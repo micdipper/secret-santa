@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Palette di partenza (da affinare nel blocco "Base grafica") */
+@theme {
+  --color-abete: #2f4830;
+  --color-ciliegia: #e0461e;
+  --color-carta: #f0e5cc;
+  --color-oro: #c9a45c;
+  --color-inchiostro: #1f2a1f;
+
+  --font-titolo: var(--font-basteleur), Georgia, serif;
+  --font-sans: var(--font-bricolage), system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-carta);
+  color: var(--color-inchiostro);
+  font-family: var(--font-sans);
+  /* Safe area dell'iPhone */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* Input almeno 16px: evita lo zoom automatico su iOS */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem);
+}
