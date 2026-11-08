@@ -1,0 +1,82 @@
+# Secret Santa – Brief di progetto
+
+Sito web per organizzare il Secret Santa tra amici, con moodboard personali e un tocco da mini social network.
+Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince sempre la soluzione più semplice.
+
+## Utenti e contesto
+- Primo utilizzo: ~12 amici. Il sito deve poter essere riutilizzato in futuro con **più gruppi**.
+- Lingua dell'interfaccia: italiano.
+- **Mobile first obbligatorio**: quasi tutti apriranno il link da iPhone (Safari) o Android (Chrome).
+  - Progettare a 375px di larghezza, poi adattare al desktop.
+  - Aree toccabili ≥ 44px; nessuna funzione che dipenda solo dall'hover.
+  - Input con font-size ≥ 16px (evita lo zoom automatico su iOS).
+  - Rispettare le safe area dell'iPhone (`env(safe-area-inset-*)`); usare `dvh` invece di `vh`.
+  - PWA leggera: manifest + icone, così il sito si può aggiungere alla schermata Home.
+
+## Stack (tutto gratuito)
+- **Next.js (App Router) + TypeScript + Tailwind CSS**
+- **Supabase**: Postgres, Auth, Storage (immagini moodboard), Realtime (chat)
+- **Vercel** per l'hosting, deploy automatico da GitHub (ogni push genera un'anteprima da provare sul telefono)
+- Moodboard: `react-rnd` (trascina + ridimensiona, supporta il touch) + rotazione con maniglia dedicata
+- Animazioni: `framer-motion`; neve/coriandoli: `canvas-confetti` o equivalente leggero
+
+## Accesso (senza email)
+- L'organizzatore crea un gruppo e ottiene un **link d'invito**.
+- L'amico apre il link → sceglie **nome + emoji/avatar + PIN a 4 cifre** (una sola volta).
+- Il PIN viene richiesto di nuovo solo su un nuovo dispositivo/browser (o dall'app aggiunta alla Home su iPhone, che ha memoria separata da Safari).
+- Implementazione: Supabase Auth email+password con email sintetica generata dal sistema (es. `<id>@users.secretsanta.local`); la password è il PIN combinato lato codice con un suffisso fisso per rispettare la lunghezza minima di Supabase. **Conferma email disattivata**. Nessuna email viene mai inviata.
+- Per rientrare: scegliere il proprio nome dalla lista del gruppo + PIN.
+- Motivo: senza PIN chiunque con il link potrebbe spacciarsi per un altro e vedere il suo abbinamento; inoltre gli amici perderebbero l'accesso cambiando dispositivo.
+
+## Funzionalità — ordine di priorità
+
+### Fase 1 – MVP (oggi)
+1. **Gruppi**: un utente crea un gruppo (nome, budget, data scambio, tema) e diventa organizzatore. Gli altri entrano con il link d'invito. Un utente può stare in più gruppi.
+2. **Esclusioni**: l'organizzatore indica coppie che non devono pescarsi (es. fidanzati).
+3. **Estrazione**: l'organizzatore la avvia quando tutti sono entrati. Algoritmo: permutazione casuale senza auto-abbinamenti che rispetti le esclusioni (riprovare finché valida; se impossibile, messaggio chiaro). Eseguita **lato server** (route API con chiave di servizio, oppure funzione Postgres `security definer`), mai nel browser. Si esegue una sola volta per gruppo.
+4. **Segretezza totale**: Row Level Security su tutte le tabelle. Ogni utente legge **solo il proprio abbinamento**. **Nessuno, organizzatore compreso, vede gli altri abbinamenti** fino alla rivelazione finale.
+5. **Rivelazione animata**: la persona pescata si scopre aprendo una busta / grattando un biglietto, con neve che cade.
+6. **Moodboard personale** (cuore del sito):
+   - bacheca libera dove trascinare, ridimensionare e ruotare elementi con le dita
+   - elementi: foto caricate, immagini da link, post-it con parole chiave, palette colori, taglie
+   - salvataggio automatico delle posizioni
+   - visibile a tutto il gruppo (in sola lettura per gli altri)
+7. **Wishlist** accanto alla moodboard: voci con link; la spunta "già preso" è visibile solo a chi regala.
+8. **Pagina gruppo**: membri con avatar, budget, data, **countdown** allo scambio.
+
+### Fase 2 – Mini social (domani)
+9. **Chat anonima con il tuo Babbo Natale**: chi regala può scrivere alla persona pescata senza rivelarsi; il destinatario può rispondere. Supabase Realtime. RLS: ogni conversazione è leggibile solo dai due partecipanti, e al destinatario non viene mai esposto l'id di chi scrive.
+10. **Feed del gruppo**: aggiornamenti tipo "Giulia ha aggiornato la moodboard", reazioni con emoji.
+11. **Rivelazione finale**: dalla data dello scambio l'organizzatore può pubblicare tutti gli abbinamenti per il gruppo (pagina "Chi era il Babbo Natale di chi").
+
+### Fase 3 – Solo se avanza tempo
+12. Temi grafici selezionabili per gruppo.
+
+### Esclusi
+- Gioco "indovina chi", galleria post-scambio, email automatiche.
+
+## Stile visivo
+- **Natalizio classico, giocoso, con un tocco vintage — ma curato e di qualità**, non kitsch.
+- Riferimenti: cartoline natalizie anni '50-'60, carta da regalo stampata, francobolli, etichette per pacchi, texture di carta leggera.
+- Palette di partenza (da affinare con le reference): rosso ciliegia, verde abete scuro, crema/carta, oro tenue.
+- Tipografia: un display serif o script vintage per i titoli + un sans pulito e leggibile per il testo.
+- Micro-animazioni morbide; niente di pesante che rallenti il telefono.
+- Reference di Marzia: cartella `/reference`.
+
+## Modello dati (indicativo)
+- `profiles` (id, nome, avatar)
+- `groups` (id, nome, budget, data_scambio, tema, codice_invito, organizer_id, stato: aperto/estratto/rivelato)
+- `group_members` (group_id, user_id)
+- `exclusions` (group_id, user_a, user_b)
+- `assignments` (group_id, giver_id, receiver_id) — RLS: leggibile solo dal giver, finché lo stato non è "rivelato"
+- `moodboard_items` (id, user_id, group_id, tipo, contenuto, x, y, larghezza, altezza, rotazione, z)
+- `wishlist_items` (id, user_id, group_id, titolo, link, preso_da)
+- Fase 2: `messages`, `feed_events`, `reactions`
+
+## Regole di lavoro
+- Procedere per fasi; a fine di ogni fase: commit, deploy su Vercel, verifica dal telefono.
+- Prima di scrivere codice per una fase, presentare un breve piano e aspettare l'ok.
+- Testare l'estrazione con utenti finti prima di usarla davvero.
+- Mai mettere chiavi segrete nel codice: solo variabili d'ambiente su Vercel; nel frontend solo la publishable key di Supabase.
+- Non installare skill, plugin o pacchetti non elencati qui senza chiedere.
+- Codice semplice e leggibile: nessuna astrazione non necessaria.
