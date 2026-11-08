@@ -26,6 +26,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - Il PIN viene richiesto di nuovo solo su un nuovo dispositivo/browser (o dall'app aggiunta alla Home su iPhone, che ha memoria separata da Safari).
 - Implementazione: Supabase Auth email+password con email sintetica generata dal sistema (es. `<id>@users.secretsanta.local`); la password è il PIN combinato lato codice con un suffisso fisso per rispettare la lunghezza minima di Supabase. **Conferma email disattivata**. Nessuna email viene mai inviata.
 - Per rientrare: scegliere il proprio nome dalla lista del gruppo + PIN.
+- PIN dimenticato: l'organizzatore può **reimpostare il PIN** di un membro (operazione lato server). Non gli dà accesso all'abbinamento di quella persona.
 - Motivo: senza PIN chiunque con il link potrebbe spacciarsi per un altro e vedere il suo abbinamento; inoltre gli amici perderebbero l'accesso cambiando dispositivo.
 
 ## Funzionalità — ordine di priorità
@@ -33,7 +34,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 ### Fase 1 – MVP (oggi)
 1. **Gruppi**: un utente crea un gruppo (nome, budget, data scambio, tema) e diventa organizzatore. Gli altri entrano con il link d'invito. Un utente può stare in più gruppi.
 2. **Esclusioni**: l'organizzatore indica coppie che non devono pescarsi (es. fidanzati).
-3. **Estrazione**: l'organizzatore la avvia quando tutti sono entrati. Algoritmo: permutazione casuale senza auto-abbinamenti che rispetti le esclusioni (riprovare finché valida; se impossibile, messaggio chiaro). Eseguita **lato server** (route API con chiave di servizio, oppure funzione Postgres `security definer`), mai nel browser. Si esegue una sola volta per gruppo.
+3. **Estrazione**: l'organizzatore la avvia quando tutti sono entrati. Algoritmo: permutazione casuale senza auto-abbinamenti che rispetti le esclusioni (riprovare finché valida; se impossibile, messaggio chiaro). Eseguita **lato server** (route API con chiave di servizio, oppure funzione Postgres `security definer`), mai nel browser. Si esegue una sola volta per gruppo. L'organizzatore partecipa all'estrazione come gli altri. **Dopo l'estrazione il link d'invito smette di funzionare** (nessun nuovo ingresso).
 4. **Segretezza totale**: Row Level Security su tutte le tabelle. Ogni utente legge **solo il proprio abbinamento**. **Nessuno, organizzatore compreso, vede gli altri abbinamenti** fino alla rivelazione finale.
 5. **Rivelazione animata**: la persona pescata si scopre aprendo una busta / grattando un biglietto, con neve che cade.
 6. **Moodboard personale** (cuore del sito):
@@ -61,7 +62,10 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - Palette di partenza (da affinare con le reference): rosso ciliegia, verde abete scuro, crema/carta, oro tenue.
 - Tipografia: un display serif o script vintage per i titoli + un sans pulito e leggibile per il testo.
 - Micro-animazioni morbide; niente di pesante che rallenti il telefono.
-- Reference di Marzia: cartella `/reference`.
+- Reference di Marzia: cartella `/reference` (da usare come moodboard, non da copiare).
+  - **Font e colori** → immagini 01-02 (display serif vintage con stelline a 4 punte stile "Mishca"; rosso-arancio acceso su verde abete scuro e beige carta). Mishca è probabilmente a pagamento: verificare la licenza o scegliere un'alternativa gratuita simile.
+  - **Layout e vibe** → immagini 03-09: collage/scrapbook, elementi sparsi e ruotati (polaroid, post-it, buste, biglietti, fogli sovrapposti), scritte a mano, colori pieni da rivista.
+  - Il tutto deve trasmettere il **calore del Natale**: etichette per pacchi, francobolli, nastri, rametti di abete, carta da regalo.
 
 ## Modello dati (indicativo)
 - `profiles` (id, nome, avatar)
