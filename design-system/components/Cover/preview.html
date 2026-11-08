@@ -1,0 +1,52 @@
+<!-- @dsCard height=336 -->
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Secret Santa</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--surface); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; width:960px; height:336px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:336px; overflow:hidden; }
+  .art svg { display:block; }
+  .cherry { fill:var(--cherry); }
+  .stitch { fill:var(--on-accent); }
+  .deep { fill:var(--ink); }
+  .gold { fill:var(--gold); }
+  .tint { fill:var(--surface-raised); }
+  .words { position:absolute; left:var(--space-6); bottom:var(--space-6); max-width:440px; }
+  .name { margin:0; font-family:var(--font-display); font-weight:700; font-size:112px; line-height:.95; letter-spacing:-.01em; color:var(--ink); }
+  .tag { margin:var(--space-3) 0 0 4px; font-size:14px; line-height:20px; color:var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 336" width="480" height="336">
+<!--
+  blocks      cherry 208x368 slab bled top and bottom (the knit field, the colour people remember) · ink 240x208 bled off top-right (fir in Carta, paper in Abete) · gold 112x112 · surface-raised 112x144 tint bled bottom-right; about 40% of 960x336
+  arrangement one tall cherry slab with satellites stacked to its right, space-4 gutters, like a jumper yoke beside folded paper
+  pattern     the knit band: "a knitted edge frames the important screens"; six knit snowflakes on an 8px stitch (2 x space-1) plus two dotted edge rows, stitched in on-accent into the slab
+  scales      sides in space-4 multiples, gutters space-4, flake pitch 96 (space-5 gap), stitch 8px; corners radius-none (paper is cut square)
+-->
+<rect class="cherry" x="32" y="-16" width="208" height="368"/>
+<path class="stitch" d="M32 12h8v8h-8zM48 12h8v8h-8zM64 12h8v8h-8zM80 12h8v8h-8zM96 12h8v8h-8zM112 12h8v8h-8zM128 12h8v8h-8zM144 12h8v8h-8zM160 12h8v8h-8zM176 12h8v8h-8zM192 12h8v8h-8zM208 12h8v8h-8zM224 12h8v8h-8zM32 316h8v8h-8zM48 316h8v8h-8zM64 316h8v8h-8zM80 316h8v8h-8zM96 316h8v8h-8zM112 316h8v8h-8zM128 316h8v8h-8zM144 316h8v8h-8zM160 316h8v8h-8zM176 316h8v8h-8zM192 316h8v8h-8zM208 316h8v8h-8zM224 316h8v8h-8z"/>
+<path class="stitch" transform="translate(48 36)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<path class="stitch" transform="translate(152 36)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<path class="stitch" transform="translate(48 132)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<path class="stitch" transform="translate(152 132)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<path class="stitch" transform="translate(48 228)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<path class="stitch" transform="translate(152 228)" d="M32 0h8v8h-8zM8 8h8v8h-8zM32 8h8v8h-8zM56 8h8v8h-8zM16 16h8v8h-8zM32 16h8v8h-8zM48 16h8v8h-8zM24 24h8v8h-8zM32 24h8v8h-8zM40 24h8v8h-8zM0 32h8v8h-8zM8 32h8v8h-8zM16 32h8v8h-8zM24 32h8v8h-8zM40 32h8v8h-8zM48 32h8v8h-8zM56 32h8v8h-8zM64 32h8v8h-8zM24 40h8v8h-8zM32 40h8v8h-8zM40 40h8v8h-8zM16 48h8v8h-8zM32 48h8v8h-8zM48 48h8v8h-8zM8 56h8v8h-8zM32 56h8v8h-8zM56 56h8v8h-8zM32 64h8v8h-8z"/>
+<rect class="deep" x="256" y="-16" width="240" height="208"/>
+<rect class="gold" x="256" y="208" width="112" height="112"/>
+<rect class="tint" x="384" y="208" width="112" height="144"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Secret<br>Santa</h1>
+<p class="tag">Il Natale tra amici, in busta chiusa.</p>
+</div>
+</div>
+</body>
+</html>

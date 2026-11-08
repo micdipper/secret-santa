@@ -1,0 +1,97 @@
+/* Secret Santa — component styles. Every colour, length and radius is a token from tokens.json. */
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap");
+
+.ss, .ss * { box-sizing: border-box; }
+.ss { font-family: var(--font-sans); font-size: 17px; line-height: 24px; color: var(--ink); -webkit-font-smoothing: antialiased; }
+.ss-display { font-family: var(--font-display); font-weight: 700; }
+
+/* ── Ornaments ─────────────────────────────────────────── */
+.ss-star { display: inline-block; width: 1em; height: 1em; background: var(--ornament); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 0 C34 22 42 30 64 32 C42 34 34 42 32 64 C30 42 22 34 0 32 C22 30 30 22 32 0Z%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 0 C34 22 42 30 64 32 C42 34 34 42 32 64 C30 42 22 34 0 32 C22 30 30 22 32 0Z%22/%3E%3C/svg%3E") center / contain no-repeat; vertical-align: -0.1em; }
+.ss-heart { display: inline-block; width: 1em; height: 1em; background: var(--accent); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 58 L8 32 C0 23 3 8 15 7 C23 6 29 11 32 18 C35 11 41 6 49 7 C61 8 64 23 56 32 Z%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 58 L8 32 C0 23 3 8 15 7 C23 6 29 11 32 18 C35 11 41 6 49 7 C61 8 64 23 56 32 Z%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-heart--gold { background: var(--ornament); }
+.ss-hearts { display: flex; justify-content: center; gap: var(--space-5); font-size: 20px; }
+.ss-hearts > .ss-heart:nth-child(odd) { background: var(--ornament); }
+
+/* ── KnitBand ──────────────────────────────────────────── */
+.ss-knit { position: relative; height: 52px; background: var(--accent); overflow: hidden; }
+.ss-knit::before { content: ""; position: absolute; inset: 0; background: var(--on-accent); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2252%22 viewBox=%220 0 44 52%22%3E%3Cpath d=%22M20 8h4v4h-4zM8 12h4v4h-4zM20 12h4v4h-4zM32 12h4v4h-4zM12 16h4v4h-4zM20 16h4v4h-4zM28 16h4v4h-4zM16 20h4v4h-4zM20 20h4v4h-4zM24 20h4v4h-4zM4 24h4v4h-4zM8 24h4v4h-4zM12 24h4v4h-4zM16 24h4v4h-4zM24 24h4v4h-4zM28 24h4v4h-4zM32 24h4v4h-4zM36 24h4v4h-4zM16 28h4v4h-4zM20 28h4v4h-4zM24 28h4v4h-4zM12 32h4v4h-4zM20 32h4v4h-4zM28 32h4v4h-4zM8 36h4v4h-4zM20 36h4v4h-4zM32 36h4v4h-4zM20 40h4v4h-4zM0 0h4v4h-4zM8 0h4v4h-4zM16 0h4v4h-4zM24 0h4v4h-4zM32 0h4v4h-4zM40 0h4v4h-4zM0 48h4v4h-4zM8 48h4v4h-4zM16 48h4v4h-4zM24 48h4v4h-4zM32 48h4v4h-4zM40 48h4v4h-4z%22/%3E%3C/svg%3E") 0 0 / 44px 52px repeat-x; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2252%22 viewBox=%220 0 44 52%22%3E%3Cpath d=%22M20 8h4v4h-4zM8 12h4v4h-4zM20 12h4v4h-4zM32 12h4v4h-4zM12 16h4v4h-4zM20 16h4v4h-4zM28 16h4v4h-4zM16 20h4v4h-4zM20 20h4v4h-4zM24 20h4v4h-4zM4 24h4v4h-4zM8 24h4v4h-4zM12 24h4v4h-4zM16 24h4v4h-4zM24 24h4v4h-4zM28 24h4v4h-4zM32 24h4v4h-4zM36 24h4v4h-4zM16 28h4v4h-4zM20 28h4v4h-4zM24 28h4v4h-4zM12 32h4v4h-4zM20 32h4v4h-4zM28 32h4v4h-4zM8 36h4v4h-4zM20 36h4v4h-4zM32 36h4v4h-4zM20 40h4v4h-4zM0 0h4v4h-4zM8 0h4v4h-4zM16 0h4v4h-4zM24 0h4v4h-4zM32 0h4v4h-4zM40 0h4v4h-4zM0 48h4v4h-4zM8 48h4v4h-4zM16 48h4v4h-4zM24 48h4v4h-4zM32 48h4v4h-4zM40 48h4v4h-4z%22/%3E%3C/svg%3E") 0 0 / 44px 52px repeat-x; }
+.ss-knit--small { height: 26px; }
+.ss-knit--small::before { -webkit-mask-size: 22px 26px; mask-size: 22px 26px; }
+
+/* ── Button ────────────────────────────────────────────── */
+.ss-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--tap-min); min-width: var(--tap-min); padding: 10px var(--space-5); border: 2px solid transparent; border-radius: var(--radius-pill); font: 700 19px/24px var(--font-sans); cursor: pointer; text-decoration: none; transition: transform 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms; -webkit-tap-highlight-color: transparent; }
+.ss-btn:active { transform: scale(0.97); }
+.ss-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ss-btn--primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 3px 0 var(--fir-deep); }
+.ss-btn--primary:active { box-shadow: 0 1px 0 var(--fir-deep); transform: translateY(2px); }
+.ss-btn--secondary { background: transparent; color: var(--ink); border-color: var(--ink); }
+.ss-btn--ghost { background: transparent; color: var(--accent-text); padding-inline: var(--space-3); text-decoration: underline; text-underline-offset: 4px; }
+.ss-btn--block { display: flex; width: 100%; }
+.ss-btn[disabled], .ss-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* ── GiftTag ───────────────────────────────────────────── */
+.ss-tag { position: relative; display: inline-flex; flex-direction: column; gap: 2px; min-width: 180px; padding: var(--space-3) var(--space-5) var(--space-3) 44px; background: var(--paper-deep); color: var(--fir); border-radius: var(--radius-sm); clip-path: polygon(22px 0, 100% 0, 100% 100%, 22px 100%, 0 50%); box-shadow: var(--shadow-paper); transform: rotate(var(--tilt-right)); }
+.ss-tag::before { content: ""; position: absolute; left: 18px; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent); }
+.ss-tag__for { font: 500 13px/18px var(--font-sans); letter-spacing: 0.02em; color: var(--fir-muted); }
+.ss-tag__name { font: 700 26px/32px var(--font-display); }
+
+/* ── Stamp (francobollo) ───────────────────────────────── */
+.ss-stamp { --hole: 5px; display: inline-grid; place-items: center; width: 104px; height: 124px; padding: 10px; background: var(--paper-bright); transform: rotate(var(--tilt-right)); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.18));
+  -webkit-mask: linear-gradient(#000 0 0) center / calc(100% - 16px) calc(100% - 16px) no-repeat, radial-gradient(circle at center, transparent var(--hole), #000 calc(var(--hole) + 0.5px)) -8px -8px / 16px 16px round; mask: linear-gradient(#000 0 0) center / calc(100% - 16px) calc(100% - 16px) no-repeat, radial-gradient(circle at center, transparent var(--hole), #000 calc(var(--hole) + 0.5px)) -8px -8px / 16px 16px round; }
+.ss-stamp__inner { display: grid; place-items: center; align-content: center; gap: 2px; width: 100%; height: 100%; background: var(--accent); color: var(--on-accent); text-align: center; }
+.ss-stamp__value { font: 700 30px/32px var(--font-display); }
+.ss-stamp__label { font: 700 11px/14px var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; }
+.ss-stamp--fir .ss-stamp__inner { background: var(--fir); color: var(--paper); }
+
+/* ── PostIt ────────────────────────────────────────────── */
+.ss-postit { position: relative; width: 160px; min-height: 140px; padding: var(--space-5) var(--space-3) var(--space-3); background: var(--postit); color: var(--fir); border-radius: var(--radius-sm); box-shadow: var(--shadow-paper); transform: rotate(var(--tilt-left)); font: 600 20px/24px var(--font-sans); }
+.ss-postit::before { content: ""; position: absolute; top: -10px; left: 50%; width: 64px; height: 22px; margin-left: -32px; background: rgba(240,229,204,0.7); box-shadow: 0 1px 2px rgba(0,0,0,0.12); transform: rotate(var(--tilt-right)); }
+.ss-postit--right { transform: rotate(var(--tilt-right)); }
+.ss-postit__note { display: block; margin-top: var(--space-2); font: 500 13px/18px var(--font-sans); color: var(--fir-muted); }
+
+/* ── Polaroid ──────────────────────────────────────────── */
+.ss-polaroid { display: inline-block; width: 180px; padding: 10px 10px 0; background: var(--photo-frame); box-shadow: var(--shadow-paper); transform: rotate(var(--tilt-left)); }
+.ss-polaroid__img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--fir-raised); }
+.ss-polaroid__caption { display: block; padding: var(--space-2) 2px var(--space-3); font: 500 13px/18px var(--font-sans); letter-spacing: 0.02em; color: var(--fir); text-align: center; }
+
+/* ── RevealCard (il biglietto) ─────────────────────────── */
+.ss-reveal { position: relative; width: 100%; max-width: 320px; padding: var(--space-6) var(--space-5) var(--space-5); background: var(--photo-frame); color: var(--fir); text-align: center; box-shadow: var(--shadow-lifted); transform: rotate(var(--tilt-slight)); }
+.ss-reveal::after { content: ""; position: absolute; inset: 8px; border: 1px dashed rgba(47,72,48,0.35); pointer-events: none; }
+.ss-reveal__eyebrow { font: 600 15px/20px var(--font-sans); color: var(--fir-muted); }
+.ss-reveal__name { margin: var(--space-2) 0; font: 700 36px/40px var(--font-display); color: var(--fir); }
+.ss-reveal__stars { display: flex; justify-content: center; gap: var(--space-3); font-size: 18px; color: var(--gold-deep); }
+.ss-reveal__stars .ss-star { background: var(--gold-deep); }
+.ss-reveal__meta { margin-top: var(--space-3); font: 400 15px/20px var(--font-sans); color: var(--fir-muted); }
+
+/* ── PinInput ──────────────────────────────────────────── */
+.ss-field { display: grid; gap: var(--space-2); }
+.ss-field__label { font: 600 15px/20px var(--font-sans); color: var(--ink); }
+.ss-field__help { font: 500 13px/18px var(--font-sans); color: var(--ink-muted); }
+.ss-field__error { font: 600 15px/20px var(--font-sans); color: var(--accent-text); }
+.ss-pin { display: flex; gap: var(--space-2); }
+.ss-pin__box { width: 56px; height: 64px; padding: 0; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: 700 32px/40px var(--font-sans); font-variant-numeric: tabular-nums; text-align: center; caret-color: var(--accent); }
+.ss-pin__box:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ss-pin--error .ss-pin__box { border-color: var(--accent-text); }
+
+/* ── Countdown ─────────────────────────────────────────── */
+.ss-countdown { display: flex; gap: var(--space-2); }
+.ss-countdown__unit { display: grid; justify-items: center; gap: 2px; min-width: 72px; padding: var(--space-3) var(--space-2); background: var(--surface-raised); border-radius: var(--radius-md); }
+.ss-countdown__value { font: 700 32px/40px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ss-countdown__label { font: 600 13px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ss-countdown__sep { align-self: center; font-size: 14px; }
+
+/* ── MemberChip ────────────────────────────────────────── */
+.ss-member { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--tap-min); padding: 4px var(--space-3) 4px 4px; border: 2px solid var(--ink); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink); font: 600 15px/20px var(--font-sans); cursor: pointer; }
+.ss-member:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ss-member__avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--surface); font-size: 20px; line-height: 1; }
+.ss-member__avatar--empty { border: 2px dashed var(--line); background: transparent; }
+.ss-member__note { font: 500 13px/18px var(--font-sans); color: var(--ink-muted); }
+.ss-member--taken { border-color: var(--line); cursor: not-allowed; }
+.ss-member--taken .ss-member__note { color: var(--accent-text); }
+.ss-member--me { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.ss-member--me .ss-member__avatar { background: var(--paper); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-btn { transition: none; }
+  .ss-btn:active { transform: none; }
+}

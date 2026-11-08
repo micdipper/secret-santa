@@ -1,0 +1,17 @@
+<!-- @dsCard group="Forms" height=150 -->
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><title>PinInput</title>
+<style>html,body{margin:0} body{background:var(--surface);} .stage{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-5);padding:var(--space-5);}</style>
+</head>
+<body class="ss">
+<div class="stage" style="align-items:flex-start;gap:var(--space-6)">
+  <div class="ss-field"><label class="ss-field__label" for="p1">Il tuo PIN</label>
+    <div class="ss-pin"><input id="p1" class="ss-pin__box" inputmode="numeric" maxlength="1" value="4"><input class="ss-pin__box" inputmode="numeric" maxlength="1" value="8"><input class="ss-pin__box" inputmode="numeric" maxlength="1"><input class="ss-pin__box" inputmode="numeric" maxlength="1"></div>
+    <span class="ss-field__help">4 cifre. Ti servirà su un altro telefono.</span></div>
+  <div class="ss-field"><span class="ss-field__label">PIN</span>
+    <div class="ss-pin ss-pin--error"><input class="ss-pin__box" value="1"><input class="ss-pin__box" value="2"><input class="ss-pin__box" value="3"><input class="ss-pin__box" value="4"></div>
+    <span class="ss-field__error" role="alert">PIN sbagliato. Riprova o chiedi all'organizzatore.</span></div>
+</div>
+</body>
+</html>

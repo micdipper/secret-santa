@@ -1,0 +1,1 @@
+The project's own mood test: Basteleur Bold and Bricolage Grotesque on fir, with the cherry knit band, gold four-point stars and the alternating gold and cherry hearts. The brand colours `fir`, `cherry`, `paper` and `gold` were sampled from this image. It is a reference, not a screen to ship.
