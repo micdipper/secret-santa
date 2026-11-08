@@ -60,10 +60,10 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 
 ## Stile visivo
 - **Natalizio classico, giocoso, con un tocco vintage — ma curato e di qualità**, non kitsch.
-- **Vibe nordica folkloristica natalizia** (il motivo per cui Marzia ama Mishca): motivi a maglia nordica, stelle a 8 punte, cuori e uccellini dell'arte popolare scandinava, carta ritagliata, stelle di paglia. Tutti gli ornamenti sono **disegnati da noi in SVG**, originali, niente immagini prese dal web.
+- **Vibe nordica folkloristica natalizia** (il motivo per cui Marzia ama Mishca): motivi a maglia nordica, stelle a 8 punte, cuori e uccellini dell'arte popolare scandinava, carta ritagliata, stelle di paglia. Tutti gli ornamenti sono **disegnati da noi in SVG**, originali, niente immagini prese dal web. Il tocco nordico è **un ingrediente, non tutto il sito**: l'obiettivo è un mashup equilibrato di tutte le reference (collage/scrapbook, colori pieni da rivista, scritte a mano, carta, Natale nordico).
 - Riferimenti: cartoline natalizie anni '50-'60, carta da regalo stampata, francobolli, etichette per pacchi, texture di carta leggera.
 - Palette di partenza (da affinare con le reference): rosso ciliegia, verde abete scuro, crema/carta, oro tenue.
-- Tipografia: titoli in stile Mishca, ma Mishca è a pagamento → font principale gratuito (SIL OFL) **da scegliere tra Basteleur Bold (Velvetyne) e Sinistre Bold (Collletttivo)**, vedi `reference/12` e `reference/13` + **Bricolage Grotesque** per il testo (Google Fonts, un solo file variabile). Massimo due font. Stelline a 4 punte disegnate come SVG.
+- Tipografia: titoli in stile Mishca, ma Mishca è a pagamento → font principale gratuito **Basteleur Bold** (Velvetyne, SIL OFL; scelto da Marzia, si può cambiare se non funziona sull'intero sito; alternativa: Sinistre Bold di Collletttivo) + **Bricolage Grotesque** per il testo (Google Fonts, un solo file variabile). Massimo due font. Stelline a 4 punte disegnate come SVG.
 - Micro-animazioni morbide; niente di pesante che rallenti il telefono.
 - Reference di Marzia: cartella `/reference` (da usare come moodboard, non da copiare).
   - **Font e colori** → immagini 01-02 (display serif vintage con stelline a 4 punte stile "Mishca"; rosso-arancio acceso su verde abete scuro e beige carta). Mishca è probabilmente a pagamento: verificare la licenza o scegliere un'alternativa gratuita simile.
