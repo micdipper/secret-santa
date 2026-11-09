@@ -9,7 +9,7 @@ import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null };
+type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null; envelope_opened_at: string | null };
 
 export default async function PaginaGruppo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +18,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
   const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
     supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id").eq("id", id).maybeSingle(),
-    supabase.from("group_members").select("id, display_name, avatar, user_id").eq("group_id", id).order("display_name"),
+    supabase.from("group_members").select("id, display_name, avatar, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
   ]);
   if (!gruppo) notFound();
 
@@ -27,6 +27,13 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const organizzatore = gruppo.organizer_id === userId;
   const entrati = membri.filter((m) => m.user_id).length;
   const giorni = giorniMancanti(gruppo.exchange_date);
+
+  // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
+  let destinatario: Membro | undefined;
+  if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
+    const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
+    destinatario = membri.find((m) => m.id === abbinamento?.receiver_member_id);
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
@@ -51,6 +58,23 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           <p className="mt-2">
             Sono entrati {entrati} su {membri.length}. Quando ci sono tutti, l&apos;organizzatore fa l&apos;estrazione e qui troverai la tua busta.
           </p>
+        </Feltro>
+      ) : destinatario ? (
+        <Feltro className="mt-6">
+          <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
+          <div className="mt-3 flex items-center gap-4">
+            <Toppa emoji={destinatario.avatar ?? "🎁"} dimensione={56} />
+            <TitoloRiquadro>{destinatario.display_name}</TitoloRiquadro>
+          </div>
+          <p className="mt-4">
+            Acqua in bocca!
+            {gruppo.budget_eur !== null && ` Budget ${gruppo.budget_eur} €`}
+            {gruppo.exchange_date && `, scambio ${dataBreve(gruppo.exchange_date)}`}
+            {gruppo.budget_eur !== null || gruppo.exchange_date ? "." : ""}
+          </p>
+          <TastoLink href={`/gruppo/${id}/bacheca/${destinatario.id}`} className="mt-5">
+            Guarda la sua bacheca
+          </TastoLink>
         </Feltro>
       ) : (
         <Feltro className="mt-6">

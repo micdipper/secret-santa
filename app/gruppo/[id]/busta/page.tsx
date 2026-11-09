@@ -22,6 +22,16 @@ export default async function Busta({ params }: { params: Promise<{ id: string }
 
   const destinatario = abbinamento?.group_members as unknown as { id: string; display_name: string; avatar: string | null } | undefined;
 
+  // La prima volta che la apro, me lo ricordo: la pagina del gruppo mostrerà il promemoria.
+  if (destinatario) {
+    await supabase
+      .from("group_members")
+      .update({ envelope_opened_at: new Date().toISOString() })
+      .eq("group_id", id)
+      .eq("user_id", userId)
+      .is("envelope_opened_at", null);
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
       <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro={`Torna a ${gruppo.name}`} contesto={gruppo.name} titolo="La tua busta" />

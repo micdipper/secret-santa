@@ -1,5 +1,7 @@
 # Secret Santa – Brief di progetto
 
+> **Prima di riprendere il lavoro leggi `STATO.md`**: contiene dove siamo arrivati, cosa manca, le decisioni prese in chat, le bozze del quiz e le note tecniche. Aggiornalo a fine di ogni blocco di lavoro.
+
 Sito web per organizzare il Secret Santa tra amici, con moodboard personali e un tocco da mini social network.
 Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince sempre la soluzione più semplice.
 
@@ -24,12 +26,12 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 ## Accesso (senza email)
 - L'organizzatore crea un gruppo e ottiene un **link d'invito**.
 - Quando crea il gruppo, l'organizzatore **scrive la lista dei nomi veri dei partecipanti** (come drawnames). Così il nome sul biglietto è sempre riconoscibile.
-- L'amico apre il link → **tocca il proprio nome nella lista** → sceglie **emoji/avatar + PIN a 4 cifre** (una sola volta). Un nome già preso è bloccato; se qualcuno prende per errore il nome sbagliato, l'organizzatore lo libera con "reimposta".
-- Il PIN viene richiesto di nuovo solo su un nuovo dispositivo/browser (o dall'app aggiunta alla Home su iPhone, che ha memoria separata da Safari).
-- Implementazione: Supabase Auth email+password con email sintetica generata dal sistema (es. `<id>@users.secretsanta.local`); la password è il PIN combinato lato codice con un suffisso fisso per rispettare la lunghezza minima di Supabase. **Conferma email disattivata**. Nessuna email viene mai inviata.
-- Per rientrare: scegliere il proprio nome dalla lista del gruppo + PIN.
-- PIN dimenticato: l'organizzatore preme "Reimposta PIN" → il sito crea un **link usa-e-getta valido 24 ore** che l'organizzatore manda in privato all'amico; l'amico lo apre e sceglie lui il nuovo PIN (operazione lato server). L'organizzatore non sceglie né conosce il PIN, quindi non accede all'abbinamento di quella persona.
-- Motivo: senza PIN chiunque con il link potrebbe spacciarsi per un altro e vedere il suo abbinamento; inoltre gli amici perderebbero l'accesso cambiando dispositivo.
+- L'amico apre il link → **tocca il proprio nome nella lista** → sceglie **emoji/avatar + password di almeno 8 caratteri** (una sola volta). Un nome già preso è bloccato; se qualcuno prende per errore il nome sbagliato, l'organizzatore lo libera con "reimposta".
+- La password viene richiesta di nuovo solo su un nuovo dispositivo/browser (o dall'app aggiunta alla Home su iPhone, che ha memoria separata da Safari).
+- Implementazione: Supabase Auth email+password con email sintetica generata dal sistema (es. `<id>@users.secretsanta.local`); la password la sceglie la persona (minimo 8 caratteri, nessun altro vincolo). **Conferma email disattivata**. Nessuna email viene mai inviata.
+- Per rientrare: scegliere il proprio nome dalla lista del gruppo + password.
+- Password dimenticata: l'organizzatore preme "Reimposta password" → il sito crea un **link usa-e-getta valido 24 ore** che l'organizzatore manda in privato all'amico; l'amico lo apre e sceglie lui la nuova password (operazione lato server). L'organizzatore non la sceglie né la conosce, quindi non accede all'abbinamento di quella persona.
+- Motivo: senza password chiunque con il link potrebbe spacciarsi per un altro e vedere il suo abbinamento; inoltre gli amici perderebbero l'accesso cambiando dispositivo.
 
 ## Funzionalità — ordine di priorità
 
