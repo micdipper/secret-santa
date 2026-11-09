@@ -1,109 +1,111 @@
+import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
-// Pulsante principale: un'etichetta vermiglio con un'ombra "stampata" piena.
-export function Pulsante({
-  variante = "pieno",
+// Tasto a pillola di stoffa: solo testo, per le azioni principali.
+export function Tasto({
+  variante = "crema",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: "pieno" | "carta" }) {
-  const stile =
-    variante === "pieno"
-      ? "bg-vermiglio text-crema shadow-[4px_4px_0_var(--color-abete-scuro)]"
-      : "bg-crema text-abete shadow-[4px_4px_0_var(--color-vermiglio)]";
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: "crema" | "vermiglio" | "verde" }) {
+  const colori = {
+    crema:
+      "bg-feltro text-vermiglio-scuro shadow-[inset_0_-4px_8px_rgba(120,90,40,.2),0_8px_14px_-8px_rgba(0,0,0,.6)]",
+    vermiglio:
+      "bg-vermiglio text-crema shadow-[inset_0_-4px_8px_rgba(0,0,0,.18),0_8px_14px_-8px_rgba(0,0,0,.6)]",
+    verde:
+      "bg-abete text-crema shadow-[inset_0_-4px_8px_rgba(0,0,0,.25),0_8px_14px_-8px_rgba(0,0,0,.6)]",
+  }[variante];
+  return <button className={`tasto ${colori} ${className}`} {...props} />;
+}
+
+// Bottone di legno rotondo con icona incisa: solo per piccole azioni senza testo.
+// L'etichetta è obbligatoria per chi usa lo screen reader.
+export function BottoneLegno({
+  etichetta,
+  icona,
+  className = "",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { etichetta: string; icona: ReactNode }) {
   return (
-    <button
-      className={`min-h-12 rounded-full px-6 font-titolo text-lg transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50 ${stile} ${className}`}
-      {...props}
-    />
+    <button aria-label={etichetta} title={etichetta} className={`bottone-legno ${className}`} {...props}>
+      {icona}
+    </button>
   );
 }
 
-// Foglio di carta fissato con un pezzo di nastro adesivo.
-export function Foglio({
+// Riquadro di feltro con la cucitura tratteggiata.
+export function Feltro({
   children,
-  inclinazione = 0,
+  variante = "crema",
+  className = "",
+}: {
+  children: ReactNode;
+  variante?: "crema" | "vermiglio";
+  className?: string;
+}) {
+  return (
+    <div className={`feltro ${variante === "vermiglio" ? "feltro-vermiglio" : ""} p-6 ${className}`}>
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
+// Etichetta di stoffa cucita, per le informazioni brevi (giorni, data, budget).
+export function EtichettaStoffa({
+  children,
   colore = "crema",
-  className = "",
 }: {
   children: ReactNode;
-  inclinazione?: number;
-  colore?: "crema" | "kraft" | "rosa" | "senape";
-  className?: string;
+  colore?: "crema" | "vermiglio" | "verde";
 }) {
-  const sfondo = {
-    crema: "bg-crema",
-    kraft: "bg-kraft",
-    rosa: "bg-rosa",
-    senape: "bg-senape",
+  const stile = {
+    crema: "bg-feltro text-abete",
+    vermiglio: "bg-vermiglio text-crema",
+    verde: "bg-abete text-crema",
   }[colore];
-  return (
-    <div
-      className={`grana relative px-5 pt-7 pb-5 shadow-[0_10px_18px_-10px_rgba(10,25,12,.7)] ${sfondo} ${className}`}
-      style={{ transform: `rotate(${inclinazione}deg)` }}
-    >
-      <span
-        aria-hidden
-        className="nastro absolute -top-3 left-1/2 h-7 w-24 -translate-x-1/2 -rotate-3 bg-senape/70"
-      />
-      <div className="relative z-2">{children}</div>
-    </div>
-  );
+  return <span className={`etichetta-stoffa text-[15px] ${stile}`}>{children}</span>;
 }
 
-// Francobollo: per piccoli dati importanti (es. il budget).
-export function Francobollo({
-  valore,
-  didascalia,
-  className = "",
+// Toppa rotonda cucita con l'emoji della persona.
+export function Toppa({
+  emoji,
+  dimensione = 58,
+  novita = false,
 }: {
-  valore: string;
-  didascalia: string;
-  className?: string;
+  emoji: string;
+  dimensione?: number;
+  novita?: boolean;
 }) {
   return (
-    <div className={`francobollo inline-block bg-crema ${className}`}>
-      <div className="flex min-w-24 flex-col items-center border-2 border-vermiglio px-3 py-2 text-vermiglio">
-        <span className="font-titolo text-3xl leading-none">{valore}</span>
-        <span className="mt-1 text-sm">{didascalia}</span>
-      </div>
-    </div>
-  );
-}
-
-// Etichetta per pacchi con il buco e lo spago (es. la data dello scambio).
-export function Etichetta({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`relative inline-flex ${className}`}>
-      <div className="etichetta flex items-center gap-3 bg-kraft py-2 pr-4 pl-7 text-inchiostro">
-        <span aria-hidden className="size-3 shrink-0 rounded-full bg-abete" />
-        <span>{children}</span>
-      </div>
-    </div>
-  );
-}
-
-// Post-it con una parola chiave scritta in grande.
-export function PostIt({
-  children,
-  colore = "senape",
-  inclinazione = -3,
-}: {
-  children: ReactNode;
-  colore?: "senape" | "rosa" | "crema";
-  inclinazione?: number;
-}) {
-  const sfondo = { senape: "bg-senape", rosa: "bg-rosa", crema: "bg-crema" }[colore];
-  return (
-    <div
-      className={`grana inline-flex size-28 items-center justify-center p-3 text-center font-titolo text-xl text-inchiostro shadow-[0_8px_14px_-8px_rgba(10,25,12,.7)] ${sfondo}`}
-      style={{ transform: `rotate(${inclinazione}deg)` }}
+    <span
+      className="toppa"
+      style={{ width: dimensione, height: dimensione, fontSize: dimensione * 0.48 }}
+      aria-hidden
     >
-      <span className="relative z-2">{children}</span>
-    </div>
+      {emoji}
+      {novita && (
+        <span className="absolute top-0.5 right-0 size-3.5 rounded-full bg-senape shadow-[0_0_0_2px_var(--color-abete)]" />
+      )}
+    </span>
   );
 }
 
-// Campo di testo con l'etichetta sempre visibile.
+// Link per tornare alla pagina del gruppo, in alto nelle pagine interne.
+export function TornaAlGruppo({ href, nome }: { href: string; nome: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center gap-2 self-start rounded-full bg-crema/12 pr-4 pl-2.5 text-[15px] text-crema"
+    >
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M15 5l-7 7 7 7" />
+      </svg>
+      {nome}
+    </Link>
+  );
+}
+
+// Campo di testo con l'etichetta sempre visibile (da usare dentro un Feltro).
 export function Campo({
   etichetta,
   aiuto,
@@ -117,10 +119,38 @@ export function Campo({
       </label>
       <input
         id={id}
-        className="min-h-12 rounded-md border-2 border-abete/40 bg-white/70 px-3 text-inchiostro placeholder:text-inchiostro/40 focus:border-abete"
+        className="min-h-12 rounded-2xl border-2 border-abete/30 bg-white/60 px-4 text-inchiostro placeholder:text-inchiostro/40 focus:border-abete"
         {...props}
       />
       {aiuto && <p className="text-sm text-inchiostro/70">{aiuto}</p>}
     </div>
   );
 }
+
+// Icone incise per i bottoni di legno (tratto semplice, originali).
+export const Icone = {
+  matita: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M4 20l4-1 11-11-3-3L5 16z" />
+      <path d="M14 7l3 3" />
+    </svg>
+  ),
+  piu: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  condividi: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 15V4M8 8l4-4 4 4" />
+      <path d="M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7" />
+    </svg>
+  ),
+  ago: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M5 19L18 6" />
+      <ellipse cx="19" cy="5" rx="1.6" ry="2.6" transform="rotate(45 19 5)" />
+      <path d="M5 19c-2 1-2-2 1-3 4-1 6 2 9 1" />
+    </svg>
+  ),
+};

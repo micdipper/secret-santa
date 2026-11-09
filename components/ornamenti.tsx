@@ -141,3 +141,50 @@ export function FasciaMaglia({
     </svg>
   );
 }
+
+// Pallina di Natale lucida, appesa a un filo (unico oggetto "realistico").
+export function Pallina({ className, title }: Props) {
+  return (
+    <svg viewBox="0 0 80 132" className={className} {...svgProps(title)}>
+      <defs>
+        <radialGradient id="pallina-vetro" cx="36%" cy="34%" r="70%">
+          <stop offset="0" stopColor="#ff8a66" />
+          <stop offset=".35" stopColor="#e5481e" />
+          <stop offset=".8" stopColor="#8f1f0b" />
+          <stop offset="1" stopColor="#5a1206" />
+        </radialGradient>
+        <linearGradient id="pallina-tappo" x1="0" x2="1">
+          <stop offset="0" stopColor="#8a6a2a" />
+          <stop offset=".45" stopColor="#f1d27a" />
+          <stop offset="1" stopColor="#7a5a1e" />
+        </linearGradient>
+      </defs>
+      <path d="M40 0v40" stroke="#f3e8cf" strokeOpacity=".7" strokeWidth="1.5" />
+      <ellipse cx="40" cy="98" rx="30" ry="6" fill="#000" opacity=".18" />
+      <circle cx="40" cy="88" r="36" fill="url(#pallina-vetro)" />
+      <rect x="31" y="42" width="18" height="12" rx="2.5" fill="url(#pallina-tappo)" />
+      <path d="M36 42c0-6 8-6 8 0" fill="none" stroke="#c9a24f" strokeWidth="2" />
+      <ellipse cx="27" cy="72" rx="9" ry="14" transform="rotate(35 27 72)" fill="#fff" opacity=".55" />
+      <ellipse cx="54" cy="108" rx="10" ry="4" transform="rotate(-25 54 108)" fill="#fff" opacity=".12" />
+    </svg>
+  );
+}
+
+// Piccola busta chiusa con il sigillo di ceralacca.
+export function BustaSigillata({ className, title }: Props) {
+  return (
+    <svg viewBox="0 0 96 64" className={className} {...svgProps(title)}>
+      <defs>
+        <radialGradient id="ceralacca" cx="35%" cy="30%" r="70%">
+          <stop offset="0" stopColor="#d9473a" />
+          <stop offset="1" stopColor="#7e1414" />
+        </radialGradient>
+      </defs>
+      <rect x="2" y="2" width="92" height="60" rx="4" fill="#f7efdd" />
+      <path d="M2 4l46 32L94 4" fill="none" stroke="#000" strokeOpacity=".1" strokeWidth="1.5" />
+      <path d="M2 60l34-26M94 60L60 34" fill="none" stroke="#000" strokeOpacity=".07" strokeWidth="1.5" />
+      <circle cx="48" cy="35" r="11" fill="url(#ceralacca)" />
+      <circle cx="48" cy="35" r="7" fill="none" stroke="#5c0d0d" strokeOpacity=".5" strokeWidth="1.2" />
+    </svg>
+  );
+}
