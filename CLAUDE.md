@@ -51,6 +51,8 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 7. **Lista dei desideri** come seconda scheda della bacheca: voci con link; la spunta "già preso" è visibile solo a chi regala.
 8. **Pagina gruppo**: membri con avatar, budget, data, **countdown** allo scambio.
 
+9bis. **Avatar e premi** (approvato da Marzia): l'**avatar sostituisce le emoji** ovunque. Personaggio **originale** disegnato da noi in SVG, stile feltro morbido, **sempre a mezzobusto**. Nella pagina "Il mio profilo" si scelgono pelle, capelli e maglione; gli **accessori natalizi si sbloccano SOLO così**: quiz completato → cappello legato al verdetto · almeno una toppa di ogni tipo → sciarpa a maglia nordica · primo ricamo a punto croce → ditale d'oro/gomitolo · almeno 3 desideri nella lista → fiocco · busta aperta → stellina. **Apertura della busta "a slot machine"**: gli avatar di tutti scorrono come rulli, rallentano e si fermano sulla persona pescata (il risultato è già deciso dal database, è solo spettacolo), poi busta 3D e biglietto. Ordine dei lavori: bacheca → avatar e profilo → slot machine + busta 3D → suoni → pubblicazione.
+
 ### Fase 2 – Mini social (domani)
 9. **Chat anonima con il tuo Babbo Natale**: chi regala può scrivere alla persona pescata senza rivelarsi; il destinatario può rispondere. Supabase Realtime. RLS: ogni conversazione è leggibile solo dai due partecipanti, e al destinatario non viene mai esposto l'id di chi scrive.
 10. **Feed del gruppo**: aggiornamenti tipo "Giulia ha aggiornato la moodboard", reazioni con emoji.
