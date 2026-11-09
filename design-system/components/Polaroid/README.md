@@ -1,9 +1,10 @@
 # Polaroid
 
-A polaroid frame for photos uploaded to the moodboard or pasted from a link.
+Cornice polaroid per le foto caricate nella moodboard o incollate da un link.
 
-## Use it
-- Moodboard items of type "foto" and "immagine da link".
+## Quando usarla
+- Elementi della moodboard di tipo "foto" e "immagine da link".
+- Nella pagina finale "Chi era il Babbo Natale di chi", una polaroid per persona, in griglia sfalsata (ref. 04).
 
-## The consumer provides
-`.ss-polaroid` (a `<figure>`) holding an `<img class="ss-polaroid__img">` (square, `object-fit: cover`) and an optional `<figcaption class="ss-polaroid__caption">` of up to about 30 characters. The frame is `photo-frame` in both themes. Rotation follows the item's saved value, as with PostIt.
+## Cosa fornisci
+`.ss-polaroid` (un `<figure>`) con `<img class="ss-polaroid__img">` (quadrata, `object-fit: cover`) e una `<figcaption class="ss-polaroid__caption">` facoltativa nel formato dell'archivio di ref. 04: descrizione, a capo, "Nome · anno". La cornice è `photo-frame` in ogni tema. La rotazione segue il valore salvato, come per PostIt.

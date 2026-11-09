@@ -1,7 +1,9 @@
-Original ornaments drawn for Secret Santa (never clip-art). Single-ink SVGs; `<img>` can't recolour them, so each file's ink is fixed:
+Ornamenti originali disegnati per Secret Santa (mai clip-art). SVG a inchiostro unico: `<img>` non li può ricolorare, quindi il colore di ogni file è fisso.
 
-- `stellina-4-punte.svg`: the four-point star, ink `gold` (#c9a45c). Flanks hero titles; three sit on the reveal ticket. In UI use the `ss-star` class instead.
-- `stella-8-punte.svg`: the Nordic eight-point star, ink `gold` with a `fir` centre. Use for the PWA icon and share image.
-- `cuore.svg`: the folk heart, ink `cherry` (#de3e1e). In UI use `ss-heart`.
-- `fiocco-maglia.svg`: the knit snowflake on an 8px stitch grid, ink `paper` (#f0e5cc). It only reads on `cherry` or `fir`.
-- `maglia-tile.svg`: one repeat of the knit band (cream on cherry, 44×52). Use as a three.js or export texture; in UI use `KnitBand`.
+- `stellina-4-punte.svg`: stellina a 4 punte, inchiostro `gold` (#c9a45c). Ai lati dei titoli grandi; tre sul biglietto. Nell'interfaccia usa la classe `ss-star`.
+- `stella-8-punte.svg`: stella nordica a 8 punte, `gold` con centro `fir`. Per l'icona PWA e l'immagine di condivisione.
+- `cuore.svg`: cuore popolare, inchiostro `cherry` (#de3e1e). Nell'interfaccia usa `ss-heart`.
+- `fiocco-maglia.svg`: fiocco a maglia su griglia di punti da 8px, inchiostro `paper` (#f0e5cc): si legge solo su `cherry` o `fir`.
+- `maglia-tile.svg`: una ripetizione della banda a maglia (crema su ciliegia, 44×52). Texture per three.js o export; nell'interfaccia usa `KnitBand`.
+- `stella-raggiera.svg`: stella a raggiera a 24 punte, `senape` (#f5ba05). Nell'interfaccia usa `Starburst`.
+- `ceralacca.svg`: ceralacca ciliegia con stella a 8 punte `gold`. Il segno piccolo dell'app (icona, favicon); nell'interfaccia usa `Envelope`.

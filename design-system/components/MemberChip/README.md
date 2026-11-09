@@ -1,16 +1,16 @@
 # MemberChip
 
-A member chip: a name from the organiser's list with the emoji avatar that person picked.
+Chip di un membro: un nome della lista dell'organizzatore con l'emoji scelta da quella persona.
 
-## Use it
-- The join screen ("Tocca il tuo nome"): every name in the group, tappable.
-- The members list on the group page, and the sign-in again flow.
+## Quando usarlo
+- Nella schermata d'ingresso ("Tocca il tuo nome"): tutti i nomi del gruppo, toccabili.
+- Nella lista dei membri del gruppo e per rientrare.
 
-## States
-- Default: tappable, `ink` border on `surface-raised`.
-- `ss-member--me`: the signed-in person, `accent` fill.
-- Empty avatar (`ss-member__avatar--empty`): the person hasn't joined yet. Add a `.ss-member__note` ("non ancora entrato").
-- `ss-member--taken` + `disabled`: someone already claimed the name. Add the note "già preso" in `accent-text`, never colour alone.
+## Stati
+- Normale: toccabile, bordo `ink` su `surface-raised`.
+- `ss-member--me`: chi è entrato, fondo `accent`.
+- Avatar vuoto (`ss-member__avatar--empty`): la persona non è ancora entrata. Aggiungi `.ss-member__note` ("non ancora entrato").
+- `ss-member--taken` + `disabled`: qualcuno ha già preso il nome. Aggiungi la nota "già preso" in `accent-text`: mai solo il colore.
 
-## The consumer provides
-A `<button class="ss-member">` with `.ss-member__avatar` (the person's emoji, or empty) and the display name exactly as the organiser wrote it. Emoji appear only here, chosen by the person: never as decoration.
+## Cosa fornisci
+Un `<button class="ss-member">` con `.ss-member__avatar` (l'emoji della persona, o vuoto) e il nome esattamente come l'ha scritto l'organizzatore. Le emoji compaiono solo qui, scelte dalle persone: mai come decorazione.

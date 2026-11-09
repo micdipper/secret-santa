@@ -1,17 +1,17 @@
 # Button
 
-Buttons are pill-shaped, at least `tap-min` (44px) tall, labelled in the `button` style (Bricolage Grotesque 19px bold).
+Bottoni a pillola, alti almeno `tap-min` (44px), con l'etichetta nello stile `button` (Bricolage Grotesque 19px bold).
 
-## Variants
-- `ss-btn--primary`: the one main action on a screen ("Apri la busta", "Estrai i nomi", "Entra"). `accent` fill, `on-accent` label, a hard `fir-deep` drop that presses down on tap.
-- `ss-btn--secondary`: alternatives ("Invita amici", "Aggiungi alla wishlist"). Transparent with a 2px `ink` border.
-- `ss-btn--ghost`: low-weight or organiser-only actions ("Reimposta PIN", "Libera il nome"). `accent-text`, underlined.
-- `ss-btn--block`: full width, for the bottom of a mobile screen.
+## Varianti
+- `ss-btn--primary`: l'unica azione principale della schermata ("Apri la busta", "Estrai i nomi", "Entra"). Fondo `accent`, testo `on-accent`, un'ombra dura `fir-deep` che si schiaccia al tocco.
+- `ss-btn--secondary`: alternative ("Invita amici", "Aggiungi alla wishlist"). Trasparente con bordo `ink` di 2px.
+- `ss-btn--ghost`: azioni leggere o solo per l'organizzatore ("Reimposta PIN", "Libera il nome"). `accent-text`, sottolineato.
+- `ss-btn--block`: larghezza piena, in fondo a una schermata mobile.
 
-## The consumer provides
-A `<button>` or `<a>` with class `ss-btn` plus one variant, a short Italian verb-first label, and `disabled` (or `aria-disabled="true"`) when the action isn't ready yet, such as the draw before everyone has joined.
+## Cosa fornisci
+Un `<button>` o `<a>` con `ss-btn` e una variante, un'etichetta breve che inizia con un verbo, e `disabled` (o `aria-disabled="true"`) quando l'azione non è ancora possibile, ad esempio l'estrazione prima che tutti siano entrati.
 
-## Do / don't
-- One primary per screen.
-- Keep the label at 19px bold: that is what lets `on-accent` read on cherry (3.5:1 large-text rule). Never shrink it.
-- No emoji in labels.
+## Sì / no
+- Un solo primario per schermata.
+- L'etichetta resta 19px bold: è ciò che rende leggibile `on-accent` sul ciliegia. Mai rimpicciolirla.
+- Niente emoji nelle etichette.

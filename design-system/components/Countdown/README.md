@@ -1,9 +1,12 @@
 # Countdown
 
-A countdown to the gift exchange, on the group page.
+Il conto alla rovescia allo scambio dei regali, nella pagina del gruppo.
 
-## The consumer provides
-`.ss-countdown` (`role="timer"`, with an `aria-label` that reads the whole time as a sentence) holding three `.ss-countdown__unit`s (days, hours, minutes; no seconds, to keep it calm), separated by decorative `ss-star`s. Values are two digits with tabular figures. Update once a minute.
+## Cosa fornisci
+`.ss-countdown` (`role="timer"`, con un `aria-label` che legge il tempo come frase) con tre `.ss-countdown__unit` (giorni, ore, minuti; niente secondi, per restare calmi) separate da `ss-star` decorative. Valori a due cifre tabellari, aggiornati una volta al minuto.
 
-## When the day comes
-Replace the countdown with a single line in `display-heading`, e.g. "È il giorno dello scambio!"
+## Variante "rivista"
+Quando mancano meno di 10 giorni, o in landing, mostra solo i giorni dentro una `Starburst` ("12 · giorni").
+
+## Il giorno dello scambio
+Al posto del countdown, una frase in `display-quote`: "È il giorno dello scambio!"

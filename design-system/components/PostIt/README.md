@@ -1,10 +1,10 @@
 # PostIt
 
-A butter-yellow sticky note with a strip of tape, used for keywords and sizes on the moodboard.
+Post-it giallo burro con un pezzo di nastro adesivo, per parole chiave e taglie nella moodboard.
 
-## Use it
-- Moodboard items of type "post-it" (keywords) and "taglie" (sizes).
-- Short text: up to about 6 words in the note, plus an optional `.ss-postit__note` line.
+## Quando usarlo
+- Elementi della moodboard di tipo "post-it" (parole chiave) e "taglie".
+- Testo breve: fino a ~6 parole, più una riga facoltativa `.ss-postit__note`.
 
-## The consumer provides
-`.ss-postit` with the text, alternating `tilt-left` (the default) and `ss-postit--right`. On the moodboard the rotation comes from the item's saved `rotazione`, so set `transform` inline and keep the class for colour, tape and shadow. Use `shadow-lifted` while the note is dragged. The text is always `fir` on `postit`, in both themes.
+## Cosa fornisci
+`.ss-postit` con il testo, alternando `tilt-left` (default) e `ss-postit--right`. Nella moodboard la rotazione arriva dalla `rotazione` salvata: mettila inline nel `transform` e tieni la classe per colore, nastro e ombra. Durante il trascinamento usa `shadow-lifted`. Testo sempre `fir` su `postit`, in ogni tema.

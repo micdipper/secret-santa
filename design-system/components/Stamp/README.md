@@ -1,11 +1,10 @@
 # Stamp
 
-A postage stamp (francobollo) with perforated edges, used for one short fact.
+Francobollo con bordo dentellato, per un solo dato breve.
 
-## Use it
-- The budget and exchange date on the group page.
-- The theme of the group.
-- One or two per screen, slightly tilted.
+## Quando usarlo
+- Budget e data dello scambio nella pagina del gruppo, il tema del gruppo.
+- Uno o due per schermata, leggermente storti.
 
-## The consumer provides
-`.ss-stamp > .ss-stamp__inner` with `.ss-stamp__value` (display face, at most about 5 characters) and `.ss-stamp__label` (one uppercase word). The default is a cherry field with `on-accent` text, which passes as large text only. `ss-stamp--fir` gives a fir field with paper text. The perforation is a CSS mask, so the stamp needs the page ground behind it.
+## Cosa fornisci
+`.ss-stamp > .ss-stamp__inner` con `.ss-stamp__value` (display, massimo ~5 caratteri) e `.ss-stamp__label` (una parola in maiuscolo). Di base: fondo ciliegia con testo `on-accent` (solo testo grande). `ss-stamp--fir`: fondo abete con testo carta. La dentellatura è una maschera CSS, quindi dietro serve il fondo della pagina.

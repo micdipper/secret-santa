@@ -1,16 +1,15 @@
 # KnitBand
 
-The knit band is a full-width strip of Nordic knit stitches: cream snowflakes and a dotted edge on cherry, taken from the project's mood test.
+Banda a maglia nordica: fiocchi crema e bordo a puntini su ciliegia, presa dalla prova di stile (ref. 13).
 
-## Use it
-- At the top of the landing page and the group page, bleeding edge to edge (no side gutter).
-- As a divider between the group header and the content, at most twice per screen.
-- `ss-knit--small` (26px) for sheets, dialogs and the footer.
+## Quando usarla
+- In cima alla landing e alla pagina del gruppo, da bordo a bordo (senza margine laterale).
+- Come divisore tra intestazione e contenuto, al massimo due volte per schermata.
+- `ss-knit--small` (26px) per fogli, dialoghi e piè di pagina.
 
-## The consumer provides
-An empty `<div class="ss-knit">`, decorative only, so add `aria-hidden="true"`. Stitch colour is `on-accent` and the field is `accent`. Both are tokens, so the band follows the theme.
+## Cosa fornisci
+Un `<div class="ss-knit" aria-hidden="true">` vuoto. Il colore dei punti è `on-accent`, il fondo `accent`: segue il tema.
 
-## Don't
-- Don't put text on it.
-- Don't animate it.
-- Don't use it vertically.
+## No
+- Niente testo sopra.
+- Non animarla, non metterla in verticale.

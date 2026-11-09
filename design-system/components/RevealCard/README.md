@@ -1,14 +1,14 @@
 # RevealCard
 
-The ticket (il biglietto) that slides out of the envelope at the draw reveal, with the recipient's name.
+Il biglietto che esce dalla busta alla rivelazione, con il nome della persona pescata.
 
-## Use it
-- The reveal screen: the 2D fallback when 3D or motion is unavailable, and the face texture of the three.js ticket.
-- The "your match" card on the group page afterwards.
+## Quando usarlo
+- Nella rivelazione: come fallback 2D quando il 3D o il movimento non sono disponibili, e come texture del biglietto three.js.
+- Come card "il tuo abbinamento" nella pagina del gruppo, dopo l'estrazione.
 
-## The consumer provides
-`.ss-reveal` with `.ss-reveal__eyebrow` (one sentence), `.ss-reveal__name` (the name exactly as the organiser wrote it), `.ss-reveal__stars` (three `ss-star`, decorative) and `.ss-reveal__meta`. Always place it on a `fir` ground (the envelope), in both themes. It uses `shadow-lifted` and `tilt-slight`.
+## Cosa fornisci
+`.ss-reveal` con `.ss-reveal__eyebrow` (una frase), `.ss-reveal__name` (il nome esattamente come l'ha scritto l'organizzatore), `.ss-reveal__stars` (tre `ss-star`, decorative) e `.ss-reveal__meta`. Sempre su fondo scuro (`fir` o `notte`), come se fosse appena uscito dalla busta.
 
-## Don't
-- Never show anyone else's match in this card.
-- The holographic tilt belongs to the 3D layer, not to this CSS. Respect `prefers-reduced-motion`.
+## No
+- Mai mostrare l'abbinamento di qualcun altro.
+- L'effetto olografico sta nel livello 3D, non qui. Rispetta `prefers-reduced-motion`.

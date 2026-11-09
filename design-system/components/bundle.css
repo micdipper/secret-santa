@@ -1,4 +1,4 @@
-/* Secret Santa — component styles. Every colour, length and radius is a token from tokens.json. */
+/* Secret Santa — stili dei componenti. Ogni colore, misura e raggio è un token di tokens.json. */
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap");
 
 .ss, .ss * { box-sizing: border-box; }
@@ -90,6 +90,102 @@
 .ss-member--taken .ss-member__note { color: var(--accent-text); }
 .ss-member--me { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .ss-member--me .ss-member__avatar { background: var(--paper); }
+
+/* ════════ Dalle reference 03–09 ════════ */
+
+/* ── Scribble: scarabocchi a mano (ref. 08, 07) ──────────── */
+.ss-scribble { position: relative; display: inline-block; z-index: 0; }
+.ss-scribble::after { content: ""; position: absolute; z-index: -1; pointer-events: none; background: var(--accent-text); }
+.ss-scribble--cerchio::after { inset: -7px -7px -5px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M14 30C6 16 40 4 72 5c30 1 46 10 42 22-4 13-38 18-64 17C24 43 6 36 10 24 14 13 44 6 66 7%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M14 30C6 16 40 4 72 5c30 1 46 10 42 22-4 13-38 18-64 17C24 43 6 36 10 24 14 13 44 6 66 7%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.ss-scribble--sottolineato::after { left: -4px; right: -4px; bottom: -10px; height: 12px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M3 10c20-6 38 4 58-1s36-5 56 0%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M30 14c18-3 40 0 64-2%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M3 10c20-6 38 4 58-1s36-5 56 0%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M30 14c18-3 40 0 64-2%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.ss-scribble--evidenziato { padding: 0 4px; color: var(--fir); }
+.ss-scribble--evidenziato::after { inset: 6% -2px 2% -2px; background: var(--highlight); transform: rotate(-1deg); }
+.ss-mark { display: inline-block; width: 1.1em; height: 1.1em; background: var(--accent-text); vertical-align: -0.15em; }
+.ss-mark--spunta { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-mark--asterisco { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-mark--freccia { width: 2.4em; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* ── Starburst: stella a raggiera (ref. 09) ──────────────── */
+.ss-burst { position: relative; display: inline-grid; place-items: center; width: 168px; aspect-ratio: 1; transform: rotate(var(--tilt-strong)); }
+.ss-burst::before, .ss-burst::after { content: ""; position: absolute; inset: 0; clip-path: polygon(100.0% 50.0%, 87.7% 55.0%, 98.3% 62.9%, 85.1% 64.5%, 93.3% 75.0%, 80.1% 73.1%, 85.4% 85.4%, 73.1% 80.1%, 75.0% 93.3%, 64.5% 85.1%, 62.9% 98.3%, 55.0% 87.7%, 50.0% 100.0%, 45.0% 87.7%, 37.1% 98.3%, 35.5% 85.1%, 25.0% 93.3%, 26.9% 80.1%, 14.6% 85.4%, 19.9% 73.1%, 6.7% 75.0%, 14.9% 64.5%, 1.7% 62.9%, 12.3% 55.0%, 0.0% 50.0%, 12.3% 45.0%, 1.7% 37.1%, 14.9% 35.5%, 6.7% 25.0%, 19.9% 26.9%, 14.6% 14.6%, 26.9% 19.9%, 25.0% 6.7%, 35.5% 14.9%, 37.1% 1.7%, 45.0% 12.3%, 50.0% 0.0%, 55.0% 12.3%, 62.9% 1.7%, 64.5% 14.9%, 75.0% 6.7%, 73.1% 19.9%, 85.4% 14.6%, 80.1% 26.9%, 93.3% 25.0%, 85.1% 35.5%, 98.3% 37.1%, 87.7% 45.0%); }
+.ss-burst::before { background: var(--rosa); transform: translate(6px, 6px) rotate(8deg); }
+.ss-burst::after { background: var(--highlight); }
+.ss-burst > * { position: relative; z-index: 1; }
+.ss-burst__value { font: 700 60px/56px var(--font-display); color: var(--notte); text-align: center; }
+.ss-burst__label { display: block; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--notte); text-align: center; }
+.ss-burst--ghiaccio::after { background: var(--ghiaccio); }
+.ss-burst--ghiaccio .ss-burst__value, .ss-burst--ghiaccio .ss-burst__label { color: var(--fir); }
+.ss-burst--small { width: 96px; }
+.ss-burst--small .ss-burst__value { font-size: 32px; line-height: 32px; }
+
+/* ── SheetStack: fogli sovrapposti (ref. 07) ─────────────── */
+.ss-sheets { display: grid; padding: 88px var(--space-7) var(--space-6) var(--space-5); }
+.ss-sheet { grid-area: 1 / 1; min-height: 168px; padding: var(--space-4) var(--space-5) var(--space-5); background: var(--rosa); color: var(--fir); box-shadow: var(--shadow-paper); }
+.ss-sheet:nth-last-child(1) { transform: translate(0, 16px) rotate(var(--tilt-slight)); box-shadow: var(--shadow-lifted); }
+.ss-sheet:nth-last-child(2) { transform: translate(var(--space-6), -24px) rotate(var(--tilt-right)); }
+.ss-sheet:nth-last-child(3) { transform: translate(-12px, -52px) rotate(var(--tilt-left)); }
+.ss-sheet:nth-last-child(4) { transform: translate(40px, -80px) rotate(3deg); }
+.ss-sheet__eyebrow { display: block; margin-bottom: var(--space-3); font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.ss-sheet__body { font: 400 20px/28px var(--font-sans); }
+.ss-sheet--senape { background: var(--senape); color: var(--fir); }
+.ss-sheet--clementina { background: var(--clementina); color: var(--notte); }
+.ss-sheet--burro { background: var(--butter); color: var(--fir); }
+.ss-sheet--ghiaccio { background: var(--ghiaccio); color: var(--fir); }
+.ss-sheet--abete { background: var(--fir-deep); color: var(--paper); }
+.ss-sheet--prugna { background: var(--prugna); color: var(--paper); }
+
+/* ── RubberStamp: timbro tondo (ref. 07, 06) ─────────────── */
+.ss-rubber { display: inline-block; width: 112px; height: 112px; color: var(--accent-text); transform: rotate(var(--tilt-strong)); opacity: 0.9; }
+.ss-rubber text { font: 700 10.5px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase; fill: currentColor; }
+.ss-rubber .ss-rubber__ring { fill: none; stroke: currentColor; stroke-width: 2; }
+.ss-rubber .ss-rubber__ring--thin { stroke-width: 1; }
+.ss-rubber .ss-rubber__word { font: 700 17px var(--font-display); letter-spacing: 0; text-transform: none; }
+.ss-rubber--ink { color: var(--ink); }
+
+/* ── Ticket: biglietto con matrice (ref. 04, 05) ─────────── */
+.ss-ticket { position: relative; display: inline-grid; grid-template-columns: 1fr auto; width: 320px; max-width: 100%; background: var(--clementina); color: var(--notte); box-shadow: var(--shadow-paper); transform: rotate(var(--tilt-right)); }
+.ss-ticket__main { padding: var(--space-4) var(--space-5); }
+.ss-ticket__eyebrow { display: block; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.ss-ticket__title { display: block; margin: 2px 0 var(--space-2); font: 700 26px/32px var(--font-display); }
+.ss-ticket__meta { font: 500 15px/20px var(--font-sans); }
+.ss-ticket__stub { position: relative; display: grid; place-items: center; width: 72px; border-left: 2px dashed currentColor; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; writing-mode: vertical-rl; }
+.ss-ticket__stub::before, .ss-ticket__stub::after { content: ""; position: absolute; left: -10px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); }
+.ss-ticket__stub::before { top: -9px; }
+.ss-ticket__stub::after { bottom: -9px; }
+.ss-ticket--rosa { background: var(--rosa); color: var(--fir); }
+.ss-ticket--senape { background: var(--senape); color: var(--fir); }
+
+/* ── Envelope: la busta (ref. 04) ────────────────────────── */
+.ss-envelope { position: relative; display: block; width: 260px; aspect-ratio: 26 / 17; background: var(--kraft); box-shadow: var(--shadow-paper); color: var(--fir); }
+.ss-envelope::before { content: ""; position: absolute; inset: 0 0 38% 0; background: var(--kraft-deep); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.ss-envelope__seal { position: absolute; left: 50%; top: 62%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--accent); box-shadow: 0 2px 0 var(--fir-deep); }
+.ss-envelope__seal::after { content: ""; position: absolute; inset: 8px; background: var(--gold); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath d=%22M24.0 10.0 L21.3 17.5 L14.1 14.1 L17.5 21.3 L10.0 24.0 L17.5 26.7 L14.1 33.9 L21.3 30.5 L24.0 38.0 L26.7 30.5 L33.9 33.9 L30.5 26.7 L38.0 24.0 L30.5 21.3 L33.9 14.1 L26.7 17.5Z%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath d=%22M24.0 10.0 L21.3 17.5 L14.1 14.1 L17.5 21.3 L10.0 24.0 L17.5 26.7 L14.1 33.9 L21.3 30.5 L24.0 38.0 L26.7 30.5 L33.9 33.9 L30.5 26.7 L38.0 24.0 L30.5 21.3 L33.9 14.1 L26.7 17.5Z%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-envelope__to { position: absolute; left: var(--space-4); bottom: var(--space-3); font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.ss-envelope--rosa { background: var(--rosa); }
+.ss-envelope--rosa::before { background: var(--rosa-deep); }
+
+/* ── PillNav: navigazione con l'ovale (ref. 06, 03) ──────── */
+.ss-nav { display: flex; gap: var(--space-1); overflow-x: auto; padding: var(--space-2) var(--space-4); border-block: 1.5px solid var(--accent-text); scrollbar-width: none; }
+.ss-nav__item { flex: none; display: inline-flex; align-items: center; min-height: var(--tap-min); padding: 0 var(--space-4); border: 1.5px solid transparent; border-radius: var(--radius-pill); color: var(--accent-text); font: 600 15px/20px var(--font-sans); text-decoration: none; }
+.ss-nav__item[aria-current="page"] { border-color: currentColor; transform: rotate(-2deg); }
+.ss-nav__item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ── LineField: campo a riga (ref. 05) ───────────────────── */
+.ss-line { display: flex; align-items: baseline; gap: var(--space-2); min-height: var(--tap-min); }
+.ss-line__label { flex: none; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+.ss-line__input { flex: 1; min-width: 0; padding: 6px 2px; border: 0; border-bottom: 2px dotted var(--ink); border-radius: 0; background: transparent; color: var(--ink); font: 400 17px/24px var(--font-sans); }
+.ss-line__input::placeholder { color: var(--ink-muted); }
+.ss-line__input:focus { outline: none; border-bottom-style: solid; border-bottom-color: var(--focus); box-shadow: 0 2px 0 var(--focus); }
+
+/* ── GiftWrap: carta da regalo (ref. 03) ─────────────────── */
+.ss-wrap { position: relative; background: var(--surface); isolation: isolate; }
+.ss-wrap::before, .ss-wrap::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.ss-wrap::before { background: var(--clementina); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Ccircle cx=%2234%22 cy=%2238%22 r=%2217%22/%3E%3Ccircle cx=%2292%22 cy=%2294%22 r=%2217%22/%3E%3Ccircle cx=%2296%22 cy=%2222%22 r=%222.5%22/%3E%3Ccircle cx=%2222%22 cy=%2296%22 r=%222.5%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Ccircle cx=%2234%22 cy=%2238%22 r=%2217%22/%3E%3Ccircle cx=%2292%22 cy=%2294%22 r=%2217%22/%3E%3Ccircle cx=%2296%22 cy=%2222%22 r=%222.5%22/%3E%3Ccircle cx=%2222%22 cy=%2296%22 r=%222.5%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; }
+.ss-wrap::after { background: var(--fir); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Cpath d=%22M34 21c6-10 18-12 24-8-6 9-16 12-24 8z%22/%3E%3Cpath d=%22M34 21c-4-8-12-10-18-7 4 7 12 10 18 7z%22/%3E%3Cpath d=%22M92 77c6-10 18-12 24-8-6 9-16 12-24 8z%22/%3E%3Cpath d=%22M92 77c-4-8-12-10-18-7 4 7 12 10 18 7z%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Cpath d=%22M34 21c6-10 18-12 24-8-6 9-16 12-24 8z%22/%3E%3Cpath d=%22M34 21c-4-8-12-10-18-7 4 7 12 10 18 7z%22/%3E%3Cpath d=%22M92 77c6-10 18-12 24-8-6 9-16 12-24 8z%22/%3E%3Cpath d=%22M92 77c-4-8-12-10-18-7 4 7 12 10 18 7z%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; }
+[data-theme="dark"] .ss-wrap::after, [data-theme="notte"] .ss-wrap::after, .ss-wrap--stelline::after { background: var(--paper); }
+.ss-wrap--stelline { background: var(--fir); }
+.ss-wrap--stelline::before { background: var(--gold); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Cpath d=%22M96 12C97.2 20.8 97.2 20.8 106 22C97.2 23.2 97.2 23.2 96 32C94.8 23.2 94.8 23.2 86 22C94.8 20.8 94.8 20.8 96 12Z%22/%3E%3Cpath d=%22M22 88C22.96 95.04 22.96 95.04 30 96C22.96 96.96 22.96 96.96 22 104C21.04 96.96 21.04 96.96 14 96C21.04 95.04 21.04 95.04 22 88Z%22/%3E%3Cpath d=%22M64 59C64.6 63.4 64.6 63.4 69 64C64.6 64.6 64.6 64.6 64 69C63.4 64.6 63.4 64.6 59 64C63.4 63.4 63.4 63.4 64 59Z%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22%3E%3Cpath d=%22M96 12C97.2 20.8 97.2 20.8 106 22C97.2 23.2 97.2 23.2 96 32C94.8 23.2 94.8 23.2 86 22C94.8 20.8 94.8 20.8 96 12Z%22/%3E%3Cpath d=%22M22 88C22.96 95.04 22.96 95.04 30 96C22.96 96.96 22.96 96.96 22 104C21.04 96.96 21.04 96.96 14 96C21.04 95.04 21.04 95.04 22 88Z%22/%3E%3Cpath d=%22M64 59C64.6 63.4 64.6 63.4 69 64C64.6 64.6 64.6 64.6 64 69C63.4 64.6 63.4 64.6 59 64C63.4 63.4 63.4 63.4 64 59Z%22/%3E%3C/svg%3E") 0 0 / 120px 120px repeat; }
+.ss-wrap--stelline::after { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .ss-btn { transition: none; }

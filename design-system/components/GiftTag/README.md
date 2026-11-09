@@ -1,14 +1,14 @@
 # GiftTag
 
-A kraft gift tag (etichetta per pacchi) with a punched hole: it labels a person or a gift.
+Etichetta per pacchi in carta con il buco per lo spago: dà un nome a una persona o a un regalo.
 
-## Use it
-- The recipient's name on the group page ("Per Giulia") and on wishlist items.
-- Group facts on the group header: budget, exchange date.
+## Quando usarla
+- Il nome del destinatario nella pagina del gruppo ("Per Giulia") e sulle voci della wishlist.
+- I dati del gruppo nell'intestazione: budget, data dello scambio.
 
-## The consumer provides
-`.ss-tag` holding `.ss-tag__for` (one short word: "Per", "Budget", "Scambio") and `.ss-tag__name` (the value, in the display face). It is always `paper-deep` with `fir` text in both themes. Tilt it with `tilt-right` or `tilt-left`, alternating when several sit together.
+## Cosa fornisci
+`.ss-tag` con `.ss-tag__for` (una parola: "Per", "Budget", "Scambio") e `.ss-tag__name` (il valore, nel carattere display). È sempre `paper-deep` con testo `fir`, in ogni tema. Inclinala con `tilt-right` o `tilt-left`, alternando se sono vicine.
 
-## Don't
-- Don't make it a button. If it must be tappable, wrap it in a link at least `tap-min` tall.
-- Keep the value under about 14 characters.
+## No
+- Non è un bottone. Se deve essere toccabile, mettila in un link alto almeno `tap-min`.
+- Valore entro circa 14 caratteri.

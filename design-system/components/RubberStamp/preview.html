@@ -1,0 +1,23 @@
+<!-- @dsCard group="Carta" height=160 -->
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><title>RubberStamp</title>
+<style>html,body{margin:0} body{background:var(--surface);} .stage{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-5);padding:var(--space-5);}</style>
+</head>
+<body class="ss">
+<div class="stage" style="gap:var(--space-6)">
+  <svg class="ss-rubber" viewBox="0 0 120 120" role="img" aria-label="Estrazione fatta">
+    <defs><path id="r1" d="M60 60m-43 0a43 43 0 1 1 86 0a43 43 0 1 1-86 0"/></defs>
+    <circle class="ss-rubber__ring" cx="60" cy="60" r="56"/><circle class="ss-rubber__ring ss-rubber__ring--thin" cx="60" cy="60" r="31"/>
+    <text><textPath href="#r1">Estrazione fatta ✦ top secret ✦</textPath></text>
+    <text class="ss-rubber__word" x="60" y="66" text-anchor="middle">Fatto</text>
+  </svg>
+  <svg class="ss-rubber ss-rubber--ink" viewBox="0 0 120 120" role="img" aria-label="Già preso" style="transform:rotate(6deg)">
+    <defs><path id="r2" d="M60 60m-43 0a43 43 0 1 1 86 0a43 43 0 1 1-86 0"/></defs>
+    <circle class="ss-rubber__ring" cx="60" cy="60" r="56"/><circle class="ss-rubber__ring ss-rubber__ring--thin" cx="60" cy="60" r="31"/>
+    <text><textPath href="#r2">Già preso ✦ non dirlo ✦ già preso ✦</textPath></text>
+    <text class="ss-rubber__word" x="60" y="66" text-anchor="middle">Preso</text>
+  </svg>
+</div>
+</body>
+</html>
