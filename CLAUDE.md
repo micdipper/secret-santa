@@ -28,7 +28,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - Il PIN viene richiesto di nuovo solo su un nuovo dispositivo/browser (o dall'app aggiunta alla Home su iPhone, che ha memoria separata da Safari).
 - Implementazione: Supabase Auth email+password con email sintetica generata dal sistema (es. `<id>@users.secretsanta.local`); la password è il PIN combinato lato codice con un suffisso fisso per rispettare la lunghezza minima di Supabase. **Conferma email disattivata**. Nessuna email viene mai inviata.
 - Per rientrare: scegliere il proprio nome dalla lista del gruppo + PIN.
-- PIN dimenticato: l'organizzatore può **reimpostare il PIN** di un membro (operazione lato server). Non gli dà accesso all'abbinamento di quella persona.
+- PIN dimenticato: l'organizzatore preme "Reimposta PIN" → il sito crea un **link usa-e-getta valido 24 ore** che l'organizzatore manda in privato all'amico; l'amico lo apre e sceglie lui il nuovo PIN (operazione lato server). L'organizzatore non sceglie né conosce il PIN, quindi non accede all'abbinamento di quella persona.
 - Motivo: senza PIN chiunque con il link potrebbe spacciarsi per un altro e vedere il suo abbinamento; inoltre gli amici perderebbero l'accesso cambiando dispositivo.
 
 ## Funzionalità — ordine di priorità
