@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CampoPin, ScegliEmoji } from "@/components/scelte";
 import { Errore, Feltro, Tasto, TitoloRiquadro, Toppa } from "@/components/ui";
 import { nuovaEmailFinta, passwordDaPin, pinValido } from "@/lib/accesso";
-import { creaClientBrowser } from "@/lib/supabase/client";
+import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Posto = {
   group_id: string;
@@ -21,7 +21,7 @@ type Posto = {
 export default function Invito() {
   const { codice } = useParams<{ codice: string }>();
   const router = useRouter();
-  const supabase = creaClientBrowser();
+  const supabase = clientSoloBrowser();
 
   const [posti, setPosti] = useState<Posto[] | null>(null);
   const [mioId, setMioId] = useState<string | null>(null);

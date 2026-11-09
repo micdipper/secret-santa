@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro, Toppa } from "@/components/ui";
-import { creaClientBrowser } from "@/lib/supabase/client";
+import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Gruppo = { id: string; name: string; budget_eur: number | null; exchange_date: string | null; theme: string | null; status: string; invite_code: string; organizer_id: string };
 type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null };
@@ -21,7 +21,7 @@ function Organizza() {
   const { id } = useParams<{ id: string }>();
   const appenaCreato = useSearchParams().get("nuovo") === "1";
   const router = useRouter();
-  const supabase = creaClientBrowser();
+  const supabase = clientSoloBrowser();
 
   const [mioId, setMioId] = useState<string | null>(null);
   const [gruppo, setGruppo] = useState<Gruppo | null>(null);

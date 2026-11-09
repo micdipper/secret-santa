@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { CampoPin, ScegliEmoji } from "@/components/scelte";
 import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordDaPin, pinValido } from "@/lib/accesso";
-import { creaClientBrowser } from "@/lib/supabase/client";
+import { clientSoloBrowser } from "@/lib/supabase/client";
 
 export default function NuovoGruppo() {
   const router = useRouter();
-  const supabase = creaClientBrowser();
+  const supabase = clientSoloBrowser();
 
   const [collegato, setCollegato] = useState(false);
   const [nome, setNome] = useState("");
