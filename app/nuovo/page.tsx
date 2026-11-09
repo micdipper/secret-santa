@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CampoPin, ScegliEmoji } from "@/components/scelte";
+import { CampoPassword, ScegliEmoji } from "@/components/scelte";
 import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { nuovaEmailFinta, passwordDaPin, pinValido } from "@/lib/accesso";
+import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 export default function NuovoGruppo() {
@@ -20,7 +20,7 @@ export default function NuovoGruppo() {
   const [emoji, setEmoji] = useState("🦊");
   const [altri, setAltri] = useState<string[]>([]);
   const [nuovoNome, setNuovoNome] = useState("");
-  const [pin, setPin] = useState("");
+  const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [invio, setInvio] = useState(false);
 
@@ -47,11 +47,11 @@ export default function NuovoGruppo() {
     if (!nome.trim()) return setErrore("Dai un nome al gruppo.");
     if (!mioNome.trim()) return setErrore("Scrivi il tuo nome.");
     if (altri.length < 2) return setErrore("Servono almeno altre 2 persone oltre a te.");
-    if (!collegato && !pinValido(pin)) return setErrore("Il PIN deve avere 4 cifre.");
+    if (!collegato && !passwordValida(password)) return setErrore("La password deve avere almeno 8 caratteri.");
 
     setInvio(true);
     if (!collegato) {
-      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password: passwordDaPin(pin) });
+      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
       if (error) {
         setInvio(false);
         return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
@@ -106,7 +106,7 @@ export default function NuovoGruppo() {
             <Campo id="mio-nome" etichetta="Il tuo nome" placeholder="Nome e cognome" value={mioNome} onChange={(e) => setMioNome(e.target.value)} maxLength={60} />
             <ScegliEmoji valore={emoji} onCambia={setEmoji} />
             {!collegato && (
-              <CampoPin id="pin" etichetta="Scegli un PIN di 4 cifre" valore={pin} onCambia={setPin} aiuto="Ti servirà per rientrare da un altro telefono. Non dirlo a nessuno." />
+              <CampoPassword id="password" nuova etichetta="Scegli una password" valore={password} onCambia={setPassword} aiuto="Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno." />
             )}
           </div>
         </Feltro>

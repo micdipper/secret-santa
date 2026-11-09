@@ -101,9 +101,10 @@ function Organizza() {
 
   async function salvaCoppia() {
     if (!coppiaA || !coppiaB || coppiaA === coppiaB) return setErrore("Scegli due persone diverse.");
-    const [a, b] = [coppiaA, coppiaB].sort();
+    // Coppia: vale nei due versi, la salvo in ordine. Anno scorso: A ha regalato a B, conta solo quel verso.
+    const [a, b] = motivo === "coppia" ? [coppiaA, coppiaB].sort() : [coppiaA, coppiaB];
     const { error } = await supabase.from("exclusions").insert({ group_id: id, member_a: a, member_b: b, reason: motivo });
-    if (error) return setErrore(error.code === "23505" ? "Questa coppia c'è già." : "Non sono riuscito a salvare la coppia.");
+    if (error) return setErrore(error.code === "23505" ? "C'è già." : "Non sono riuscito a salvarla.");
     setNuovaCoppia(false);
     setCoppiaA("");
     setCoppiaB("");
@@ -112,14 +113,14 @@ function Organizza() {
   }
 
   async function togliCoppia(c: Coppia) {
-    await supabase.from("exclusions").delete().eq("group_id", id).eq("member_a", c.member_a).eq("member_b", c.member_b);
+    await supabase.from("exclusions").delete().eq("group_id", id).eq("member_a", c.member_a).eq("member_b", c.member_b).eq("reason", c.reason);
     if (coppie.length <= 1) setTogliCoppie(false);
     carica();
   }
 
   async function condividi() {
     const link = `${window.location.origin}/invito/${gruppo!.invite_code}`;
-    const testo = `Entra nel Secret Santa "${gruppo!.name}": tocca il tuo nome e scegli il PIN.`;
+    const testo = `Entra nel Secret Santa "${gruppo!.name}": tocca il tuo nome e scegli una password.`;
     try {
       if (navigator.share) {
         await navigator.share({ title: gruppo!.name, text: testo, url: link });
@@ -275,9 +276,11 @@ function Organizza() {
         {coppie.length > 0 && (
           <ul className="mt-4 flex flex-wrap gap-2">
             {coppie.map((c) => {
-              const testo = `${nome(c.member_a).split(" ")[0]} e ${nome(c.member_b).split(" ")[0]} · ${c.reason === "coppia" ? "coppia" : "anno scorso"}`;
+              const a = nome(c.member_a).split(" ")[0];
+              const b = nome(c.member_b).split(" ")[0];
+              const testo = c.reason === "coppia" ? `💞 ${a} e ${b}` : `🎁 ${a} → ${b}, anno scorso`;
               return (
-                <li key={c.member_a + c.member_b}>
+                <li key={c.member_a + c.member_b + c.reason}>
                   {togliCoppie ? (
                     <button type="button" onClick={() => togliCoppia(c)} className="cucitura cliccabile stoffa-chiara relative rounded-full px-4 py-2 text-sm">
                       Togli {testo}
@@ -292,31 +295,50 @@ function Organizza() {
         )}
         {nuovaCoppia && (
           <div className="mt-5 flex flex-col gap-4">
-            <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 font-medium">Perché?</legend>
+            <div role="radiogroup" aria-label="Perché non devono pescarsi?" className="grid grid-cols-2 gap-3">
               {(
                 [
-                  ["coppia", "Sono una coppia"],
-                  ["anno_scorso", "Si sono fatti il regalo l'anno scorso"],
+                  ["coppia", "💞", "Sono una coppia", "Non si pescano a vicenda"],
+                  ["anno_scorso", "🎁", "Già fatto l'anno scorso", "Chi ha regalato non ripesca la stessa persona"],
                 ] as const
-              ).map(([v, t]) => (
-                <label key={v} className="flex min-h-11 items-center gap-3">
-                  <input type="radio" name="motivo" value={v} checked={motivo === v} onChange={() => setMotivo(v)} className="size-5 accent-vermiglio" />
-                  {t}
-                </label>
+              ).map(([v, emoji, titolo, spiegazione]) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="radio"
+                  aria-checked={motivo === v}
+                  onClick={() => {
+                    setMotivo(v);
+                    setCoppiaB("");
+                  }}
+                  className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 rounded-[20px] px-3 pt-4 pb-3 text-center ${
+                    motivo === v ? "outline-3 outline-offset-2 outline-vermiglio" : ""
+                  }`}
+                >
+                  <span className="text-3xl" aria-hidden>
+                    {emoji}
+                  </span>
+                  <span className="font-titolo text-[17px] leading-tight text-abete">{titolo}</span>
+                  <span className="text-[13px] leading-snug text-inchiostro/70">{spiegazione}</span>
+                </button>
               ))}
-            </fieldset>
+            </div>
             {[
-              { v: coppiaA, set: setCoppiaA, et: "Prima persona", opzioni: membri },
+              { v: coppiaA, set: setCoppiaA, seconda: false, et: motivo === "coppia" ? "Prima persona" : "Chi ha fatto il regalo", opzioni: membri },
               {
                 v: coppiaB,
                 set: setCoppiaB,
-                et: "Seconda persona",
-                // senza la prima persona e senza chi è già escluso con lei
+                seconda: true,
+                et: motivo === "coppia" ? "Seconda persona" : "A chi l'ha fatto",
+                // senza la prima persona e senza chi è già escluso con lei per lo stesso motivo (e verso)
                 opzioni: membri.filter(
                   (m) =>
                     m.id !== coppiaA &&
-                    !coppie.some((c) => (c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id)),
+                    !coppie.some((c) =>
+                      motivo === "coppia"
+                        ? c.reason === "coppia" && ((c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id))
+                        : c.reason === "anno_scorso" && c.member_a === coppiaA && c.member_b === m.id,
+                    ),
                 ),
               },
             ].map((s) => (
@@ -325,14 +347,14 @@ function Organizza() {
                 <span className="campo-cucito block">
                   <select
                     value={s.v}
-                    disabled={s.et === "Seconda persona" && !coppiaA}
+                    disabled={s.seconda && !coppiaA}
                     onChange={(e) => {
                       s.set(e.target.value);
-                      if (s.et === "Prima persona") setCoppiaB("");
+                      if (!s.seconda) setCoppiaB("");
                     }}
                     className="h-14 w-full appearance-none bg-transparent px-5 text-inchiostro outline-none"
                   >
-                    <option value="">{s.et === "Seconda persona" && !coppiaA ? "Prima scegli la prima persona" : "Scegli…"}</option>
+                    <option value="">{s.seconda && !coppiaA ? "Prima scegli la persona sopra" : "Scegli…"}</option>
                     {s.opzioni.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.display_name}

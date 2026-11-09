@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { CampoPin, ScegliEmoji } from "@/components/scelte";
+import { CampoPassword, ScegliEmoji } from "@/components/scelte";
 import { Errore, Feltro, Tasto, TitoloRiquadro, Toppa } from "@/components/ui";
-import { nuovaEmailFinta, passwordDaPin, pinValido } from "@/lib/accesso";
+import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Posto = {
@@ -27,7 +27,7 @@ export default function Invito() {
   const [mioId, setMioId] = useState<string | null>(null);
   const [scelto, setScelto] = useState<Posto | null>(null);
   const [emoji, setEmoji] = useState("🦊");
-  const [pin, setPin] = useState("");
+  const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [invio, setInvio] = useState(false);
 
@@ -81,26 +81,26 @@ export default function Invito() {
     setInvio(true);
 
     if (scelto.claimed) {
-      // Rientro: nome già preso da me in passato → PIN
-      if (!pinValido(pin) || !scelto.login_email) {
+      // Rientro: nome già preso da me in passato → password
+      if (!password || !scelto.login_email) {
         setInvio(false);
-        return setErrore("Scrivi il tuo PIN di 4 cifre.");
+        return setErrore("Scrivi la tua password.");
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: scelto.login_email, password: passwordDaPin(pin) });
+      const { error } = await supabase.auth.signInWithPassword({ email: scelto.login_email, password });
       if (error) {
         setInvio(false);
-        return setErrore("PIN sbagliato. Se l'hai dimenticato, chiedi all'organizzatore di reimpostarlo.");
+        return setErrore("Password sbagliata. Se l'hai dimenticata, chiedi all'organizzatore di reimpostarla.");
       }
       return router.replace(`/gruppo/${gruppo.group_id}`);
     }
 
-    // Primo ingresso: se non ho ancora un accesso, lo creo con il PIN
+    // Primo ingresso: se non ho ancora un accesso, lo creo con la password
     if (!mioId) {
-      if (!pinValido(pin)) {
+      if (!passwordValida(password)) {
         setInvio(false);
-        return setErrore("Il PIN deve avere 4 cifre.");
+        return setErrore("La password deve avere almeno 8 caratteri.");
       }
-      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password: passwordDaPin(pin) });
+      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
       if (error) {
         setInvio(false);
         return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
@@ -124,7 +124,7 @@ export default function Invito() {
         <Feltro className="mt-6">
           <TitoloRiquadro>Chi sei?</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">
-            {aperto ? "Tocca il tuo nome. Chi ha già l'emoji è entrato: se sei tu, ti chiederò il PIN." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
+            {aperto ? "Tocca il tuo nome. Chi ha già l'emoji è entrato: se sei tu, ti chiederò la password." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
           </p>
           <ul className="mt-4 flex flex-col gap-3">
             {posti.map((p) => {
@@ -136,7 +136,7 @@ export default function Invito() {
                     disabled={!disponibile}
                     onClick={() => {
                       setScelto(p);
-                      setPin("");
+                      setPassword("");
                       setErrore("");
                     }}
                     className="cucitura cliccabile stoffa-chiara relative flex h-14 w-full items-center gap-3 rounded-full pr-6 pl-2 text-left"
@@ -155,12 +155,13 @@ export default function Invito() {
           <div className="mt-5 flex flex-col gap-5">
             {!scelto.claimed && <ScegliEmoji valore={emoji} onCambia={setEmoji} />}
             {(scelto.claimed || !mioId) && (
-              <CampoPin
-                id="pin"
-                etichetta={scelto.claimed ? "Il tuo PIN" : "Scegli un PIN di 4 cifre"}
-                valore={pin}
-                onCambia={setPin}
-                aiuto={scelto.claimed ? undefined : "Ti servirà per rientrare da un altro telefono. Non dirlo a nessuno."}
+              <CampoPassword
+                id="password"
+                nuova={!scelto.claimed}
+                etichetta={scelto.claimed ? "La tua password" : "Scegli una password"}
+                valore={password}
+                onCambia={setPassword}
+                aiuto={scelto.claimed ? undefined : "Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno."}
               />
             )}
             <Errore>{errore}</Errore>

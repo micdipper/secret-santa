@@ -207,6 +207,18 @@ export const Icone = {
       <circle cx="18" cy="12" r="1.2" />
     </svg>
   ),
+  occhio: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  occhioChiuso: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
+      <path d="M4 20L20 4" />
+    </svg>
+  ),
   ago: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 19L18 6" />

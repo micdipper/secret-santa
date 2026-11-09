@@ -1,19 +1,15 @@
 // Accesso senza email: ogni persona ha un'email finta generata dal sito
-// e il PIN a 4 cifre come password (con un suffisso fisso per la lunghezza minima).
+// e una password scelta da lei (almeno 8 caratteri, nessun altro vincolo).
 // Nessuna email viene mai inviata.
 
-const SUFFISSO = "-babbo-natale-segreto";
+export const LUNGHEZZA_MINIMA_PASSWORD = 8;
 
 export function nuovaEmailFinta() {
   return `${crypto.randomUUID()}@users.secretsanta.local`;
 }
 
-export function passwordDaPin(pin: string) {
-  return `${pin}${SUFFISSO}`;
-}
-
-export function pinValido(pin: string) {
-  return /^\d{4}$/.test(pin);
+export function passwordValida(password: string) {
+  return password.length >= LUNGHEZZA_MINIMA_PASSWORD;
 }
 
 export const EMOJI = ["🦊", "🐻", "🦉", "🐧", "🦌", "🐿️", "🐰", "🐱", "🐶", "🐼", "🐨", "🐸", "🦔", "🐝", "🦄", "🐢", "🐙", "🦭", "🐹", "🦝", "⛄", "🧸", "🍪", "🌲"];
