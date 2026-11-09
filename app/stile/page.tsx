@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
-import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, Toppa, TornaAlGruppo } from "@/components/ui";
+import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro, Toppa } from "@/components/ui";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
 export const metadata = { title: "Base grafica – Secret Santa" };
@@ -27,7 +27,7 @@ const palette = [
 
 function Separatore({ titolo }: { titolo: string }) {
   return (
-    <div className="my-12 flex items-center gap-3 text-sm text-crema/60">
+    <div className="my-10 flex items-center gap-3 text-sm text-crema/60">
       <span className="flex-1 border-t-2 border-dashed border-crema/20" />
       {titolo}
       <span className="flex-1 border-t-2 border-dashed border-crema/20" />
@@ -37,100 +37,91 @@ function Separatore({ titolo }: { titolo: string }) {
 
 export default function Stile() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-[18px] pb-16">
-      {/* ---------- Esempio: pagina del gruppo ---------- */}
-      <section className="relative pt-11">
-        <Profondita intensita={8} className="absolute -top-2 right-1 w-16">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-5 pb-16">
+      {/* ================= Pagina del gruppo ================= */}
+      <header className="relative pt-10">
+        <Profondita intensita={8} className="absolute -top-2 right-0 w-16">
           <PallinaCheDondola className="w-16" />
         </Profondita>
-        <h1 className="pr-16 font-titolo text-[34px] leading-none text-crema drop-shadow-[0_3px_12px_rgba(0,0,0,.5)]">
-          Natale tra amici
-        </h1>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <EtichettaStoffa colore="vermiglio">
-            <b className="mr-1.5 font-titolo text-[17px] font-normal">41</b> giorni allo scambio
-          </EtichettaStoffa>
+        <h1 className="pr-16 font-titolo text-[32px] leading-none">Natale tra amici</h1>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <EtichettaStoffa colore="vermiglio">41 giorni allo scambio</EtichettaStoffa>
           <EtichettaStoffa>sab 20 dic</EtichettaStoffa>
           <EtichettaStoffa>budget 30 €</EtichettaStoffa>
         </div>
-      </section>
+      </header>
 
-      <Feltro variante="vermiglio" className="mt-6">
-        <BustaSigillata className="absolute top-0 right-0 w-[72px] rotate-[8deg] drop-shadow-[0_3px_4px_rgba(0,0,0,.35)]" />
-        <h2 className="font-titolo text-[28px] leading-[1.05]">
-          La tua busta
-          <br />è pronta
-        </h2>
-        <p className="mt-1.5 max-w-[220px]">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
-        <Tasto largo className="mt-5">
-          Apri la busta
-        </Tasto>
+      <Feltro className="mt-6">
+        <BustaSigillata className="absolute -top-1 right-0 w-16 rotate-[8deg] drop-shadow-[0_3px_4px_rgba(0,0,0,.3)]" />
+        <TitoloRiquadro className="pr-20">La tua busta è pronta</TitoloRiquadro>
+        <p className="mt-2 pr-16">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
+        <Tasto className="mt-5">Apri la busta</Tasto>
       </Feltro>
 
-      {/* Riquadro cliccabile: in rilievo, come i tasti */}
-      <Link href="/stile" className="feltro cliccabile mt-4 flex items-center gap-3.5 px-4 py-3.5 [--spessore:#c4a877]">
-        <span className="relative h-[52px] w-14 flex-none" aria-hidden>
-          <span className="absolute top-1.5 left-0 h-11 w-[38px] -rotate-10 rounded-md border-[3px] border-[#fbf8f0] bg-senape shadow" />
-          <span className="absolute top-0.5 left-3 h-11 w-[38px] rotate-2 rounded-md border-[3px] border-[#fbf8f0] bg-rosa shadow" />
-          <span className="absolute top-1.5 left-6 h-11 w-[38px] rotate-12 rounded-md border-[3px] border-[#fbf8f0] bg-kraft shadow" />
+      {/* Riquadro cliccabile: in rilievo come i tasti, con la freccia */}
+      <Link href="/stile" className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+        <span className="relative h-12 w-14 flex-none" aria-hidden>
+          <span className="absolute top-1 left-0 h-11 w-9 -rotate-10 rounded-md border-[3px] border-[#fbf8f0] bg-senape shadow" />
+          <span className="absolute top-0 left-3 h-11 w-9 rotate-2 rounded-md border-[3px] border-[#fbf8f0] bg-rosa shadow" />
+          <span className="absolute top-1 left-6 h-11 w-9 rotate-12 rounded-md border-[3px] border-[#fbf8f0] bg-kraft shadow" />
         </span>
         <span className="relative min-w-0 flex-1">
-          <span className="block font-titolo text-lg leading-tight whitespace-nowrap text-abete">La tua bacheca</span>
-          <span className="block text-sm text-inchiostro/75">3 cose aggiunte</span>
+          <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
+          <span className="block text-sm text-inchiostro/70">3 cose aggiunte</span>
         </span>
-        <span className="relative mr-1 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">
+        <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">
           {Icone.avanti}
         </span>
       </Link>
 
-      <div className="mt-7 mb-3 flex items-baseline justify-between">
-        <h3 className="font-titolo text-[22px]">Chi c&apos;è</h3>
-        <span className="text-sm text-crema/75">12 persone</span>
-      </div>
-      <ul className="-mx-[18px] flex gap-3.5 overflow-x-auto px-[18px] pb-1.5">
-        {membri.map((m) => (
-          <li key={m.nome} className="flex-none">
-            <Link href="/stile" className="flex w-[62px] flex-col items-center gap-1.5 pt-0.5 text-[13px]" aria-label={`Bacheca di ${m.nome}`}>
-              <Toppa emoji={m.emoji} novita={m.novita} cliccabile />
-              {m.nome}
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-[13px] text-crema/70">Tocca una persona per vedere la sua bacheca. Il pallino giallo indica chi l&apos;ha appena aggiornata.</p>
-      <p className="mt-4 text-[13px] text-crema/70">
-        Prova: tocca la pallina (sul telefono Android puoi anche scuoterlo).
-      </p>
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-titolo text-2xl">Chi c&apos;è</h2>
+          <span className="text-sm text-crema/75">12 persone</span>
+        </div>
+        <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pt-1 pb-2">
+          {membri.map((m) => (
+            <li key={m.nome} className="flex-none">
+              <Link href="/stile" className="flex w-16 flex-col items-center gap-2 text-sm" aria-label={`Bacheca di ${m.nome}`}>
+                <Toppa emoji={m.emoji} novita={m.novita} cliccabile />
+                {m.nome}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Il pallino giallo indica chi l&apos;ha appena aggiornata.</p>
+      </section>
 
-      {/* ---------- Esempio: crea il gruppo ---------- */}
+      {/* ================= Crea il gruppo ================= */}
       <Separatore titolo="Esempio: crea il gruppo" />
-      <TornaAlGruppo href="/stile" nome="I tuoi gruppi" />
-      <h1 className="mt-4 font-titolo text-[34px] leading-none">Crea il gruppo</h1>
-      <Feltro className="mt-5">
+      <TestataInterna indietro="/stile" etichettaIndietro="Torna ai tuoi gruppi" titolo="Crea il gruppo" />
+      <Feltro className="mt-6">
         <div className="flex flex-col gap-5">
           <Campo id="prova-nome" etichetta="Come si chiama il gruppo?" placeholder="Natale tra amici" aiuto="Lo vedranno tutti gli invitati." />
           <Campo id="prova-tema" etichetta="Tema (facoltativo)" placeholder="Regali fatti a mano" />
         </div>
+        <Tasto className="mt-6">Crea il gruppo</Tasto>
       </Feltro>
-      <Tasto variante="vermiglio" largo className="mt-6">
-        Crea il gruppo
-      </Tasto>
 
-      {/* ---------- Esempio: area dell'organizzatore ---------- */}
+      {/* ================= Area dell'organizzatore ================= */}
       <Separatore titolo="Esempio: area dell'organizzatore" />
-      <TornaAlGruppo href="/stile" nome="Natale tra amici" />
-      <h1 className="mt-4 font-titolo text-[34px] leading-none">Organizza</h1>
-      <p className="mt-2 text-crema/80">Solo tu vedi questa pagina.</p>
+      <TestataInterna
+        indietro="/stile"
+        etichettaIndietro="Torna a Natale tra amici"
+        contesto="Natale tra amici"
+        titolo="Organizza"
+        sottotitolo="Solo tu vedi questa pagina."
+      />
 
-      <Feltro className="mt-5">
-        <h2 className="font-titolo text-[22px] text-abete">Quando e quanto</h2>
-        <div className="mt-4 flex flex-col gap-5">
+      <Feltro className="mt-6">
+        <TitoloRiquadro>Quando e quanto</TitoloRiquadro>
+        <div className="mt-5 flex flex-col gap-5">
           <Campo id="prova-data" type="date" etichetta="Giorno dello scambio" defaultValue="2026-12-20" />
-          <div className="flex flex-col gap-1.5">
-            <span className="font-medium text-inchiostro">Budget a persona</span>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2">
+            <span className="font-medium">Budget a persona</span>
+            <div className="flex items-center justify-between gap-3">
               <TastoTondo etichetta="Diminuisci il budget" icona={Icone.meno} />
-              <span className="min-w-20 text-center font-titolo text-3xl text-vermiglio">30 €</span>
+              <span className="font-titolo text-[32px] leading-none text-vermiglio">30 €</span>
               <TastoTondo etichetta="Aumenta il budget" icona={Icone.piu} />
             </div>
           </div>
@@ -138,15 +129,15 @@ export default function Stile() {
       </Feltro>
 
       <Feltro className="mt-4">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-titolo text-[22px] text-abete">Chi partecipa</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <TitoloRiquadro>Chi partecipa</TitoloRiquadro>
           <span className="text-sm text-inchiostro/70">4 su 6 entrati</span>
         </div>
         <ul className="mt-3 divide-y-2 divide-dashed divide-abete/15">
           {membri.map((m) => (
-            <li key={m.nome} className="flex min-h-14 items-center gap-3 py-2">
+            <li key={m.nome} className="flex items-center gap-3 py-3">
               <Toppa emoji={m.entrato ? m.emoji : "·"} dimensione={40} />
-              <span className="flex-1">
+              <span className="min-w-0 flex-1">
                 <span className="block font-medium">{m.nome}</span>
                 <span className={`block text-sm ${m.entrato ? "text-abete" : "text-inchiostro/60"}`}>
                   {m.entrato ? "è entrato" : "non è ancora entrato"}
@@ -156,84 +147,89 @@ export default function Stile() {
             </li>
           ))}
         </ul>
-        <div className="mt-3 flex items-end gap-3">
-          <div className="flex-1">
+        <div className="mt-4 flex items-end gap-3">
+          <div className="min-w-0 flex-1">
             <Campo id="prova-nuovo" etichetta="Aggiungi una persona" placeholder="Nome e cognome" />
           </div>
-          <TastoTondo etichetta="Aggiungi" icona={Icone.piu} variante="verde" />
+          <TastoTondo etichetta="Aggiungi" icona={Icone.piu} />
         </div>
       </Feltro>
 
       <Feltro className="mt-4">
-        <h2 className="font-titolo text-[22px] text-abete">Chi non deve pescarsi</h2>
-        <p className="mt-1 text-sm text-inchiostro/70">Per esempio le coppie, che si fanno già un regalo.</p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <TitoloRiquadro>Chi non deve pescarsi</TitoloRiquadro>
+        <p className="mt-2 text-sm text-inchiostro/70">Per esempio le coppie, che si fanno già un regalo.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
           <EtichettaStoffa colore="verde">Giulia e Marco</EtichettaStoffa>
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <Tasto variante="crema" className="flex-1">
+        <div className="mt-5 flex items-center gap-3">
+          <Tasto tipo="secondario" className="flex-1">
             Nuova coppia
           </Tasto>
           <TastoTondo etichetta="Togli una coppia" icona={Icone.meno} />
         </div>
-        <p className="mt-2 text-sm text-inchiostro/70">Con il − scegli quale coppia togliere. È spento finché non ce ne sono.</p>
       </Feltro>
 
       <Feltro className="mt-4">
-        <h2 className="font-titolo text-[22px] text-abete">Link d&apos;invito</h2>
-        <p className="mt-1 text-sm text-inchiostro/70">
-          Mandalo nel gruppo: ognuno tocca il proprio nome. Sul computer il link viene copiato.
-        </p>
-        <Tasto variante="verde" largo className="mt-4">
+        <TitoloRiquadro>Link d&apos;invito</TitoloRiquadro>
+        <p className="mt-2 text-sm text-inchiostro/70">Mandalo nel gruppo: ognuno tocca il proprio nome. Sul computer il link viene copiato.</p>
+        <Tasto tipo="secondario" className="mt-5">
           Condividi il link
         </Tasto>
       </Feltro>
 
-      <Feltro variante="vermiglio" className="mt-4">
-        <h2 className="font-titolo text-[24px]">Estrazione</h2>
-        <p className="mt-1">Mancano Anna e Pietro. Quando entrano tutti, potrai fare l&apos;estrazione: si fa una volta sola.</p>
-        <Tasto variante="crema" largo className="mt-4" disabled>
+      <Feltro className="mt-4">
+        <TitoloRiquadro>Estrazione</TitoloRiquadro>
+        <p className="mt-2">Mancano Anna e Pietro. Quando entrano tutti potrai fare l&apos;estrazione: si fa una volta sola.</p>
+        <Tasto className="mt-5" disabled>
           Fai l&apos;estrazione
         </Tasto>
       </Feltro>
 
-      {/* ---------- Riferimenti ---------- */}
+      {/* ================= Riferimenti ================= */}
       <Separatore titolo="Riferimenti" />
-      <h2 className="font-titolo text-3xl">Cliccabile o no?</h2>
-      <p className="mt-1 text-crema/80">
-        Ciò che si tocca è in rilievo (ha uno spessore sotto), si solleva al passaggio del mouse e si schiaccia al tocco. Ciò che è solo
-        informazione è piatto, cucito sulla stoffa.
-      </p>
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Tasto>Apri la busta</Tasto>
-        <Toppa emoji="🦊" dimensione={44} cliccabile />
-        <TastoTondo etichetta="Modifica" icona={Icone.matita} />
-        <TastoTondo etichetta="Aggiungi" icona={Icone.piu} variante="verde" />
-        <TastoTondo etichetta="Ricama" icona={Icone.ago} variante="vermiglio" />
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <EtichettaStoffa>non cliccabile</EtichettaStoffa>
-        <EtichettaStoffa colore="vermiglio">informazione</EtichettaStoffa>
-        <Toppa emoji="🦊" dimensione={44} />
-      </div>
+      <h2 className="font-titolo text-2xl">I tre tasti</h2>
+      <p className="mt-2 text-crema/80">Tutti alti 56px. Tutto ciò che si tocca è in rilievo; ciò che è informazione è piatto.</p>
+      <Feltro className="mt-4">
+        <p className="text-sm text-inchiostro/70">1. Primario: l&apos;azione principale, uno per riquadro</p>
+        <Tasto className="mt-2">Apri la busta</Tasto>
+        <p className="mt-5 text-sm text-inchiostro/70">2. Secondario: azioni utili ma non principali</p>
+        <Tasto tipo="secondario" className="mt-2">
+          Condividi il link
+        </Tasto>
+        <p className="mt-5 text-sm text-inchiostro/70">3. Tondo: piccole azioni con un&apos;icona</p>
+        <div className="mt-2 flex gap-3">
+          <TastoTondo etichetta="Modifica" icona={Icone.matita} />
+          <TastoTondo etichetta="Aggiungi" icona={Icone.piu} />
+          <TastoTondo etichetta="Ricama" icona={Icone.ago} />
+          <TastoTondo etichetta="Indietro" icona={Icone.indietro} />
+        </div>
+        <p className="mt-5 text-sm text-inchiostro/70">Non cliccabili: piatti</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <EtichettaStoffa>sab 20 dic</EtichettaStoffa>
+          <EtichettaStoffa colore="vermiglio">41 giorni</EtichettaStoffa>
+          <Toppa emoji="🦊" dimensione={40} />
+        </div>
+      </Feltro>
 
-      <h2 className="mt-10 font-titolo text-3xl">Colori</h2>
+      <h2 className="mt-8 font-titolo text-2xl">Testi</h2>
+      <Feltro className="mt-4">
+        <p className="font-titolo text-[32px] leading-none text-abete">Titolo pagina 32</p>
+        <p className="mt-3 font-titolo text-2xl leading-tight text-abete">Titolo riquadro 24</p>
+        <p className="mt-2">Testo 16: Bricolage Grotesque, per tutto quello che si legge.</p>
+        <p className="mt-1 text-sm text-inchiostro/70">Nota 14: aiuti e dettagli.</p>
+      </Feltro>
+
+      <h2 className="mt-8 font-titolo text-2xl">Colori</h2>
       <ul className="mt-4 grid grid-cols-3 gap-3">
         {palette.map((c) => (
-          <li key={c.nome} className={`flex aspect-square flex-col justify-end rounded-2xl p-2.5 ring-1 ring-crema/25 ${c.classe}`}>
+          <li key={c.nome} className={`flex aspect-square flex-col justify-end rounded-[20px] p-3 ring-1 ring-crema/25 ${c.classe}`}>
             <span className="font-medium">{c.nome}</span>
             <span className="text-sm opacity-80">{c.hex}</span>
           </li>
         ))}
       </ul>
 
-      <h2 className="mt-10 font-titolo text-3xl">Caratteri</h2>
-      <p className="mt-3 font-titolo text-4xl leading-tight">La tua busta ti aspetta</p>
-      <p className="mt-1 text-crema/75">Basteleur Bold, solo per titoli e tasti.</p>
-      <p className="mt-4 text-lg">Aggiungi toppe, colori e ricami alla tua bacheca: chi ti ha pescato la guarderà per scegliere il regalo.</p>
-      <p className="mt-1 text-crema/75">Bricolage Grotesque, per tutto il resto.</p>
-
-      <h2 className="mt-10 font-titolo text-3xl">Ornamenti</h2>
+      <h2 className="mt-8 font-titolo text-2xl">Ornamenti</h2>
       <div className="mt-4 flex flex-wrap items-center gap-6">
         <Stellina className="size-10 text-senape" title="Stellina" />
         <StellaNordica className="size-12 text-vermiglio" title="Stella nordica" />

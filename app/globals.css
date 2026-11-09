@@ -67,17 +67,24 @@ textarea {
   outline-offset: 3px;
 }
 
-/* ---------- Feltro cucito ---------- */
 /*
-  Raggi concentrici: i tasti a pillola alti 56px hanno raggio 28px;
-  il feltro ha ~20-24px di margine interno, quindi raggio 48px (28 + 20).
-  Il margine in alto è un po' più grande perché nell'angolo curvo il testo non tocchi la cucitura.
-  La cucitura sta 8px dentro il bordo: 48 - 8 = 40px.
-  Il feltro NON è cliccabile: è piatto (solo un'ombra morbida, niente spessore).
+  ================= SISTEMA (regole fisse) =================
+  Spaziature: multipli di 4 (4, 8, 12, 16, 20, 24, 32, 40).
+  Testi: titolo pagina 32 · titolo riquadro 24 · tasti e voci cliccabili 18 (Basteleur) · testo 16 · nota 14 (Bricolage).
+  Raggi: riquadro 28 · tasti e bottoni tondi alti 56 (pillola = raggio 28) · campi 16.
+  Le cuciture stanno dentro il bordo e seguono lo stesso centro (raggio − distanza).
+  Tre tipi di tasto, tutti alti 56:
+    1. primario   = pillola vermiglio, a tutta larghezza, uno solo per riquadro;
+    2. secondario = pillola chiara con testo verde, a tutta larghezza;
+    3. tondo      = cerchio chiaro con icona verde, per azioni piccole.
+  Cliccabile = in rilievo; non cliccabile = piatto.
+  ==========================================================
 */
+
+/* ---------- Riquadro di feltro (NON cliccabile) ---------- */
 .feltro {
   position: relative;
-  border-radius: 48px;
+  border-radius: 28px;
   background: var(--color-feltro);
   color: var(--color-inchiostro);
   box-shadow:
@@ -89,20 +96,9 @@ textarea {
   content: "";
   position: absolute;
   inset: 8px;
-  border-radius: 40px;
-  border: 2.5px dashed rgb(229 72 30 / 0.8);
+  border-radius: 20px;
+  border: 2px dashed rgb(229 72 30 / 0.7);
   pointer-events: none;
-}
-.feltro-vermiglio {
-  background: var(--color-vermiglio);
-  color: var(--color-crema);
-  box-shadow:
-    inset 0 -4px 10px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 8px 16px -10px rgba(0, 0, 0, 0.5);
-}
-.feltro-vermiglio::before {
-  border-color: rgb(243 232 207 / 0.7);
 }
 
 /* ---------- Etichetta di stoffa cucita (NON cliccabile: piatta, cucita sulla stoffa) ---------- */
@@ -170,46 +166,43 @@ textarea {
   transform: none;
 }
 
-/* Colori dei pezzi cliccabili (stoffa + spessore più scuro) */
-.stoffa-crema {
-  background-color: var(--color-feltro);
-  color: var(--color-vermiglio-scuro);
-  --spessore: #c4a877;
-}
+/* Stoffe dei pezzi cliccabili (colore + spessore più scuro) */
 .stoffa-vermiglio {
   background-color: var(--color-vermiglio);
   color: var(--color-crema);
   --spessore: #9e2a0b;
 }
-.stoffa-verde {
-  background-color: #3a6142;
-  color: var(--color-crema);
-  --spessore: #172b1c;
+.stoffa-chiara {
+  background-color: #fbf6ea;
+  color: var(--color-abete);
+  --spessore: #c9b48a;
 }
 
-/* Cucitura tratteggiata interna, uguale per tasti e bottoni tondi */
+/* Cucitura tratteggiata interna dei tasti (raggio = quello del tasto) */
 .cucitura::before {
   content: "";
   position: absolute;
   inset: 5px;
   border-radius: inherit;
   border: 2px dashed currentColor;
-  opacity: 0.45;
+  opacity: 0.4;
   pointer-events: none;
 }
 
-/* Tasto a pillola: solo testo, centrato otticamente */
+/* Tasti 1 e 2: pillola alta 56, a tutta larghezza, testo centrato */
 .tasto {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
-  padding: 0 30px;
-  border-radius: 999px;
+  height: 56px;
+  padding: 0 24px;
+  border-radius: 28px;
   font-family: var(--font-titolo);
-  font-size: 1.2rem;
+  font-size: 18px;
   line-height: 1;
+  white-space: nowrap;
 }
 /* Basteleur ha più spazio sotto le lettere: lo compensiamo */
 .tasto > span {
@@ -223,20 +216,20 @@ textarea {
   }
 }
 
-/* Bottone tondo: stessa stoffa e cucitura dei tasti, con un'icona */
+/* Tasto 3: cerchio alto 56 con icona */
 .tasto-tondo {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 999px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
 }
 .tasto-tondo svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   stroke: currentColor;
   fill: none;
   stroke-width: 2.2;
@@ -244,19 +237,19 @@ textarea {
   stroke-linejoin: round;
 }
 
-/* Campo di testo cucito */
+/* Campo di testo cucito (NON in rilievo: è incavato) */
 .campo-cucito {
   position: relative;
-  border-radius: 28px;
+  border-radius: 16px;
   background: #fbf6ea;
-  box-shadow: inset 0 2px 4px rgba(120, 90, 40, 0.18);
+  box-shadow: inset 0 2px 4px rgba(120, 90, 40, 0.2);
 }
 .campo-cucito::after {
   content: "";
   position: absolute;
   inset: 5px;
-  border-radius: 23px;
-  border: 2px dashed rgb(44 74 50 / 0.35);
+  border-radius: 11px;
+  border: 2px dashed rgb(44 74 50 / 0.3);
   pointer-events: none;
   transition: border-color 140ms ease;
 }
@@ -265,8 +258,8 @@ textarea {
 }
 .campo-cucito input {
   width: 100%;
-  min-height: 56px;
-  padding: 0 22px;
+  height: 56px;
+  padding: 0 20px;
   background: transparent;
   color: var(--color-inchiostro);
   outline: none;

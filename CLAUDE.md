@@ -67,7 +67,12 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
   - **Cliccabile = in rilievo** (spessore sotto, si alza al passaggio del mouse, si schiaccia al tocco), stessa animazione ovunque. **Ciò che non è cliccabile è piatto**: mai dare rilievo a cose che non si toccano.
   - **Una funzione, un solo comando**: niente tasti che fanno la stessa cosa (es. si torna indietro solo con "‹ …" in alto, niente "Annulla" che fa lo stesso). Su schermo solo cose utili, niente ridondanze.
   - **Testo dei tasti centrato** (anche otticamente); i tasti dentro i riquadri sono a tutta larghezza e centrati.
-  - **Raggi concentrici**: tasti e campi alti 56px con raggio 28px; riquadri di feltro con 20px di margine e raggio 48px; le cuciture interne seguono lo stesso centro (raggio esterno − distanza).
+  - **Sistema fisso** (definito in `app/globals.css` e `components/ui.tsx`):
+    - spaziature a multipli di 4 (4, 8, 12, 16, 20, 24, 32, 40);
+    - testi: titolo pagina 32 · titolo riquadro 24 · tasti e voci cliccabili 18 (Basteleur) · testo 16 · nota 14 (Bricolage);
+    - raggi: riquadro di feltro 28 (margine interno 24) · tasti alti 56 a pillola (raggio 28) · campi alti 56 con raggio 16; le cuciture interne seguono lo stesso centro (raggio − distanza);
+    - **tre tipi di tasto, tutti alti 56**: 1) **primario** pillola vermiglio a tutta larghezza, uno solo per riquadro; 2) **secondario** pillola chiara con testo verde a tutta larghezza; 3) **tondo** cerchio chiaro con icona verde, per piccole azioni. Stesso tipo = identico ovunque;
+    - riquadri tutti uguali (feltro crema, titolo 24 verde); per tornare indietro: tasto tondo con la freccia in alto, sopra il titolo della pagina.
   - Comandi affiancati (es. "Aggiungi" e "−") alla stessa distanza; un comando che non può agire è spento (es. "−" quando non c'è niente da togliere).
 - **Suoni (da fare)**: piccoli suoni ai tocchi dei tasti, sottofondo musicale e suoni buffi per le interazioni con gli oggetti (es. la pallina che dondola). Sempre con un tasto per togliere l'audio; il sottofondo parte solo dopo un tocco (i telefoni bloccano l'audio automatico). Da decidere: suoni generati dal codice (nessun file, nessun problema di licenza) o file audio con licenza libera.
 - **Vibe nordica folkloristica natalizia** (il motivo per cui Marzia ama Mishca): motivi a maglia nordica, stelle a 8 punte, cuori e uccellini dell'arte popolare scandinava, carta ritagliata, stelle di paglia. Tutti gli ornamenti sono **disegnati da noi in SVG**, originali, niente immagini prese dal web. Il tocco nordico è **un ingrediente, non tutto il sito**: l'obiettivo è un mashup equilibrato di tutte le reference (collage/scrapbook, colori pieni da rivista, scritte a mano, carta, Natale nordico).

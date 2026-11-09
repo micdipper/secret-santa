@@ -1,41 +1,40 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
-type Stoffa = "crema" | "vermiglio" | "verde";
+/*
+  Sistema dei tasti (vedi app/globals.css):
+  1. primario   – pillola vermiglio, tutta larghezza, uno solo per riquadro
+  2. secondario – pillola chiara con testo verde, tutta larghezza
+  3. tondo      – cerchio chiaro con icona verde, per azioni piccole
+  Tutti alti 56px. Tutto ciò che è cliccabile è in rilievo.
+*/
 
-// Tasto a pillola di stoffa: solo testo, per le azioni principali.
-// Tutto ciò che è cliccabile è "in rilievo" (classe .cliccabile).
 export function Tasto({
-  variante = "crema",
-  largo = false,
+  tipo = "primario",
   className = "",
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: Stoffa; largo?: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { tipo?: "primario" | "secondario" }) {
+  const stoffa = tipo === "primario" ? "stoffa-vermiglio" : "stoffa-chiara";
   return (
-    <button
-      className={`tasto cucitura cliccabile stoffa-${variante} ${largo ? "w-full" : ""} ${className}`}
-      {...props}
-    >
+    <button className={`tasto cucitura cliccabile ${stoffa} ${className}`} {...props}>
       <span>{children}</span>
     </button>
   );
 }
 
-// Bottone tondo: stessa stoffa e cucitura dei tasti, con un'icona.
-// L'etichetta è obbligatoria per chi usa lo screen reader.
+// L'etichetta è obbligatoria: serve a chi usa lo screen reader e compare al passaggio del mouse.
 export function TastoTondo({
   etichetta,
   icona,
-  variante = "crema",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { etichetta: string; icona: ReactNode; variante?: Stoffa }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { etichetta: string; icona: ReactNode }) {
   return (
     <button
       aria-label={etichetta}
       title={etichetta}
-      className={`tasto-tondo cucitura cliccabile stoffa-${variante} ${className}`}
+      className={`tasto-tondo cucitura cliccabile stoffa-chiara ${className}`}
       {...props}
     >
       {icona}
@@ -43,24 +42,21 @@ export function TastoTondo({
   );
 }
 
-// Riquadro di feltro con la cucitura tratteggiata.
-export function Feltro({
-  children,
-  variante = "crema",
-  className = "",
-}: {
-  children: ReactNode;
-  variante?: "crema" | "vermiglio";
-  className?: string;
-}) {
+// Riquadro di feltro (non cliccabile). Margine interno 24px.
+export function Feltro({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`feltro ${variante === "vermiglio" ? "feltro-vermiglio" : ""} px-6 pt-7 pb-6 ${className}`}>
+    <div className={`feltro p-6 ${className}`}>
       <div className="relative">{children}</div>
     </div>
   );
 }
 
-// Etichetta di stoffa cucita, per le informazioni brevi (giorni, data, budget).
+// Titolo di un riquadro: sempre 24px, sempre verde.
+export function TitoloRiquadro({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <h2 className={`font-titolo text-2xl leading-tight text-balance text-abete ${className}`}>{children}</h2>;
+}
+
+// Etichetta di stoffa cucita (non cliccabile), per le informazioni brevi.
 export function EtichettaStoffa({
   children,
   colore = "crema",
@@ -73,13 +69,13 @@ export function EtichettaStoffa({
     vermiglio: "bg-vermiglio text-crema",
     verde: "bg-abete text-crema",
   }[colore];
-  return <span className={`etichetta-stoffa text-[15px] ${stile}`}>{children}</span>;
+  return <span className={`etichetta-stoffa text-sm ${stile}`}>{children}</span>;
 }
 
-// Toppa rotonda cucita con l'emoji della persona.
+// Toppa rotonda con l'emoji della persona. In rilievo solo se si può toccare.
 export function Toppa({
   emoji,
-  dimensione = 58,
+  dimensione = 56,
   novita = false,
   cliccabile = false,
 }: {
@@ -90,7 +86,7 @@ export function Toppa({
 }) {
   return (
     <span
-      className={`toppa ${cliccabile ? "cliccabile stoffa-crema" : ""}`}
+      className={`toppa ${cliccabile ? "cliccabile stoffa-chiara" : ""}`}
       style={{ width: dimensione, height: dimensione, fontSize: dimensione * 0.48 }}
       aria-hidden
     >
@@ -102,18 +98,37 @@ export function Toppa({
   );
 }
 
-// Link per tornare alla pagina del gruppo, in alto nelle pagine interne.
-export function TornaAlGruppo({ href, nome }: { href: string; nome: string }) {
+// Testata delle pagine interne: tasto tondo per tornare indietro (unico modo),
+// nome del gruppo come contesto e titolo della pagina.
+export function TestataInterna({
+  indietro,
+  etichettaIndietro,
+  contesto,
+  titolo,
+  sottotitolo,
+}: {
+  indietro: string;
+  etichettaIndietro: string;
+  contesto?: string;
+  titolo: string;
+  sottotitolo?: string;
+}) {
   return (
-    <Link
-      href={href}
-      className="inline-flex min-h-11 items-center gap-2 self-start rounded-full bg-crema/12 pr-4 pl-2.5 text-[15px] text-crema"
-    >
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M15 5l-7 7 7 7" />
-      </svg>
-      {nome}
-    </Link>
+    <header className="flex flex-col gap-4 pt-6">
+      <Link
+        href={indietro}
+        aria-label={etichettaIndietro}
+        title={etichettaIndietro}
+        className="tasto-tondo cucitura cliccabile stoffa-chiara self-start"
+      >
+        {Icone.indietro}
+      </Link>
+      <div>
+        {contesto && <p className="text-sm text-crema/75">{contesto}</p>}
+        <h1 className="font-titolo text-[32px] leading-none">{titolo}</h1>
+        {sottotitolo && <p className="mt-2 text-crema/80">{sottotitolo}</p>}
+      </div>
+    </header>
   );
 }
 
@@ -125,7 +140,7 @@ export function Campo({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { etichetta: string; aiuto?: string; id: string }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <label htmlFor={id} className="font-medium text-inchiostro">
         {etichetta}
       </label>
@@ -137,8 +152,18 @@ export function Campo({
   );
 }
 
-// Icone per i bottoni tondi (tratto semplice, originali).
+// Icone dei tasti tondi (tratto semplice, originali).
 export const Icone = {
+  indietro: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M15 5l-7 7 7 7" />
+    </svg>
+  ),
+  avanti: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  ),
   matita: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M4 20l4-1 11-11-3-3L5 16z" />
@@ -150,10 +175,9 @@ export const Icone = {
       <path d="M12 5v14M5 12h14" />
     </svg>
   ),
-  condividi: (
+  meno: (
     <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M12 15V4M8 8l4-4 4 4" />
-      <path d="M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7" />
+      <path d="M5 12h14" />
     </svg>
   ),
   altro: (
@@ -161,16 +185,6 @@ export const Icone = {
       <circle cx="6" cy="12" r="1.2" />
       <circle cx="12" cy="12" r="1.2" />
       <circle cx="18" cy="12" r="1.2" />
-    </svg>
-  ),
-  avanti: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M9 5l7 7-7 7" />
-    </svg>
-  ),
-  meno: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M5 12h14" />
     </svg>
   ),
   ago: (
