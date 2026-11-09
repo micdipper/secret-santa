@@ -7,7 +7,7 @@ import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Gruppo = { id: string; name: string; budget_eur: number | null; exchange_date: string | null; theme: string | null; status: string; invite_code: string; organizer_id: string };
 type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null };
-type Coppia = { member_a: string; member_b: string };
+type Coppia = { member_a: string; member_b: string; reason: "coppia" | "anno_scorso" };
 
 export default function PaginaOrganizza() {
   return (
@@ -35,6 +35,7 @@ function Organizza() {
   const [nuovaCoppia, setNuovaCoppia] = useState(false);
   const [coppiaA, setCoppiaA] = useState("");
   const [coppiaB, setCoppiaB] = useState("");
+  const [motivo, setMotivo] = useState<Coppia["reason"]>("coppia");
   const [togliCoppie, setTogliCoppie] = useState(false);
   const [estrazioneInCorso, setEstrazioneInCorso] = useState(false);
 
@@ -43,7 +44,7 @@ function Organizza() {
       supabase.auth.getSession(),
       supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id").eq("id", id).maybeSingle(),
       supabase.from("group_members").select("id, display_name, avatar, user_id").eq("group_id", id).order("display_name"),
-      supabase.from("exclusions").select("member_a, member_b").eq("group_id", id),
+      supabase.from("exclusions").select("member_a, member_b, reason").eq("group_id", id),
     ]);
     setMioId(s.session?.user.id ?? null);
     setGruppo(g as Gruppo | null);
@@ -101,7 +102,7 @@ function Organizza() {
   async function salvaCoppia() {
     if (!coppiaA || !coppiaB || coppiaA === coppiaB) return setErrore("Scegli due persone diverse.");
     const [a, b] = [coppiaA, coppiaB].sort();
-    const { error } = await supabase.from("exclusions").insert({ group_id: id, member_a: a, member_b: b });
+    const { error } = await supabase.from("exclusions").insert({ group_id: id, member_a: a, member_b: b, reason: motivo });
     if (error) return setErrore(error.code === "23505" ? "Questa coppia c'è già." : "Non sono riuscito a salvare la coppia.");
     setNuovaCoppia(false);
     setCoppiaA("");
@@ -259,7 +260,7 @@ function Organizza() {
                 }}
               />
             </div>
-            <TastoTondo etichetta="Aggiungi" icona={Icone.piu} disabled={!nuovoNome.trim()} onClick={aggiungiPersona} />
+            <TastoTondo etichetta="Aggiungi la persona" icona={Icone.piu} disabled={!nuovoNome.trim()} onClick={aggiungiPersona} />
           </div>
         )}
       </Feltro>
@@ -267,37 +268,72 @@ function Organizza() {
       <Feltro className="mt-4">
         <TitoloRiquadro>Chi non deve pescarsi</TitoloRiquadro>
         <p className="mt-2 text-sm text-inchiostro/70">
-          {togliCoppie ? "Tocca la coppia da togliere." : "Per esempio le coppie, che si fanno già un regalo."}
+          {togliCoppie
+            ? "Tocca quella da togliere."
+            : "L'estrazione è una catena: nessuno pesca se stesso o chi gli fa il regalo. Qui aggiungi chi altro non deve pescarsi."}
         </p>
         {coppie.length > 0 && (
           <ul className="mt-4 flex flex-wrap gap-2">
-            {coppie.map((c) => (
-              <li key={c.member_a + c.member_b}>
-                {togliCoppie ? (
-                  <button type="button" onClick={() => togliCoppia(c)} className="cliccabile stoffa-chiara rounded-full px-4 py-2 text-sm">
-                    Togli {nome(c.member_a)} e {nome(c.member_b)}
-                  </button>
-                ) : (
-                  <EtichettaStoffa colore="verde">
-                    {nome(c.member_a)} e {nome(c.member_b)}
-                  </EtichettaStoffa>
-                )}
-              </li>
-            ))}
+            {coppie.map((c) => {
+              const testo = `${nome(c.member_a).split(" ")[0]} e ${nome(c.member_b).split(" ")[0]} · ${c.reason === "coppia" ? "coppia" : "anno scorso"}`;
+              return (
+                <li key={c.member_a + c.member_b}>
+                  {togliCoppie ? (
+                    <button type="button" onClick={() => togliCoppia(c)} className="cucitura cliccabile stoffa-chiara relative rounded-full px-4 py-2 text-sm">
+                      Togli {testo}
+                    </button>
+                  ) : (
+                    <EtichettaStoffa colore={c.reason === "coppia" ? "verde" : "crema"}>{testo}</EtichettaStoffa>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         {nuovaCoppia && (
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-4">
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 font-medium">Perché?</legend>
+              {(
+                [
+                  ["coppia", "Sono una coppia"],
+                  ["anno_scorso", "Si sono fatti il regalo l'anno scorso"],
+                ] as const
+              ).map(([v, t]) => (
+                <label key={v} className="flex min-h-11 items-center gap-3">
+                  <input type="radio" name="motivo" value={v} checked={motivo === v} onChange={() => setMotivo(v)} className="size-5 accent-vermiglio" />
+                  {t}
+                </label>
+              ))}
+            </fieldset>
             {[
-              { v: coppiaA, set: setCoppiaA, et: "Prima persona" },
-              { v: coppiaB, set: setCoppiaB, et: "Seconda persona" },
+              { v: coppiaA, set: setCoppiaA, et: "Prima persona", opzioni: membri },
+              {
+                v: coppiaB,
+                set: setCoppiaB,
+                et: "Seconda persona",
+                // senza la prima persona e senza chi è già escluso con lei
+                opzioni: membri.filter(
+                  (m) =>
+                    m.id !== coppiaA &&
+                    !coppie.some((c) => (c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id)),
+                ),
+              },
             ].map((s) => (
               <label key={s.et} className="flex flex-col gap-2">
                 <span className="font-medium">{s.et}</span>
                 <span className="campo-cucito block">
-                  <select value={s.v} onChange={(e) => s.set(e.target.value)} className="h-14 w-full appearance-none bg-transparent px-5 text-inchiostro outline-none">
-                    <option value="">Scegli…</option>
-                    {membri.map((m) => (
+                  <select
+                    value={s.v}
+                    disabled={s.et === "Seconda persona" && !coppiaA}
+                    onChange={(e) => {
+                      s.set(e.target.value);
+                      if (s.et === "Prima persona") setCoppiaB("");
+                    }}
+                    className="h-14 w-full appearance-none bg-transparent px-5 text-inchiostro outline-none"
+                  >
+                    <option value="">{s.et === "Seconda persona" && !coppiaA ? "Prima scegli la prima persona" : "Scegli…"}</option>
+                    {s.opzioni.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.display_name}
                       </option>
@@ -306,13 +342,15 @@ function Organizza() {
                 </span>
               </label>
             ))}
-            <Tasto onClick={salvaCoppia}>Salva la coppia</Tasto>
+            <Tasto onClick={salvaCoppia} disabled={!coppiaA || !coppiaB}>
+              Salva
+            </Tasto>
           </div>
         )}
         {modificabile && !nuovaCoppia && (
           <div className="mt-5 flex items-center gap-3">
             <Tasto tipo="secondario" className="flex-1" onClick={() => setNuovaCoppia(true)}>
-              Nuova coppia
+              Aggiungi
             </Tasto>
             <TastoTondo
               etichetta={togliCoppie ? "Fine" : "Togli una coppia"}

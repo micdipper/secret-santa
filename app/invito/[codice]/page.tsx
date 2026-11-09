@@ -124,7 +124,7 @@ export default function Invito() {
         <Feltro className="mt-6">
           <TitoloRiquadro>Chi sei?</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">
-            {aperto ? "Tocca il tuo nome. Se è già preso e sei tu, ti chiederò il PIN." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
+            {aperto ? "Tocca il tuo nome. Chi ha già l'emoji è entrato: se sei tu, ti chiederò il PIN." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
           </p>
           <ul className="mt-4 flex flex-col gap-3">
             {posti.map((p) => {
@@ -139,13 +139,10 @@ export default function Invito() {
                       setPin("");
                       setErrore("");
                     }}
-                    className="feltro cliccabile flex w-full items-center gap-4 rounded-[28px] p-3 pl-4 text-left [--spessore:#c4a877] before:hidden"
+                    className="cucitura cliccabile stoffa-chiara relative flex h-14 w-full items-center gap-3 rounded-full pr-6 pl-2 text-left"
                   >
                     <Toppa emoji={p.avatar ?? "·"} dimensione={40} />
-                    <span className="flex-1">
-                      <span className="block font-titolo text-lg text-abete">{p.display_name}</span>
-                      <span className="block text-sm text-inchiostro/70">{p.claimed ? "Rientra con il PIN" : "Sono io"}</span>
-                    </span>
+                    <span className="font-titolo text-lg text-abete">{p.display_name}</span>
                   </button>
                 </li>
               );

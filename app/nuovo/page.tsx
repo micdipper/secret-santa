@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CampoPin, ScegliEmoji } from "@/components/scelte";
-import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordDaPin, pinValido } from "@/lib/accesso";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
@@ -115,10 +115,11 @@ export default function NuovoGruppo() {
           <TitoloRiquadro>Chi partecipa</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">Scrivi i nomi veri: saranno quelli scritti sul biglietto.</p>
           {altri.length > 0 && (
-            <ul className="mt-4 flex flex-wrap gap-2">
+            <ul className="mt-4 divide-y-2 divide-dashed divide-abete/15">
               {altri.map((n) => (
-                <li key={n}>
-                  <EtichettaStoffa colore="verde">{n}</EtichettaStoffa>
+                <li key={n} className="flex items-center gap-3 py-2">
+                  <span className="min-w-0 flex-1 truncate font-medium">{n}</span>
+                  <TastoTondo type="button" etichetta={`Togli ${n}`} icona={Icone.meno} onClick={() => setAltri(altri.filter((x) => x !== n))} />
                 </li>
               ))}
             </ul>
@@ -140,14 +141,11 @@ export default function NuovoGruppo() {
                 maxLength={60}
               />
             </div>
-            <TastoTondo type="button" etichetta="Aggiungi" icona={Icone.piu} onClick={aggiungiNome} disabled={!nuovoNome.trim()} />
+            <TastoTondo type="button" etichetta="Aggiungi la persona" icona={Icone.piu} onClick={aggiungiNome} disabled={!nuovoNome.trim()} />
           </div>
-          <div className="mt-3 flex items-center gap-3">
-            <p className="flex-1 text-sm text-inchiostro/70">
-              {altri.length === 0 ? "Nessuno ancora." : `${altri.length + 1} persone, te compreso.`}
-            </p>
-            <TastoTondo type="button" etichetta="Togli l'ultimo nome" icona={Icone.meno} disabled={altri.length === 0} onClick={() => setAltri(altri.slice(0, -1))} />
-          </div>
+          <p className="mt-3 text-sm text-inchiostro/70">
+            {altri.length === 0 ? "Nessuno ancora." : `${altri.length + 1} persone, te compreso. Il − accanto a un nome lo toglie.`}
+          </p>
         </Feltro>
 
         <Errore>{errore}</Errore>

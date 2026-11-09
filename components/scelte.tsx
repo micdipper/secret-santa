@@ -28,6 +28,8 @@ export function ScegliEmoji({ valore, onCambia }: { valore: string; onCambia: (e
 }
 
 // Campo per il PIN a 4 cifre (tastiera numerica sul telefono).
+// Non è un campo "password": così il gestore password del telefono non lo salva
+// e non mostra falsi allarmi (un PIN di 4 cifre risulta sempre "già visto" nelle sue liste).
 export function CampoPin({
   id,
   etichetta,
@@ -49,14 +51,17 @@ export function CampoPin({
       <div className="campo-cucito">
         <input
           id={id}
-          type="password"
+          type="text"
           inputMode="numeric"
           autoComplete="off"
+          name={`pin-${id}`}
+          data-1p-ignore
+          data-lpignore="true"
           pattern="[0-9]{4}"
           maxLength={4}
           value={valore}
           onChange={(ev) => onCambia(ev.target.value.replace(/\D/g, "").slice(0, 4))}
-          className="text-center font-titolo text-2xl tracking-[0.6em]"
+          className="text-center font-titolo text-2xl tracking-[0.6em] [-webkit-text-security:disc]"
           placeholder="••••"
         />
       </div>
