@@ -10,7 +10,7 @@ Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole)
 | Database Fase 1 (tabelle, RLS, funzioni, archivio foto) | ✅ fatto e collaudato |
 | 2 · Crea gruppo, invito, pagina gruppo, area organizzatore | ✅ fatto e collaudato |
 | Promemoria "Il tuo regalo è per…" nella pagina del gruppo dopo aver aperto la busta (`group_members.envelope_opened_at`) | ✅ fatto e collaudato |
-| Reimposta password (link usa-e-getta 24 ore, usa `SUPABASE_SECRET_KEY`) | ⏳ da fare |
+| Reimposta password: link usa-e-getta 24 ore creato dall'organizzatore (⋯ accanto al nome), l'amico sceglie la nuova password (`/reimposta/[codice]`). Fatto con funzioni del database (`create_password_reset`, `use_password_reset`), senza chiave segreta | ✅ fatto e collaudato |
 | Bacheca: quiz, toppe SVG nel cassetto, ricamo a punto croce, foto, lista dei desideri | ⏳ da fare (aspetta le domande/verdetti di Marzia) |
 | Rivelazione: busta 3D con three.js, biglietto olografico, neve (oggi c'è una versione semplice) | ⏳ da fare |
 | Suoni (tocchi, sottofondo, oggetti) + tasto per togliere l'audio | ⏳ da fare (decidere: generati dal codice o file con licenza libera) |

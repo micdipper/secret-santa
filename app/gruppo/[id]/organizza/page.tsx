@@ -31,6 +31,7 @@ function Organizza() {
   const [avviso, setAvviso] = useState("");
 
   const [aperto, setAperto] = useState<string | null>(null); // membro con le opzioni aperte
+  const [linkReset, setLinkReset] = useState<{ membro: string; url: string } | null>(null);
   const [nuovoNome, setNuovoNome] = useState("");
   const [nuovaCoppia, setNuovaCoppia] = useState(false);
   const [coppiaA, setCoppiaA] = useState("");
@@ -83,6 +84,26 @@ function Organizza() {
     setNuovoNome("");
     setErrore("");
     carica();
+  }
+
+  async function creaLinkReset(m: Membro) {
+    const { data, error } = await supabase.rpc("create_password_reset", { p_member_id: m.id });
+    if (error || !data) return setErrore(error?.message ?? "Non sono riuscito a creare il link.");
+    setErrore("");
+    setLinkReset({ membro: m.id, url: `${window.location.origin}/reimposta/${data}` });
+  }
+
+  async function condividiLinkReset(m: Membro, url: string) {
+    const testo = `${m.display_name.split(" ")[0]}, ecco il link per scegliere una nuova password per "${gruppo!.name}". Vale 24 ore e si usa una volta sola.`;
+    try {
+      if (navigator.share) await navigator.share({ title: "Nuova password", text: testo, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setAvviso("Link copiato.");
+      }
+    } catch {
+      // condivisione annullata
+    }
   }
 
   async function liberaNome(m: Membro) {
@@ -206,6 +227,7 @@ function Organizza() {
             const sonoIo = m.user_id === mioId;
             const puoLiberare = modificabile && !!m.user_id && !sonoIo;
             const puoTogliere = modificabile && !m.user_id;
+            const puoReimpostare = !!m.user_id && !sonoIo;
             return (
               <li key={m.id} className="py-3">
                 <div className="flex items-center gap-3">
@@ -220,13 +242,34 @@ function Organizza() {
                   <TastoTondo
                     etichetta={`Opzioni per ${m.display_name}`}
                     icona={Icone.altro}
-                    disabled={!puoLiberare && !puoTogliere}
+                    disabled={!puoLiberare && !puoTogliere && !puoReimpostare}
                     aria-expanded={aperto === m.id}
-                    onClick={() => setAperto(aperto === m.id ? null : m.id)}
+                    onClick={() => {
+                      setAperto(aperto === m.id ? null : m.id);
+                      setLinkReset(null);
+                    }}
                   />
                 </div>
                 {aperto === m.id && (
                   <div className="mt-3 flex flex-col gap-2">
+                    {puoReimpostare &&
+                      (linkReset?.membro === m.id ? (
+                        <>
+                          <p className="text-sm text-inchiostro/70">
+                            Link pronto: mandalo <b>in privato</b> a {m.display_name.split(" ")[0]}. Vale 24 ore e si usa una volta sola; tu non vedrai la nuova password.
+                          </p>
+                          <Tasto onClick={() => condividiLinkReset(m, linkReset.url)}>Manda il link</Tasto>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm text-inchiostro/70">
+                            Ha dimenticato la password? Crea un link con cui sceglierne una nuova da solo.
+                          </p>
+                          <Tasto tipo="secondario" onClick={() => creaLinkReset(m)}>
+                            Reimposta password
+                          </Tasto>
+                        </>
+                      ))}
                     {puoLiberare && (
                       <>
                         <p className="text-sm text-inchiostro/70">Se qualcuno ha preso questo nome per sbaglio, liberalo: tornerà libero nella lista dell&apos;invito.</p>
