@@ -219,6 +219,34 @@ export const Icone = {
       <path d="M4 20L20 4" />
     </svg>
   ),
+  sopra: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect x="4" y="10" width="11" height="10" rx="2" />
+      <path d="M9 10V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
+    </svg>
+  ),
+  cestino: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+    </svg>
+  ),
+  gomma: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M14 4l6 6-9 9H6l-3-3z" />
+      <path d="M9 9l6 6M11 19h9" />
+    </svg>
+  ),
+  annulla: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M9 14L4 9l5-5" />
+      <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+    </svg>
+  ),
+  fatto: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M5 12l5 5 9-10" />
+    </svg>
+  ),
   ago: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 19L18 6" />

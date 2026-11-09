@@ -19,7 +19,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - **Next.js (App Router) + TypeScript + Tailwind CSS**
 - **Supabase**: Postgres, Auth, Storage (immagini moodboard), Realtime (chat)
 - **Vercel** per l'hosting, deploy automatico da GitHub (ogni push genera un'anteprima da provare sul telefono)
-- Moodboard: `react-rnd` (trascina + ridimensiona, supporta il touch) + rotazione con maniglia dedicata
+- Bacheca: gesti col dito scritti da noi (un dito sposta, due dita ingrandiscono e ruotano), senza librerie esterne
 - Animazioni: `framer-motion`; neve/coriandoli: `canvas-confetti` o equivalente leggero
 - 3D: `three` (solo questa libreria, senza @react-three/*), caricato **solo nella pagina della rivelazione**
 
@@ -48,10 +48,11 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
    - **ricamo a punto croce col dito**: ogni quadretto toccato diventa una crocetta; griglia abbastanza fine da permettere un minimo di dettaglio (non grossolana), 4-5 colori di filo, gomma e annulla
    - anche foto caricate e immagini da link; niente post-it
    - salvataggio automatico; visibile a tutto il gruppo (in sola lettura per gli altri)
-7. **Lista dei desideri** come seconda scheda della bacheca: voci con link; la spunta "già preso" è visibile solo a chi regala.
+   - gesti col dito scritti da noi (un dito sposta, due dita ingrandiscono e ruotano): **niente `react-rnd`**
+7. ~~Lista dei desideri~~ **tolta** (decisione di Marzia): è solo la bacheca a raccontare il mood del regalo.
 8. **Pagina gruppo**: membri con avatar, budget, data, **countdown** allo scambio.
 
-9bis. **Avatar e premi** (approvato da Marzia): l'**avatar sostituisce le emoji** ovunque. Personaggio **originale** disegnato da noi in SVG, stile feltro morbido, **sempre a mezzobusto**. Nella pagina "Il mio profilo" si scelgono pelle, capelli e maglione; gli **accessori natalizi si sbloccano SOLO così**: quiz completato → cappello legato al verdetto · almeno una toppa di ogni tipo → sciarpa a maglia nordica · primo ricamo a punto croce → ditale d'oro/gomitolo · almeno 3 desideri nella lista → fiocco · busta aperta → stellina. **Apertura della busta "a slot machine"**: gli avatar di tutti scorrono come rulli, rallentano e si fermano sulla persona pescata (il risultato è già deciso dal database, è solo spettacolo), poi busta 3D e biglietto. Ordine dei lavori: bacheca → avatar e profilo → slot machine + busta 3D → suoni → pubblicazione.
+9bis. **Avatar e premi** (approvato da Marzia): l'**avatar sostituisce le emoji** ovunque. Personaggio **originale** disegnato da noi in SVG, stile feltro morbido, **sempre a mezzobusto**. Nella pagina "Il mio profilo" si scelgono pelle, capelli e maglione; gli **accessori natalizi si sbloccano SOLO così**: quiz completato → cappello legato al verdetto · almeno una toppa di ogni tipo → sciarpa a maglia nordica · primo ricamo a punto croce → ditale d'oro/gomitolo · almeno una foto o immagine attaccata alla bacheca → fiocco (provvisorio, da confermare) · busta aperta → stellina. **Apertura della busta "a slot machine"**: gli avatar di tutti scorrono come rulli, rallentano e si fermano sulla persona pescata (il risultato è già deciso dal database, è solo spettacolo), poi busta 3D e biglietto. Ordine dei lavori: bacheca → avatar e profilo → slot machine + busta 3D → suoni → pubblicazione.
 
 ### Fase 2 – Mini social (domani)
 9. **Chat anonima con il tuo Babbo Natale**: chi regala può scrivere alla persona pescata senza rivelarsi; il destinatario può rispondere. Supabase Realtime. RLS: ogni conversazione è leggibile solo dai due partecipanti, e al destinatario non viene mai esposto l'id di chi scrive.
@@ -96,8 +97,6 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - `exclusions` (group_id, user_a, user_b)
 - `assignments` (group_id, giver_id, receiver_id) — RLS: leggibile solo dal giver, finché lo stato non è "rivelato"
 - `moodboard_items` (id, user_id, group_id, tipo, contenuto, x, y, larghezza, altezza, rotazione, z)
-- `wishlist_items` (id, user_id, group_id, titolo, link)
-- `wishlist_claims` (item_id, claimed_by) — spunta "già preso" in tabella separata: la vede solo chi l'ha messa, mai il proprietario della wishlist
 - Fase 2: `messages`, `feed_events`, `reactions`
 
 ## Regole di lavoro

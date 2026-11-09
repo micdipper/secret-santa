@@ -265,6 +265,17 @@ textarea {
   outline: none;
 }
 
+/* Tela da ricamo (aida): crema con la trama a quadretti */
+.tela-aida {
+  background-color: #f6eedb;
+  background-image:
+    linear-gradient(rgb(44 74 50 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(44 74 50 / 0.07) 1px, transparent 1px),
+    radial-gradient(circle at center, rgb(120 90 40 / 0.1) 0.8px, transparent 1.2px);
+  background-size: var(--cella, 6px) var(--cella, 6px);
+  touch-action: pan-y;
+}
+
 /* Pallina che dondola */
 @keyframes dondola {
   0% { transform: rotate(0); }

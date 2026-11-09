@@ -11,7 +11,9 @@ Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole)
 | 2 · Crea gruppo, invito, pagina gruppo, area organizzatore | ✅ fatto e collaudato |
 | Promemoria "Il tuo regalo è per…" nella pagina del gruppo dopo aver aperto la busta (`group_members.envelope_opened_at`) | ✅ fatto e collaudato |
 | Reimposta password: link usa-e-getta 24 ore creato dall'organizzatore (⋯ accanto al nome), l'amico sceglie la nuova password (`/reimposta/[codice]`). Fatto con funzioni del database (`create_password_reset`, `use_password_reset`), senza chiave segreta | ✅ fatto e collaudato |
-| Bacheca: quiz, toppe SVG nel cassetto, ricamo a punto croce, foto, lista dei desideri | ⏳ da fare (aspetta le domande/verdetti di Marzia) |
+| Bacheca: tela aida, cassetto con 21 toppe SVG (simboli, parole, palette/texture), gesti (1 dito sposta, 2 dita ingrandiscono/ruotano), porta sopra/togli, foto (ridotte a 1200px, archivio privato) e immagini da link, ricamo a punto croce 60×80 con 5 fili, gomma e annulla, salvataggio automatico — `components/bacheca.tsx`, `components/toppe.tsx` | ✅ fatto e collaudato |
+| Quiz "Questo o quello" + verdetto (totem) | ⏳ aspetta domande e struttura di Marzia |
+| Lista dei desideri | ❌ tolta (decisione di Marzia) |
 | Rivelazione: busta 3D con three.js, biglietto olografico, neve (oggi c'è una versione semplice) | ⏳ da fare |
 | Suoni (tocchi, sottofondo, oggetti) + tasto per togliere l'audio | ⏳ da fare (decidere: generati dal codice o file con licenza libera) |
 | Pubblicazione: unire il ramo in `main` → sito ufficiale su Vercel (Production) | ⏳ a fine Fase 1 |
