@@ -23,6 +23,26 @@ export function Tasto({
   );
 }
 
+// Stesso aspetto del Tasto, ma porta a un'altra pagina.
+export function TastoLink({
+  href,
+  tipo = "primario",
+  className = "",
+  children,
+}: {
+  href: string;
+  tipo?: "primario" | "secondario";
+  className?: string;
+  children: ReactNode;
+}) {
+  const stoffa = tipo === "primario" ? "stoffa-vermiglio" : "stoffa-chiara";
+  return (
+    <Link href={href} className={`tasto cucitura cliccabile ${stoffa} ${className}`}>
+      <span>{children}</span>
+    </Link>
+  );
+}
+
 // L'etichetta è obbligatoria: serve a chi usa lo screen reader e compare al passaggio del mouse.
 export function TastoTondo({
   etichetta,
@@ -195,3 +215,13 @@ export const Icone = {
     </svg>
   ),
 };
+
+// Messaggio d'errore vicino a ciò che l'ha causato (non cliccabile).
+export function Errore({ children }: { children: ReactNode }) {
+  if (!children) return null;
+  return (
+    <p role="alert" className="rounded-2xl bg-vermiglio/10 px-4 py-3 text-sm text-vermiglio-scuro">
+      {children}
+    </p>
+  );
+}
