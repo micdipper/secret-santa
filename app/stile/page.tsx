@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
-import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTesto, TastoTondo, Toppa, TornaAlGruppo } from "@/components/ui";
+import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, Toppa, TornaAlGruppo } from "@/components/ui";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
 export const metadata = { title: "Base grafica – Secret Santa" };
@@ -62,7 +62,9 @@ export default function Stile() {
           <br />è pronta
         </h2>
         <p className="mt-1.5 max-w-[220px]">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
-        <Tasto className="mt-5">Apri la busta</Tasto>
+        <Tasto largo className="mt-5">
+          Apri la busta
+        </Tasto>
       </Feltro>
 
       {/* Riquadro cliccabile: in rilievo, come i tasti */}
@@ -87,20 +89,22 @@ export default function Stile() {
       </div>
       <ul className="-mx-[18px] flex gap-3.5 overflow-x-auto px-[18px] pb-1.5">
         {membri.map((m) => (
-          <li key={m.nome} className="flex w-[62px] flex-none flex-col items-center gap-1.5 text-[13px]">
-            <Toppa emoji={m.emoji} novita={m.novita} />
-            {m.nome}
+          <li key={m.nome} className="flex-none">
+            <Link href="/stile" className="flex w-[62px] flex-col items-center gap-1.5 pt-0.5 text-[13px]" aria-label={`Bacheca di ${m.nome}`}>
+              <Toppa emoji={m.emoji} novita={m.novita} cliccabile />
+              {m.nome}
+            </Link>
           </li>
         ))}
       </ul>
-      <p className="mt-1.5 text-[13px] text-crema/70">Il pallino giallo indica chi ha appena aggiornato la bacheca.</p>
+      <p className="mt-2 text-[13px] text-crema/70">Tocca una persona per vedere la sua bacheca. Il pallino giallo indica chi l&apos;ha appena aggiornata.</p>
       <p className="mt-4 text-[13px] text-crema/70">
         Prova: tocca la pallina (sul telefono Android puoi anche scuoterlo).
       </p>
 
       {/* ---------- Esempio: crea il gruppo ---------- */}
       <Separatore titolo="Esempio: crea il gruppo" />
-      <TornaAlGruppo href="/stile" nome="Indietro" />
+      <TornaAlGruppo href="/stile" nome="I tuoi gruppi" />
       <h1 className="mt-4 font-titolo text-[34px] leading-none">Crea il gruppo</h1>
       <Feltro className="mt-5">
         <div className="flex flex-col gap-5">
@@ -108,12 +112,9 @@ export default function Stile() {
           <Campo id="prova-tema" etichetta="Tema (facoltativo)" placeholder="Regali fatti a mano" />
         </div>
       </Feltro>
-      <div className="mt-6 flex flex-col items-center gap-2">
-        <Tasto variante="vermiglio" largo>
-          Crea il gruppo
-        </Tasto>
-        <TastoTesto>Annulla</TastoTesto>
-      </div>
+      <Tasto variante="vermiglio" largo className="mt-6">
+        Crea il gruppo
+      </Tasto>
 
       {/* ---------- Esempio: area dell'organizzatore ---------- */}
       <Separatore titolo="Esempio: area dell'organizzatore" />
@@ -169,17 +170,20 @@ export default function Stile() {
         <div className="mt-3 flex flex-wrap gap-2">
           <EtichettaStoffa colore="verde">Giulia e Marco</EtichettaStoffa>
         </div>
-        <Tasto variante="crema" className="mt-4">
-          Aggiungi una coppia
-        </Tasto>
+        <div className="mt-4 flex items-center gap-3">
+          <Tasto variante="crema" className="flex-1">
+            Nuova coppia
+          </Tasto>
+          <TastoTondo etichetta="Togli una coppia" icona={Icone.meno} />
+        </div>
+        <p className="mt-2 text-sm text-inchiostro/70">Con il − scegli quale coppia togliere. È spento finché non ce ne sono.</p>
       </Feltro>
 
       <Feltro className="mt-4">
         <h2 className="font-titolo text-[22px] text-abete">Link d&apos;invito</h2>
-        <p className="mt-1 text-sm text-inchiostro/70">Mandalo nel gruppo: ognuno tocca il proprio nome.</p>
-        <div className="campo-cucito mt-3">
-          <input readOnly value="secretsanta.app/g/3f9a1c7e2b4d" aria-label="Link d'invito" />
-        </div>
+        <p className="mt-1 text-sm text-inchiostro/70">
+          Mandalo nel gruppo: ognuno tocca il proprio nome. Sul computer il link viene copiato.
+        </p>
         <Tasto variante="verde" largo className="mt-4">
           Condividi il link
         </Tasto>
@@ -202,6 +206,7 @@ export default function Stile() {
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <Tasto>Apri la busta</Tasto>
+        <Toppa emoji="🦊" dimensione={44} cliccabile />
         <TastoTondo etichetta="Modifica" icona={Icone.matita} />
         <TastoTondo etichetta="Aggiungi" icona={Icone.piu} variante="verde" />
         <TastoTondo etichetta="Ricama" icona={Icone.ago} variante="vermiglio" />
@@ -209,6 +214,7 @@ export default function Stile() {
       <div className="mt-4 flex flex-wrap gap-2">
         <EtichettaStoffa>non cliccabile</EtichettaStoffa>
         <EtichettaStoffa colore="vermiglio">informazione</EtichettaStoffa>
+        <Toppa emoji="🦊" dimensione={44} />
       </div>
 
       <h2 className="mt-10 font-titolo text-3xl">Colori</h2>

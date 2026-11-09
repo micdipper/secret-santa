@@ -22,16 +22,6 @@ export function Tasto({
   );
 }
 
-// Tasto secondario: solo testo sottolineato, per "Annulla" e simili.
-export function TastoTesto({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      className={`min-h-11 px-3 text-[15px] underline decoration-dashed decoration-2 underline-offset-4 opacity-85 hover:opacity-100 active:opacity-70 ${className}`}
-      {...props}
-    />
-  );
-}
-
 // Bottone tondo: stessa stoffa e cucitura dei tasti, con un'icona.
 // L'etichetta è obbligatoria per chi usa lo screen reader.
 export function TastoTondo({
@@ -64,7 +54,7 @@ export function Feltro({
   className?: string;
 }) {
   return (
-    <div className={`feltro ${variante === "vermiglio" ? "feltro-vermiglio" : ""} p-6 ${className}`}>
+    <div className={`feltro ${variante === "vermiglio" ? "feltro-vermiglio" : ""} px-6 pt-7 pb-6 ${className}`}>
       <div className="relative">{children}</div>
     </div>
   );
@@ -91,14 +81,16 @@ export function Toppa({
   emoji,
   dimensione = 58,
   novita = false,
+  cliccabile = false,
 }: {
   emoji: string;
   dimensione?: number;
   novita?: boolean;
+  cliccabile?: boolean;
 }) {
   return (
     <span
-      className="toppa"
+      className={`toppa ${cliccabile ? "cliccabile stoffa-crema" : ""}`}
       style={{ width: dimensione, height: dimensione, fontSize: dimensione * 0.48 }}
       aria-hidden
     >
