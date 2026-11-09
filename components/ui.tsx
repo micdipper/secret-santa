@@ -1,33 +1,53 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
+type Stoffa = "crema" | "vermiglio" | "verde";
+
 // Tasto a pillola di stoffa: solo testo, per le azioni principali.
+// Tutto ciò che è cliccabile è "in rilievo" (classe .cliccabile).
 export function Tasto({
+  variante = "crema",
+  largo = false,
+  className = "",
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: Stoffa; largo?: boolean }) {
+  return (
+    <button
+      className={`tasto cucitura cliccabile stoffa-${variante} ${largo ? "w-full" : ""} ${className}`}
+      {...props}
+    >
+      <span>{children}</span>
+    </button>
+  );
+}
+
+// Tasto secondario: solo testo sottolineato, per "Annulla" e simili.
+export function TastoTesto({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className={`min-h-11 px-3 text-[15px] underline decoration-dashed decoration-2 underline-offset-4 opacity-85 hover:opacity-100 active:opacity-70 ${className}`}
+      {...props}
+    />
+  );
+}
+
+// Bottone tondo: stessa stoffa e cucitura dei tasti, con un'icona.
+// L'etichetta è obbligatoria per chi usa lo screen reader.
+export function TastoTondo({
+  etichetta,
+  icona,
   variante = "crema",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: "crema" | "vermiglio" | "verde" }) {
-  const colori = {
-    crema:
-      "bg-feltro text-vermiglio-scuro shadow-[inset_0_-4px_8px_rgba(120,90,40,.2),0_8px_14px_-8px_rgba(0,0,0,.6)]",
-    vermiglio:
-      "bg-vermiglio text-crema shadow-[inset_0_-4px_8px_rgba(0,0,0,.18),0_8px_14px_-8px_rgba(0,0,0,.6)]",
-    verde:
-      "bg-abete text-crema shadow-[inset_0_-4px_8px_rgba(0,0,0,.25),0_8px_14px_-8px_rgba(0,0,0,.6)]",
-  }[variante];
-  return <button className={`tasto ${colori} ${className}`} {...props} />;
-}
-
-// Bottone di legno rotondo con icona incisa: solo per piccole azioni senza testo.
-// L'etichetta è obbligatoria per chi usa lo screen reader.
-export function BottoneLegno({
-  etichetta,
-  icona,
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { etichetta: string; icona: ReactNode }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { etichetta: string; icona: ReactNode; variante?: Stoffa }) {
   return (
-    <button aria-label={etichetta} title={etichetta} className={`bottone-legno ${className}`} {...props}>
+    <button
+      aria-label={etichetta}
+      title={etichetta}
+      className={`tasto-tondo cucitura cliccabile stoffa-${variante} ${className}`}
+      {...props}
+    >
       {icona}
     </button>
   );
@@ -105,7 +125,7 @@ export function TornaAlGruppo({ href, nome }: { href: string; nome: string }) {
   );
 }
 
-// Campo di testo con l'etichetta sempre visibile (da usare dentro un Feltro).
+// Campo di testo cucito con l'etichetta sempre visibile (da usare dentro un Feltro).
 export function Campo({
   etichetta,
   aiuto,
@@ -113,21 +133,19 @@ export function Campo({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { etichetta: string; aiuto?: string; id: string }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="font-medium text-inchiostro">
         {etichetta}
       </label>
-      <input
-        id={id}
-        className="min-h-12 rounded-2xl border-2 border-abete/30 bg-white/60 px-4 text-inchiostro placeholder:text-inchiostro/40 focus:border-abete"
-        {...props}
-      />
+      <div className="campo-cucito">
+        <input id={id} className="placeholder:text-inchiostro/40" {...props} />
+      </div>
       {aiuto && <p className="text-sm text-inchiostro/70">{aiuto}</p>}
     </div>
   );
 }
 
-// Icone incise per i bottoni di legno (tratto semplice, originali).
+// Icone per i bottoni tondi (tratto semplice, originali).
 export const Icone = {
   matita: (
     <svg viewBox="0 0 24 24" aria-hidden>
@@ -144,6 +162,23 @@ export const Icone = {
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M12 15V4M8 8l4-4 4 4" />
       <path d="M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7" />
+    </svg>
+  ),
+  altro: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <circle cx="6" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="18" cy="12" r="1.2" />
+    </svg>
+  ),
+  avanti: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  ),
+  meno: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M5 12h14" />
     </svg>
   ),
   ago: (
