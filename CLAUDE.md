@@ -39,12 +39,14 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 3. **Estrazione**: l'organizzatore la avvia quando tutti sono entrati. Algoritmo: permutazione casuale senza auto-abbinamenti che rispetti le esclusioni (riprovare finché valida; se impossibile, messaggio chiaro). Eseguita **lato server** (route API con chiave di servizio, oppure funzione Postgres `security definer`), mai nel browser. Si esegue una sola volta per gruppo. L'organizzatore partecipa all'estrazione come gli altri. **Dopo l'estrazione il link d'invito smette di funzionare** (nessun nuovo ingresso).
 4. **Segretezza totale**: Row Level Security su tutte le tabelle. Ogni utente legge **solo il proprio abbinamento**. **Nessuno, organizzatore compreso, vede gli altri abbinamenti** fino alla rivelazione finale.
 5. **Rivelazione animata**: busta 3D (three.js) con dentro il biglietto col nome. Il biglietto si inclina con le dita o col giroscopio (permesso iOS chiesto al tocco "Apri la busta") con effetto olografico, stile carte collezionabili; neve che cade. Fallback 2D se il 3D non è supportato o con "riduci movimento".
-6. **Moodboard personale** (cuore del sito):
-   - bacheca libera dove trascinare, ridimensionare e ruotare elementi con le dita
-   - elementi: foto caricate, immagini da link, post-it con parole chiave, palette colori, taglie
-   - salvataggio automatico delle posizioni
-   - visibile a tutto il gruppo (in sola lettura per gli altri)
-7. **Wishlist** accanto alla moodboard: voci con link; la spunta "già preso" è visibile solo a chi regala.
+6. **Bacheca personale** (nell'interfaccia si chiama "bacheca", non "moodboard"; è il cuore del sito):
+   - è una **tela da ricamo** (trama a quadretti tipo aida) su cui si attaccano toppe e si ricama
+   - **quiz "Questo o quello"** al primo accesso: ~6 carte, un tocco per risposta, sempre "Salta"; tono **nonsense / meme**, mai serio. Alla fine un **verdetto surreale** ("totem") appuntato in cima alla bacheca. Le risposte aiutano chi regala e decidono quali toppe compaiono nel cassetto. Domande e verdetti definitivi: li propone Marzia.
+   - **cassetto di toppe ricamate già pronte**, disegnate da noi in **SVG**: vibe e atmosfere (texture, simboli, parole ricamate col font dei titoli, palette), non prodotti. Sul telefono: tocca per attaccare → poi trascina, ridimensiona e ruota con le dita
+   - **ricamo a punto croce col dito**: ogni quadretto toccato diventa una crocetta; griglia abbastanza fine da permettere un minimo di dettaglio (non grossolana), 4-5 colori di filo, gomma e annulla
+   - anche foto caricate e immagini da link; niente post-it
+   - salvataggio automatico; visibile a tutto il gruppo (in sola lettura per gli altri)
+7. **Lista dei desideri** come seconda scheda della bacheca: voci con link; la spunta "già preso" è visibile solo a chi regala.
 8. **Pagina gruppo**: membri con avatar, budget, data, **countdown** allo scambio.
 
 ### Fase 2 – Mini social (domani)
@@ -60,6 +62,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 
 ## Stile visivo
 - **Natalizio classico, giocoso, con un tocco vintage — ma curato e di qualità**, non kitsch.
+- **Direzione approvata (vedi `reference/17` e `18`)**: sfondo **verde abete in tinta unita** con luce morbida e grana leggera; elementi **tessili e tattili**: riquadri di **feltro** con cucitura tratteggiata, **etichette di stoffa** cucite per le info (giorni, data, budget), **toppe rotonde** per i membri. **Tasti = una forma sola**: pillole di stoffa con solo testo per le azioni principali; **bottoni di legno rotondi** con icona incisa solo per piccole azioni senza testo. **Niente menu in basso**: la pagina del gruppo è il punto di partenza, le pagine interne hanno in alto "‹ nome del gruppo". Oggetti realistici al minimo (es. una pallina), con leggero **effetto profondità** al movimento del telefono. Niente post-it, niente rettangoli rigidi.
 - **Vibe nordica folkloristica natalizia** (il motivo per cui Marzia ama Mishca): motivi a maglia nordica, stelle a 8 punte, cuori e uccellini dell'arte popolare scandinava, carta ritagliata, stelle di paglia. Tutti gli ornamenti sono **disegnati da noi in SVG**, originali, niente immagini prese dal web. Il tocco nordico è **un ingrediente, non tutto il sito**: l'obiettivo è un mashup equilibrato di tutte le reference (collage/scrapbook, colori pieni da rivista, scritte a mano, carta, Natale nordico).
 - Riferimenti: cartoline natalizie anni '50-'60, carta da regalo stampata, francobolli, etichette per pacchi, texture di carta leggera.
 - Palette di partenza (da affinare con le reference): rosso ciliegia, verde abete scuro, crema/carta, oro tenue.
