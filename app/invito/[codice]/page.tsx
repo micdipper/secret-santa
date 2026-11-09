@@ -2,8 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { CampoPassword, ScegliEmoji } from "@/components/scelte";
-import { Errore, Feltro, Tasto, TitoloRiquadro, Toppa } from "@/components/ui";
+import { ToppaAvatar, normalizzaLook } from "@/components/avatar";
+import { CampoPassword } from "@/components/scelte";
+import { Errore, Feltro, Tasto, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
@@ -13,7 +14,7 @@ type Posto = {
   group_status: string;
   member_id: string;
   display_name: string;
-  avatar: string | null;
+  look: unknown;
   claimed: boolean;
   login_email: string | null;
 };
@@ -26,7 +27,6 @@ export default function Invito() {
   const [posti, setPosti] = useState<Posto[] | null>(null);
   const [mioId, setMioId] = useState<string | null>(null);
   const [scelto, setScelto] = useState<Posto | null>(null);
-  const [emoji, setEmoji] = useState("🦊");
   const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [invio, setInvio] = useState(false);
@@ -106,13 +106,14 @@ export default function Invito() {
         return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
       }
     }
-    const { error } = await supabase.rpc("claim_member", { p_invite_code: codice, p_member_id: scelto.member_id, p_avatar: emoji });
+    const { error } = await supabase.rpc("claim_member", { p_invite_code: codice, p_member_id: scelto.member_id, p_avatar: null });
     if (error) {
       setInvio(false);
       await carica();
       return setErrore(error.message);
     }
-    router.replace(`/gruppo/${gruppo.group_id}`);
+    // Appena entrato: prima si veste il personaggio, poi si va al gruppo
+    router.replace(`/profilo?gruppo=${gruppo.group_id}`);
   }
 
   return (
@@ -124,7 +125,7 @@ export default function Invito() {
         <Feltro className="mt-6">
           <TitoloRiquadro>Chi sei?</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">
-            {aperto ? "Tocca il tuo nome. Chi ha già l'emoji è entrato: se sei tu, ti chiederò la password." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
+            {aperto ? "Tocca il tuo nome. Chi ha già il personaggio è entrato: se sei tu, ti chiederò la password." : "L'estrazione è già stata fatta: tocca il tuo nome per rientrare."}
           </p>
           <ul className="mt-4 flex flex-col gap-3">
             {posti.map((p) => {
@@ -141,7 +142,7 @@ export default function Invito() {
                     }}
                     className="cucitura cliccabile stoffa-chiara relative flex h-14 w-full items-center gap-3 rounded-full pr-6 pl-2 text-left"
                   >
-                    <Toppa emoji={p.avatar ?? "·"} dimensione={40} />
+                    <ToppaAvatar look={p.claimed ? normalizzaLook(p.look, p.member_id) : null} dimensione={40} />
                     <span className="font-titolo text-lg text-abete">{p.display_name}</span>
                   </button>
                 </li>
@@ -153,7 +154,6 @@ export default function Invito() {
         <Feltro className="mt-6">
           <TitoloRiquadro>{scelto.claimed ? `Bentornato, ${scelto.display_name}` : `Ciao, ${scelto.display_name}!`}</TitoloRiquadro>
           <div className="mt-5 flex flex-col gap-5">
-            {!scelto.claimed && <ScegliEmoji valore={emoji} onCambia={setEmoji} />}
             {(scelto.claimed || !mioId) && (
               <CampoPassword
                 id="password"

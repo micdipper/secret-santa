@@ -92,32 +92,6 @@ export function EtichettaStoffa({
   return <span className={`etichetta-stoffa text-sm ${stile}`}>{children}</span>;
 }
 
-// Toppa rotonda con l'emoji della persona. In rilievo solo se si può toccare.
-export function Toppa({
-  emoji,
-  dimensione = 56,
-  novita = false,
-  cliccabile = false,
-}: {
-  emoji: string;
-  dimensione?: number;
-  novita?: boolean;
-  cliccabile?: boolean;
-}) {
-  return (
-    <span
-      className={`toppa ${cliccabile ? "cliccabile stoffa-chiara" : ""}`}
-      style={{ width: dimensione, height: dimensione, fontSize: dimensione * 0.48 }}
-      aria-hidden
-    >
-      {emoji}
-      {novita && (
-        <span className="absolute top-0.5 right-0 size-3.5 rounded-full bg-senape shadow-[0_0_0_2px_var(--color-abete)]" />
-      )}
-    </span>
-  );
-}
-
 // Testata delle pagine interne: tasto tondo per tornare indietro (unico modo),
 // nome del gruppo come contesto e titolo della pagina.
 export function TestataInterna({

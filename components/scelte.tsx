@@ -2,32 +2,6 @@
 
 import { useState } from "react";
 import { Icone, TastoTondo } from "@/components/ui";
-import { EMOJI } from "@/lib/accesso";
-
-// Griglia di emoji: ognuna è una toppa che si tocca (in rilievo); quella scelta è cerchiata.
-export function ScegliEmoji({ valore, onCambia }: { valore: string; onCambia: (e: string) => void }) {
-  return (
-    <fieldset>
-      <legend className="mb-2 font-medium text-inchiostro">La tua emoji</legend>
-      <div className="grid grid-cols-6 gap-2">
-        {EMOJI.map((e) => (
-          <button
-            key={e}
-            type="button"
-            aria-label={`Emoji ${e}`}
-            aria-pressed={valore === e}
-            onClick={() => onCambia(e)}
-            className={`toppa cliccabile stoffa-chiara aspect-square w-full text-2xl ${
-              valore === e ? "outline-3 outline-offset-2 outline-vermiglio" : ""
-            }`}
-          >
-            {e}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
 
 // Campo per la password (almeno 8 caratteri), con il tasto per mostrarla.
 export function CampoPassword({

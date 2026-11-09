@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CampoPassword, ScegliEmoji } from "@/components/scelte";
+import { CampoPassword } from "@/components/scelte";
 import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -17,7 +17,6 @@ export default function NuovoGruppo() {
   const [budget, setBudget] = useState(30);
   const [tema, setTema] = useState("");
   const [mioNome, setMioNome] = useState("");
-  const [emoji, setEmoji] = useState("🦊");
   const [altri, setAltri] = useState<string[]>([]);
   const [nuovoNome, setNuovoNome] = useState("");
   const [password, setPassword] = useState("");
@@ -63,7 +62,7 @@ export default function NuovoGruppo() {
       p_exchange_date: data || null,
       p_theme: tema,
       p_my_name: mioNome,
-      p_my_avatar: emoji,
+      p_my_avatar: null,
       p_other_names: altri,
     });
     if (error || !risultato?.[0]) {
@@ -104,7 +103,6 @@ export default function NuovoGruppo() {
           <p className="mt-2 text-sm text-inchiostro/70">Partecipi anche tu all&apos;estrazione, come gli altri.</p>
           <div className="mt-5 flex flex-col gap-5">
             <Campo id="mio-nome" etichetta="Il tuo nome" placeholder="Nome e cognome" value={mioNome} onChange={(e) => setMioNome(e.target.value)} maxLength={60} />
-            <ScegliEmoji valore={emoji} onCambia={setEmoji} />
             {!collegato && (
               <CampoPassword id="password" nuova etichetta="Scegli una password" valore={password} onCambia={setPassword} aiuto="Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno." />
             )}

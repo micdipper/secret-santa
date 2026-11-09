@@ -2,7 +2,8 @@ import Link from "next/link";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
-import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro, Toppa } from "@/components/ui";
+import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { ToppaAvatar, lookIniziale } from "@/components/avatar";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
 export const metadata = { title: "Base grafica – Secret Santa" };
@@ -83,7 +84,7 @@ export default function Stile() {
           {membri.map((m) => (
             <li key={m.nome} className="flex-none">
               <Link href="/stile" className="flex w-16 flex-col items-center gap-2 text-sm" aria-label={`Bacheca di ${m.nome}`}>
-                <Toppa emoji={m.emoji} novita={m.novita} cliccabile />
+                <ToppaAvatar look={lookIniziale(m.nome)} novita={m.novita} cliccabile />
                 {m.nome}
               </Link>
             </li>
@@ -136,7 +137,7 @@ export default function Stile() {
         <ul className="mt-3 divide-y-2 divide-dashed divide-abete/15">
           {membri.map((m) => (
             <li key={m.nome} className="flex items-center gap-3 py-3">
-              <Toppa emoji={m.entrato ? m.emoji : "·"} dimensione={40} />
+              <ToppaAvatar look={m.entrato ? lookIniziale(m.nome) : null} dimensione={40} />
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{m.nome}</span>
                 <span className={`block text-sm ${m.entrato ? "text-abete" : "text-inchiostro/60"}`}>
@@ -207,7 +208,7 @@ export default function Stile() {
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <EtichettaStoffa>sab 20 dic</EtichettaStoffa>
           <EtichettaStoffa colore="vermiglio">41 giorni</EtichettaStoffa>
-          <Toppa emoji="🦊" dimensione={40} />
+          <ToppaAvatar look={lookIniziale("Giulia")} dimensione={40} />
         </div>
       </Feltro>
 

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { Feltro, TastoLink, TestataInterna, TitoloRiquadro, Toppa } from "@/components/ui";
+import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { Feltro, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +17,15 @@ export default async function Busta({ params }: { params: Promise<{ id: string }
   // Le regole del database restituiscono solo il MIO abbinamento.
   const { data: abbinamento } = await supabase
     .from("assignments")
-    .select("receiver_member_id, group_members!assignments_receiver_member_id_fkey(id, display_name, avatar)")
+    .select("receiver_member_id, group_members!assignments_receiver_member_id_fkey(id, display_name, user_id)")
     .eq("group_id", id)
     .maybeSingle();
 
-  const destinatario = abbinamento?.group_members as unknown as { id: string; display_name: string; avatar: string | null } | undefined;
+  const destinatario = abbinamento?.group_members as unknown as { id: string; display_name: string; user_id: string | null } | undefined;
+
+  const { data: profili } = destinatario?.user_id
+    ? await supabase.from("profiles").select("user_id, look").eq("user_id", destinatario.user_id)
+    : { data: null };
 
   // La prima volta che la apro, me lo ricordo: la pagina del gruppo mostrerà il promemoria.
   if (destinatario) {
@@ -39,7 +44,7 @@ export default async function Busta({ params }: { params: Promise<{ id: string }
         <Feltro className="mt-6">
           <p className="text-sm text-inchiostro/70">Farai il regalo a</p>
           <div className="mt-3 flex items-center gap-4">
-            <Toppa emoji={destinatario.avatar ?? "🎁"} dimensione={56} />
+            <ToppaAvatar look={lookDi(profili, destinatario.user_id)} nome={destinatario.display_name} />
             <TitoloRiquadro>{destinatario.display_name}</TitoloRiquadro>
           </div>
           <p className="mt-4">Acqua in bocca! Guarda la sua bacheca per farti venire un&apos;idea.</p>

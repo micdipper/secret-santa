@@ -2,11 +2,12 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro, Toppa } from "@/components/ui";
+import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Gruppo = { id: string; name: string; budget_eur: number | null; exchange_date: string | null; theme: string | null; status: string; invite_code: string; organizer_id: string };
-type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null };
+type Membro = { id: string; display_name: string; user_id: string | null };
 type Coppia = { member_a: string; member_b: string; reason: "coppia" | "anno_scorso" };
 
 export default function PaginaOrganizza() {
@@ -27,6 +28,7 @@ function Organizza() {
   const [gruppo, setGruppo] = useState<Gruppo | null>(null);
   const [membri, setMembri] = useState<Membro[]>([]);
   const [coppie, setCoppie] = useState<Coppia[]>([]);
+  const [profili, setProfili] = useState<{ user_id: string; look: unknown }[]>([]);
   const [errore, setErrore] = useState("");
   const [avviso, setAvviso] = useState("");
 
@@ -44,13 +46,16 @@ function Organizza() {
     const [{ data: s }, { data: g }, { data: m }, { data: c }] = await Promise.all([
       supabase.auth.getSession(),
       supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id").eq("id", id).maybeSingle(),
-      supabase.from("group_members").select("id, display_name, avatar, user_id").eq("group_id", id).order("display_name"),
+      supabase.from("group_members").select("id, display_name, user_id").eq("group_id", id).order("display_name"),
       supabase.from("exclusions").select("member_a, member_b, reason").eq("group_id", id),
     ]);
     setMioId(s.session?.user.id ?? null);
     setGruppo(g as Gruppo | null);
     setMembri((m as Membro[]) ?? []);
     setCoppie((c as Coppia[]) ?? []);
+    const ids = ((m as Membro[]) ?? []).flatMap((x) => (x.user_id ? [x.user_id] : []));
+    const { data: p } = await supabase.from("profiles").select("user_id, look").in("user_id", ids);
+    setProfili(p ?? []);
   }, [supabase, id]);
 
   useEffect(() => {
@@ -231,7 +236,7 @@ function Organizza() {
             return (
               <li key={m.id} className="py-3">
                 <div className="flex items-center gap-3">
-                  <Toppa emoji={m.avatar ?? "·"} dimensione={40} />
+                  <ToppaAvatar look={lookDi(profili, m.user_id)} dimensione={40} />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium">
                       {m.display_name}

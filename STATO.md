@@ -17,8 +17,8 @@ Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole)
 | Rivelazione: busta 3D con three.js, biglietto olografico, neve (oggi c'è una versione semplice) | ⏳ da fare |
 | Suoni (tocchi, sottofondo, oggetti) + tasto per togliere l'audio | ⏳ da fare (decidere: generati dal codice o file con licenza libera) |
 | Pubblicazione: unire il ramo in `main` → sito ufficiale su Vercel (Production) | ⏳ a fine Fase 1 |
-| Avatar a mezzobusto (sostituisce le emoji) + pagina profilo + accessori sbloccabili solo con le azioni della tabella in CLAUDE.md (punto 9bis) | ⏳ dopo la bacheca |
-| Apertura busta "a slot machine" con gli avatar, poi busta 3D | ⏳ dopo avatar |
+| Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` (pelle, capelli, colore, maglione) + accessori sbloccati dal database (sciarpa, gomitolo, fiocco, stellina; cappello col quiz) | ✅ fatto (tabella `profiles`, `save_avatar` rifiuta accessori non sbloccati; chi entra riceve un personaggio a caso e va subito al profilo) |
+| Apertura busta "a slot machine" con gli avatar, poi busta 3D | ⏳ prossimo |
 | Fase 2: chat anonima, feed del gruppo, rivelazione finale | ⏳ dopo |
 
 ## Decisioni prese (oltre a quelle in CLAUDE.md)

@@ -3,13 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
-import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro, Toppa } from "@/components/ui";
+import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giorniMancanti } from "@/lib/date";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-type Membro = { id: string; display_name: string; avatar: string | null; user_id: string | null; envelope_opened_at: string | null };
+type Membro = { id: string; display_name: string; user_id: string | null; envelope_opened_at: string | null };
 
 export default async function PaginaGruppo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,11 +19,17 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
   const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
     supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id").eq("id", id).maybeSingle(),
-    supabase.from("group_members").select("id, display_name, avatar, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
   ]);
   if (!gruppo) notFound();
 
   const membri = (membriDati as Membro[]) ?? [];
+  // I personaggi di chi è entrato (le regole del database mostrano solo quelli dei miei gruppi)
+  const { data: profili } = await supabase
+    .from("profiles")
+    .select("user_id, look")
+    .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
+  const look = (m: Membro) => lookDi(profili, m.user_id);
   const io = membri.find((m) => m.user_id === userId);
   const organizzatore = gruppo.organizer_id === userId;
   const entrati = membri.filter((m) => m.user_id).length;
@@ -63,7 +70,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         <Feltro className="mt-6">
           <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
           <div className="mt-3 flex items-center gap-4">
-            <Toppa emoji={destinatario.avatar ?? "🎁"} dimensione={56} />
+            <ToppaAvatar look={look(destinatario)} nome={destinatario.display_name} />
             <TitoloRiquadro>{destinatario.display_name}</TitoloRiquadro>
           </div>
           <p className="mt-4">
@@ -89,10 +96,21 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
       {io && (
         <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-          <Toppa emoji={io.avatar ?? "🎁"} dimensione={44} />
+          <span className="toppa tela-aida size-11 flex-none text-vermiglio [&_svg]:relative [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.2]">{Icone.ago}</span>
           <span className="relative min-w-0 flex-1">
             <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
             <span className="block text-sm text-inchiostro/70">Fai capire cosa ti piace</span>
+          </span>
+          <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
+        </Link>
+      )}
+
+      {io && (
+        <Link href={`/profilo?gruppo=${id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+          <ToppaAvatar look={look(io)} dimensione={44} />
+          <span className="relative min-w-0 flex-1">
+            <span className="block font-titolo text-lg leading-tight text-abete">Il tuo personaggio</span>
+            <span className="block text-sm text-inchiostro/70">Vestilo e sblocca gli accessori</span>
           </span>
           <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
         </Link>
@@ -108,19 +126,19 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             m.user_id ? (
               <li key={m.id} className="flex-none">
                 <Link href={`/gruppo/${id}/bacheca/${m.id}`} className="flex w-16 flex-col items-center gap-2 text-center text-sm" aria-label={`Bacheca di ${m.display_name}`}>
-                  <Toppa emoji={m.avatar ?? "🎁"} cliccabile />
+                  <ToppaAvatar look={look(m)} cliccabile />
                   <span className="w-full truncate">{m.display_name.split(" ")[0]}</span>
                 </Link>
               </li>
             ) : (
               <li key={m.id} className="flex w-16 flex-none flex-col items-center gap-2 text-center text-sm text-crema/60">
-                <Toppa emoji="·" />
+                <ToppaAvatar look={null} />
                 <span className="w-full truncate">{m.display_name.split(" ")[0]}</span>
               </li>
             ),
           )}
         </ul>
-        <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Chi non è ancora entrato è senza emoji.</p>
+        <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Chi non è ancora entrato ha la toppa vuota.</p>
       </section>
 
       {organizzatore && (

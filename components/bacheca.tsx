@@ -14,7 +14,7 @@ import { clientSoloBrowser } from "@/lib/supabase/client";
 export type Elemento = {
   id: string;
   kind: "toppa" | "ricamo" | "foto" | "immagine_link";
-  content: { toppa?: string; path?: string; url?: string; rapporto?: number; celle?: string };
+  content: { toppa?: string; tipo?: string; path?: string; url?: string; rapporto?: number; celle?: string };
   x: number;
   y: number;
   width: number;
@@ -384,7 +384,7 @@ export function Bacheca({
                     <li key={t.id} className={t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}>
                       <button
                         aria-label={`Attacca: ${t.nome}`}
-                        onClick={() => aggiungi("toppa", { toppa: t.id }, t.tipo === "parola" ? 46 : 26)}
+                        onClick={() => aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26)}
                         className="block w-full transition-transform active:scale-95"
                         style={{ aspectRatio: String(t.rapporto) }}
                       >

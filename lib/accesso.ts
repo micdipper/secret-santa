@@ -12,4 +12,3 @@ export function passwordValida(password: string) {
   return password.length >= LUNGHEZZA_MINIMA_PASSWORD;
 }
 
-export const EMOJI = ["🦊", "🐻", "🦉", "🐧", "🦌", "🐿️", "🐰", "🐱", "🐶", "🐼", "🐨", "🐸", "🦔", "🐝", "🦄", "🐢", "🐙", "🦭", "🐹", "🦝", "⛄", "🧸", "🍪", "🌲"];
