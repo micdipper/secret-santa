@@ -18,7 +18,7 @@ Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole)
 | Suoni (tocchi, sottofondo, oggetti) + tasto per togliere l'audio | ⏳ da fare (decidere: generati dal codice o file con licenza libera) |
 | Pubblicazione: unire il ramo in `main` → sito ufficiale su Vercel (Production) | ⏳ a fine Fase 1 |
 | Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` + personaggio anche in "Crea un gruppo" (riquadro "Tu") | ✅ fatto: 12 tagli, barba/baffi, occhiali, pelle, colore capelli, maglione. Premi: accessori (sciarpa, gomitolo, fiocco, stellina), taglio **Super** (10 cose sulla bacheca), capelli **olografici** (tutti e 4 gli accessori), cappello col quiz. Il database rifiuta i premi non sbloccati. Niente login separato (deciso da Marzia: resta tutto com'era). |
-| Apertura busta "a slot machine" con gli avatar, poi busta 3D | ⏳ prossimo |
+| Apertura busta "a slot machine" con gli avatar, poi busta 3D | 🟡 tappa 1 fatta: slot machine (rullo di personaggi, leva, coriandoli) + busta 2D + biglietto; la busta si segna "aperta" solo al tocco "Apri la busta"; seconda visita = biglietto subito. ⏳ tappa 2: busta 3D (three.js) con biglietto olografico e neve |
 | Fase 2: chat anonima, feed del gruppo, rivelazione finale | ⏳ dopo |
 
 ## Decisioni prese (oltre a quelle in CLAUDE.md)
@@ -63,3 +63,4 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - DA FARE: Marzia manderà immagini/descrizioni per sostituire i SIMBOLI delle toppe con soggetti del suo gruppo di amici (stesso stile).
   - "Scegli una foto" non chiede il permesso della galleria: è normale, iPhone e Android aprono il selettore e danno al sito solo la foto scelta.
 - Regola nuova (CLAUDE.md): ogni schermata che crea/modifica ha un tasto finale chiaro + indicazione "Salvo…/Tutto salvato". Bacheca: "Ho finito" (aspetta i salvataggi e torna al gruppo). Organizza: "Salvato ✓" sotto data/budget.
+- Home: niente personaggio cliccabile (il personaggio si crea in "Crea un gruppo" o entrando dall'invito; poi si cambia dalla pagina del gruppo).
