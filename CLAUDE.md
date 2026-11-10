@@ -71,6 +71,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - **Regole di interfaccia (sempre)**:
   - **Cliccabile = in rilievo** (spessore sotto, si alza al passaggio del mouse, si schiaccia al tocco), stessa animazione ovunque. **Ciò che non è cliccabile è piatto**: mai dare rilievo a cose che non si toccano.
   - **Contrasto sempre**: ogni elemento deve staccarsi dallo sfondo (mai colori quasi uguali al fondo, es. capelli beige su toppa crema). I premi sbloccati devono essere vistosi e "preziosi", diversi dal resto.
+  - **Ogni schermata in cui si crea o si modifica qualcosa ha un tasto finale chiaro** ("Salva", "Ho finito", "Crea"…) che conferma e porta avanti, più un'indicazione visibile quando qualcosa si salva da solo ("Salvo…" / "Tutto salvato"). Mai costringere a usare la freccia indietro per finire.
   - **Una funzione, un solo comando**: niente tasti che fanno la stessa cosa (es. si torna indietro solo con "‹ …" in alto, niente "Annulla" che fa lo stesso). Su schermo solo cose utili, niente ridondanze.
   - **Testo dei tasti centrato** (anche otticamente); i tasti dentro i riquadri sono a tutta larghezza e centrati.
   - **Sistema fisso** (definito in `app/globals.css` e `components/ui.tsx`):

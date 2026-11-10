@@ -62,3 +62,4 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - Bacheca: 8 fili (via il crema, aggiunti rosa, bordeaux, marrone, nero); le palette a pallini sono state sostituite da texture (pois, bastoncino di zucchero, vichy); la scheda si chiama "Texture".
   - DA FARE: Marzia manderà immagini/descrizioni per sostituire i SIMBOLI delle toppe con soggetti del suo gruppo di amici (stesso stile).
   - "Scegli una foto" non chiede il permesso della galleria: è normale, iPhone e Android aprono il selettore e danno al sito solo la foto scelta.
+- Regola nuova (CLAUDE.md): ogni schermata che crea/modifica ha un tasto finale chiaro + indicazione "Salvo…/Tutto salvato". Bacheca: "Ho finito" (aspetta i salvataggi e torna al gruppo). Organizza: "Salvato ✓" sotto data/budget.

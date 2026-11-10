@@ -31,6 +31,7 @@ function Organizza() {
   const [profili, setProfili] = useState<{ user_id: string; look: unknown }[]>([]);
   const [errore, setErrore] = useState("");
   const [avviso, setAvviso] = useState("");
+  const [salvataggio, setSalvataggio] = useState<"" | "salvo" | "salvato">("");
 
   const [aperto, setAperto] = useState<string | null>(null); // membro con le opzioni aperte
   const [linkReset, setLinkReset] = useState<{ membro: string; url: string } | null>(null);
@@ -77,8 +78,10 @@ function Organizza() {
 
   async function salva(campi: Partial<Pick<Gruppo, "budget_eur" | "exchange_date" | "theme">>) {
     setGruppo((g) => (g ? { ...g, ...campi } : g));
+    setSalvataggio("salvo");
     const { error } = await supabase.from("groups").update(campi).eq("id", id);
     setErrore(error ? "Non sono riuscito a salvare. Riprova." : "");
+    setSalvataggio(error ? "" : "salvato");
   }
 
   async function aggiungiPersona() {
@@ -217,6 +220,11 @@ function Organizza() {
               <TastoTondo etichetta="Aumenta il budget" icona={Icone.piu} disabled={!modificabile} onClick={() => salva({ budget_eur: (gruppo.budget_eur ?? 0) + 5 })} />
             </div>
           </div>
+          {modificabile && (
+            <p className="text-sm text-inchiostro/70" aria-live="polite">
+              {salvataggio === "salvo" ? "Salvo…" : salvataggio === "salvato" ? "Salvato ✓" : "Si salva da solo appena cambi qualcosa."}
+            </p>
+          )}
         </div>
       </Feltro>
 

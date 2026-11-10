@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CATALOGO, NOMI_TIPI, trovaToppa, type TipoToppa } from "@/components/toppe";
-import { Errore, Feltro, Icone, TastoTondo } from "@/components/ui";
+import { useRouter } from "next/navigation";
+import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 /*
@@ -77,6 +78,7 @@ export function Bacheca({
   iniziali: Elemento[];
 }) {
   const supabase = clientSoloBrowser();
+  const router = useRouter();
   const telaRef = useRef<HTMLDivElement>(null);
   const [larghezza, setLarghezza] = useState(0);
   const [elementi, setElementi] = useState<Elemento[]>(iniziali.filter((e) => e.kind !== "ricamo"));
@@ -88,6 +90,28 @@ export function Bacheca({
   const [errore, setErrore] = useState("");
   const [linkImmagine, setLinkImmagine] = useState("");
   const [caricamento, setCaricamento] = useState(false);
+
+  // Salvataggi in corso: servono per dire "Tutto salvato" e per il tasto "Ho finito"
+  const inCorso = useRef(new Set<Promise<unknown>>());
+  const [quantiInCorso, setQuantiInCorso] = useState(0);
+  const [esco, setEsco] = useState(false);
+  const traccia = useCallback(<T,>(lavoro: PromiseLike<T>): Promise<T> => {
+    const p = Promise.resolve(lavoro);
+    inCorso.current.add(p);
+    setQuantiInCorso((n) => n + 1);
+    p.finally(() => {
+      inCorso.current.delete(p);
+      setQuantiInCorso((n) => n - 1);
+    }).catch(() => {});
+    return p;
+  }, []);
+
+  async function hoFinito() {
+    setEsco(true);
+    await Promise.allSettled([...inCorso.current]);
+    router.push(`/gruppo/${groupId}`);
+    router.refresh();
+  }
 
   // Larghezza reale della tela (per convertire pixel ↔ unità)
   useEffect(() => {
@@ -116,19 +140,21 @@ export function Bacheca({
   // ---------- salvataggio ----------
   const salvaPosizione = useCallback(
     async (e: Elemento) => {
-      const { error } = await supabase
-        .from("moodboard_items")
-        .update({ x: e.x, y: e.y, width: e.width, height: e.width / rapportoDi(e), rotation: e.rotation, z: e.z, updated_at: new Date().toISOString() })
-        .eq("id", e.id);
+      const { error } = await traccia(
+        supabase
+          .from("moodboard_items")
+          .update({ x: e.x, y: e.y, width: e.width, height: e.width / rapportoDi(e), rotation: e.rotation, z: e.z, updated_at: new Date().toISOString() })
+          .eq("id", e.id),
+      );
       if (error) setErrore("Non sono riuscito a salvare l'ultima modifica.");
     },
-    [supabase],
+    [supabase, traccia],
   );
 
   async function aggiungi(kind: Elemento["kind"], content: Elemento["content"], width: number) {
     const z = Math.max(0, ...elementi.map((e) => e.z)) + 1;
     const nuovo = { member_id: memberId, kind, content, x: 50 + spostamentoCasuale(18), y: ALTEZZA / 2 + spostamentoCasuale(24), width, height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1), rotation: inclinazioneCasuale(), z };
-    const { data, error } = await supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single();
+    const { data, error } = await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
     if (error || !data) return setErrore("Non sono riuscito ad attaccarlo. Riprova.");
     setErrore("");
     setElementi((l) => [...l, data as Elemento]);
@@ -139,8 +165,8 @@ export function Bacheca({
     const e = elementi.find((x) => x.id === id);
     setElementi((l) => l.filter((x) => x.id !== id));
     setSelezionato(null);
-    await supabase.from("moodboard_items").delete().eq("id", id);
-    if (e?.kind === "foto" && e.content.path) await supabase.storage.from("moodboard").remove([e.content.path]);
+    await traccia(supabase.from("moodboard_items").delete().eq("id", id));
+    if (e?.kind === "foto" && e.content.path) await traccia(supabase.storage.from("moodboard").remove([e.content.path]));
   }
 
   function portaSopra(id: string) {
@@ -155,7 +181,7 @@ export function Bacheca({
     try {
       const { blob, rapporto } = await riduciFoto(file);
       const path = `${groupId}/${memberId}/${crypto.randomUUID()}.jpg`;
-      const { error } = await supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" });
+      const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
       if (error) throw error;
       await aggiungi("foto", { path, rapporto }, 36);
       setCassetto(null);
@@ -267,6 +293,7 @@ export function Bacheca({
             onSalvato={setRicamo}
             onErrore={setErrore}
             onFine={() => setModoRicamo(false)}
+            traccia={traccia}
             supabase={supabase}
           />
         )}
@@ -397,6 +424,18 @@ export function Bacheca({
               )}
             </Feltro>
           )}
+
+          {/* Si salva da sola, ma serve un modo chiaro per dire "ho finito" */}
+          {!modoRicamo && (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <p className="text-sm text-crema/80" aria-live="polite">
+                {quantiInCorso > 0 ? "Salvo…" : "Tutto salvato"}
+              </p>
+              <Tasto onClick={hoFinito} disabled={esco}>
+                {esco ? "Un momento…" : "Ho finito"}
+              </Tasto>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -413,6 +452,7 @@ function StratoRicamo({
   onSalvato,
   onErrore,
   onFine,
+  traccia,
   supabase,
 }: {
   larghezza: number;
@@ -422,6 +462,7 @@ function StratoRicamo({
   onSalvato: (e: Elemento) => void;
   onErrore: (m: string) => void;
   onFine: () => void;
+  traccia: <T>(lavoro: PromiseLike<T>) => Promise<T>;
   supabase: ReturnType<typeof clientSoloBrowser>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -474,9 +515,17 @@ function StratoRicamo({
     ridisegna();
   }, [ridisegna]);
 
+  // Salvo poco dopo l'ultimo punto; intanto il salvataggio risulta "in corso"
+  const fineAttesa = useRef<(() => void) | null>(null);
   function salvaPresto() {
     if (timerSalva.current) clearTimeout(timerSalva.current);
-    timerSalva.current = setTimeout(async () => {
+    if (!fineAttesa.current) traccia(new Promise<void>((ok) => (fineAttesa.current = ok)));
+    timerSalva.current = setTimeout(salvaOra, 600);
+  }
+
+  async function salvaOra() {
+    timerSalva.current = null;
+    try {
       const content = { celle: celle.current.join("") };
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
@@ -491,7 +540,19 @@ function StratoRicamo({
         idRicamo.current = data.id;
         onSalvato(data as Elemento);
       }
-    }, 600);
+    } finally {
+      fineAttesa.current?.();
+      fineAttesa.current = null;
+    }
+  }
+
+  // "Fine ricamo": salvo subito quello che manca
+  function fine() {
+    if (timerSalva.current) {
+      clearTimeout(timerSalva.current);
+      salvaOra();
+    }
+    onFine();
   }
 
   function puntoDa(ev: React.PointerEvent) {
@@ -585,7 +646,7 @@ function StratoRicamo({
                   setPuoAnnullare(storia.current.length > 0);
                 }}
               />
-              <TastoTondo etichetta="Fine ricamo" icona={Icone.fatto} onClick={onFine} />
+              <TastoTondo etichetta="Fine ricamo" icona={Icone.fatto} onClick={fine} />
             </div>
           </div>
         </div>
