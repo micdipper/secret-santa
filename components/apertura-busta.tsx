@@ -23,8 +23,8 @@ import {
   TitoloRiquadro,
 } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
-import { suoni } from "@/lib/suoni";
-import { TastoAudio } from "@/components/audio";
+import { cambiaBrano, suoni } from "@/lib/suoni";
+
 
 // three.js si scarica solo quando serve (mentre gira la slot machine)
 const caricaScena = () => import("@/components/scena-busta");
@@ -211,6 +211,12 @@ export function AperturaBusta({
     return r; // la busta sta tutta dentro la finestrella
   };
 
+  // la musica d'attesa dal momento in cui la busta esce dalla slot; si torna al carillon dopo il nome (o uscendo)
+  useEffect(() => {
+    if (fase === "rotta") cambiaBrano("attesa");
+  }, [fase]);
+  useEffect(() => () => cambiaBrano("carillon"), []);
+
   // durante la scena la pagina non scorre (le dita servono alla busta)
   const inScena = fase === "rotta" || fase === "scena";
   useEffect(() => {
@@ -347,6 +353,7 @@ export function AperturaBusta({
   // il biglietto è fuori: festa!
   function bustaAperta() {
     suoni.fanfara();
+    setTimeout(() => cambiaBrano("carillon"), 2500);
     setRivelato(true);
     segnaAperta();
     if (!ridotto) {
@@ -843,9 +850,7 @@ export function AperturaBusta({
                     : "Una busta per te"}
               </motion.p>
             </AnimatePresence>
-            <div className="pointer-events-auto">
-              <TastoAudio />
-            </div>
+            <span className="w-14 flex-none" />
           </div>
 
           {/* il posto della card: il biglietto 3D ci vola esattamente sopra, poi la card vera prende il suo posto */}

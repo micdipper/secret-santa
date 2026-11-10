@@ -19,7 +19,12 @@ export function AscoltaTocchi() {
     window.addEventListener("pointerdown", giu, { capture: true });
     return () => window.removeEventListener("pointerdown", giu, { capture: true });
   }, []);
-  return null;
+  // il tasto per togliere musica e suoni: sempre visibile, in ogni schermata, in alto a destra
+  return (
+    <div className="pointer-events-none !fixed inset-x-0 top-0 !z-[60] mx-auto w-full max-w-md px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
+      <TastoAudio className="pointer-events-auto ml-auto" />
+    </div>
+  );
 }
 
 // Tasto tondo per togliere e rimettere l'audio (il telefono se lo ricorda).
@@ -30,7 +35,7 @@ export function TastoAudio({ className = "" }: { className?: string }) {
     setMuto(eMuto());
     return seguiMuto(setMuto);
   }, []);
-  const etichetta = muto ? "Rimetti l'audio" : "Togli l'audio";
+  const etichetta = muto ? "Rimetti musica e suoni" : "Togli musica e suoni";
   return (
     <button
       type="button"
@@ -38,7 +43,7 @@ export function TastoAudio({ className = "" }: { className?: string }) {
       title={etichetta}
       aria-pressed={muto}
       onClick={() => impostaMuto(!muto)}
-      className={`tasto-tondo cucitura cliccabile stoffa-chiara ${className}`}
+      className={`tasto-tondo cucitura cliccabile stoffa-chiara !flex ${className}`}
     >
       <svg viewBox="0 0 24 24" aria-hidden>
         <path d="M4 10v4h4l5 4V6L8 10z" />

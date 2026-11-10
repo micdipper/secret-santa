@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BustaSigillata } from "@/components/ornamenti";
-import { TastoAudio } from "@/components/audio";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
@@ -45,12 +44,12 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <header className="relative pt-6">
-        <TastoAudio />
-        <Profondita intensita={8} className="absolute top-4 right-0 w-16">
+      <header className="relative pt-24">
+        {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
+        <Profondita intensita={8} className="absolute top-[88px] right-0 w-16">
           <PallinaCheDondola className="w-16" />
         </Profondita>
-        <h1 className="mt-4 pr-16 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
+        <h1 className="pr-16 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
         <div className="mt-4 flex flex-wrap gap-2">
           {giorni !== null && giorni >= 0 && (
             <EtichettaStoffa colore="vermiglio">{giorni === 0 ? "Lo scambio è oggi!" : `${giorni} ${giorni === 1 ? "giorno" : "giorni"} allo scambio`}</EtichettaStoffa>

@@ -85,3 +85,4 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - BUG risolto: i pezzi che uscivano dallo schermo allargavano la pagina e il telefono rimpiccioliva tutto (la busta spariva): ora tagliati (overflow hidden + body/html overflow clip durante la scena);
   - lembo attaccato alla busta (niente fessura), passa dietro al biglietto quando esce;
   - olografia più tenue, senza puntini.
+- Audio (10/11 sera): tasto più presente sulle medie; carillon con sonagli e campane dal 3° giro; brano "attesa" (accordi lenti + arpeggio che sale, originale) dalla rottura della slot fino al nome, poi torna il carillon; la musica si ferma uscendo dal sito (visibilitychange/pagehide) e riprende al ritorno; UN SOLO tasto audio (musica+suoni) fisso in alto a destra in ogni schermata (components/audio.tsx nel layout, !fixed perché body > * è relative).

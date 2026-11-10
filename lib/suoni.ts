@@ -99,9 +99,11 @@ function campana(freq: number, ritardo = 0, volume = 0.18) {
 // ---------- i suoni del sito ----------
 export const suoni = {
   // tasto di feltro: "tump" morbido
+  // (più corpo sulle medie: un "toc" a 420 Hz e un soffio di stoffa intorno agli 800)
   tasto() {
-    nota(180, 0.12, { volume: 0.25, scivola: 0.6 });
-    rumore(0.06, { volume: 0.08, filtro: 900 });
+    nota(200, 0.12, { volume: 0.18, scivola: 0.6 });
+    nota(420, 0.08, { tipo: "triangle", volume: 0.16, scivola: 0.75 });
+    rumore(0.07, { volume: 0.12, filtro: 850, tipoFiltro: "bandpass", q: 1.2 });
   },
   // pallina di vetro dell'albero
   pallina() {
@@ -150,8 +152,12 @@ export const suoni = {
   },
 };
 
-// ---------- musica di sottofondo: carillon originale, a volume basso ----------
-// (melodia scritta da noi, in re maggiore, 16 battute che si ripetono)
+// ---------- musica ----------
+// Due brani scritti da noi:
+// - "carillon": dolce, in re maggiore; dal terzo giro entrano sonagli e campane natalizie;
+// - "attesa": per l'apertura della busta, lento e sospeso, che sale piano (cresce la suspense).
+// Si ferma quando si esce dal sito (app in background o scheda nascosta) e riprende al ritorno.
+type Brano = "carillon" | "attesa";
 const MELODIA: [number, number][] = [
   [74, 1], [78, 1], [81, 2], [79, 1], [78, 1], [76, 2],
   [74, 1], [76, 1], [78, 1], [81, 1], [79, 3], [0, 1],
@@ -159,39 +165,105 @@ const MELODIA: [number, number][] = [
   [76, 1], [78, 1], [76, 1], [73, 1], [74, 3], [0, 1],
 ];
 const BASSI = [50, 55, 57, 50, 55, 50, 57, 50];
+// attesa: accordi lunghi (note MIDI) che salgono di tensione
+const ACCORDI_ATTESA = [
+  [50, 57, 62, 65], // re minore
+  [46, 58, 62, 65], // si bemolle
+  [48, 55, 60, 67], // do
+  [45, 57, 61, 64], // la (sospeso → tensione)
+  [50, 57, 62, 66], // re maggiore (spiraglio di luce)
+  [43, 59, 62, 67], // sol
+  [45, 57, 62, 64], // la sus
+  [45, 57, 61, 64], // la
+];
 let timerMusica: ReturnType<typeof setTimeout> | null = null;
 let musicaVoluta = false;
+let brano: Brano = "carillon";
+let nascosta = false;
 
 const freq = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
-export function avviaMusica() {
-  musicaVoluta = true;
-  const c = audio();
-  if (!c || muto || timerMusica) return;
+// sonagli della slitta: tanti piccoli colpi metallici ravvicinati
+function sonagli(ritardo = 0, volume = 0.03) {
+  for (let k = 0; k < 4; k++) rumore(0.05, { volume: volume * (1 - k * 0.2), filtro: 7500, tipoFiltro: "bandpass", q: 4, ritardo: ritardo + k * 0.025 });
+}
+
+function suonaCarillon() {
   const passo = 0.32; // secondi per tempo
   let i = 0;
   let battuta = 0;
   let tempo = 0;
   let ultimaBattuta = -1;
+  const giro = MELODIA.reduce((t, [, d]) => t + d, 0);
   const suona = () => {
-    if (muto || !musicaVoluta) {
+    if (muto || !musicaVoluta || nascosta || brano !== "carillon") {
       timerMusica = null;
       return;
     }
     const [m, durata] = MELODIA[i % MELODIA.length];
+    const giri = Math.floor(tempo / giro);
     if (m) {
       nota(freq(m), passo * durata * 1.6, { volume: 0.05 });
       nota(freq(m) * 2, passo * durata, { volume: 0.012 });
     }
+    // dal terzo giro: sonagli sul tempo e campane natalizie a inizio battuta
+    if (giri >= 2) {
+      for (let k = 0; k < durata; k++) sonagli(k * passo, k % 2 ? 0.018 : 0.03);
+    }
     if (Math.floor(tempo / 4) !== ultimaBattuta) {
       ultimaBattuta = Math.floor(tempo / 4);
-      nota(freq(BASSI[battuta++ % BASSI.length]), passo * 4, { tipo: "triangle", volume: 0.035, attacco: 0.05 });
+      const basso = BASSI[battuta++ % BASSI.length];
+      nota(freq(basso), passo * 4, { tipo: "triangle", volume: 0.035, attacco: 0.05 });
+      if (giri >= 2) campana(freq(basso + 36), 0, 0.05);
+      if (giri >= 3 && battuta % 2 === 0) campana(freq(basso + 43), passo * 2, 0.035);
     }
     tempo += durata;
     i++;
     timerMusica = setTimeout(suona, passo * durata * 1000);
   };
   suona();
+}
+
+function suonaAttesa() {
+  const durataAccordo = 3.2; // lento e disteso
+  let n = 0;
+  const suona = () => {
+    if (muto || !musicaVoluta || nascosta || brano !== "attesa") {
+      timerMusica = null;
+      return;
+    }
+    const accordo = ACCORDI_ATTESA[n % ACCORDI_ATTESA.length];
+    const sale = Math.min(1, n / 8); // cresce piano
+    // tappeto: note lunghe con attacco morbido
+    accordo.forEach((m, k) =>
+      nota(freq(m), durataAccordo * 1.4, { tipo: k === 0 ? "triangle" : "sine", volume: k === 0 ? 0.05 : 0.022, attacco: 0.9 }),
+    );
+    // arpeggio che sale, come uno scrigno che sta per aprirsi
+    const note = [...accordo.slice(1), accordo[1] + 12, accordo[2] + 12, accordo[3] + 12];
+    note.forEach((m, k) => nota(freq(m + 12), 0.9, { volume: 0.018 + 0.012 * sale, ritardo: 0.5 + k * 0.38 }));
+    // brillio in cima e un tremolo leggero
+    campana(freq(note[note.length - 1] + 12), 0.5 + note.length * 0.38, 0.02 + 0.02 * sale);
+    for (let k = 0; k < 8; k++) nota(freq(accordo[3] + 24), 0.12, { volume: 0.004 + 0.004 * sale, ritardo: 1.8 + k * 0.17 });
+    n++;
+    timerMusica = setTimeout(suona, durataAccordo * 1000);
+  };
+  suona();
+}
+
+export function avviaMusica() {
+  musicaVoluta = true;
+  const c = audio();
+  if (!c || muto || nascosta || timerMusica) return;
+  if (brano === "attesa") suonaAttesa();
+  else suonaCarillon();
+}
+
+// cambia brano (es. "attesa" quando si apre la busta, poi di nuovo "carillon")
+export function cambiaBrano(nuovo: Brano) {
+  if (brano === nuovo) return;
+  brano = nuovo;
+  fermaMusica();
+  if (musicaVoluta) avviaMusica();
 }
 
 export function fermaMusica() {
@@ -202,4 +274,25 @@ export function fermaMusica() {
 export function smettiMusica() {
   musicaVoluta = false;
   fermaMusica();
+}
+
+// uscendo dal sito (altra app, schermo spento, altra scheda) la musica si ferma; al ritorno riprende
+if (typeof document !== "undefined") {
+  const aggiorna = () => {
+    nascosta = document.visibilityState === "hidden";
+    if (nascosta) {
+      fermaMusica();
+      ctx?.suspend();
+    } else if (musicaVoluta && !muto) {
+      ctx?.resume();
+      avviaMusica();
+    }
+  };
+  document.addEventListener("visibilitychange", aggiorna);
+  window.addEventListener("pagehide", () => {
+    nascosta = true;
+    fermaMusica();
+    ctx?.suspend();
+  });
+  window.addEventListener("pageshow", aggiorna);
 }
