@@ -32,17 +32,18 @@ export default async function Busta({ params }: { params: Promise<{ id: string }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro={`Torna a ${gruppo.name}`} contesto={gruppo.name} titolo="La tua busta" />
-      <div className="mt-6">
-        {ricevente ? (
-          <AperturaBusta groupId={id} candidati={candidati} destinatario={persona(ricevente)} giaAperta={!!io?.envelope_opened_at} />
-        ) : (
-          <Feltro>
+      {ricevente ? (
+        // la testata la disegna AperturaBusta: quando la slot si rompe vola via anche lei
+        <AperturaBusta groupId={id} nomeGruppo={gruppo.name} candidati={candidati} destinatario={persona(ricevente)} giaAperta={!!io?.envelope_opened_at} />
+      ) : (
+        <>
+          <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro={`Torna a ${gruppo.name}`} contesto={gruppo.name} titolo="La tua busta" />
+          <Feltro className="mt-6">
             <TitoloRiquadro>Ancora niente</TitoloRiquadro>
             <p className="mt-2">L&apos;estrazione non è ancora stata fatta.</p>
           </Feltro>
-        )}
-      </div>
+        </>
+      )}
     </main>
   );
 }

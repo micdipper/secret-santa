@@ -7,6 +7,7 @@
 // 4) il lembo si apre trascinando in su, curvandosi come carta;
 // 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
+import { fontNome } from "@/components/biglietto-olografico";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
@@ -136,7 +137,7 @@ function texturaPunto() {
 
 // ---------- biglietto (retro con "?" e fronte col nome) ----------
 const B_LARGO = 2.6;
-const B_ALTO = 2.9;
+const B_ALTO = B_LARGO * 1.25; // stesse proporzioni della card finale (4:5)
 const PX = 640 / B_LARGO; // pixel della texture per unità
 
 function arrotonda(c: CanvasRenderingContext2D, w: number, h: number, r: number) {
@@ -179,57 +180,64 @@ function disegnaRetro(c: CanvasRenderingContext2D, w: number, h: number) {
   c.restore();
 }
 
+// Fronte del biglietto: STESSA disposizione della card finale (components/biglietto-olografico.tsx),
+// tutte le misure sono frazioni della larghezza, così il passaggio dal 3D alla card non si vede.
 function disegnaFronte(c: CanvasRenderingContext2D, w: number, h: number, nome: string, avatar: HTMLImageElement | null) {
   c.clearRect(0, 0, w, h);
   c.save();
-  arrotonda(c, w, h, 70);
+  arrotonda(c, w, h, w * 0.082);
   c.fillStyle = "#f3e8cf";
   c.fillRect(0, 0, w, h);
   // cucitura
-  c.setLineDash([22, 16]);
+  c.setLineDash([w * 0.024, w * 0.016]);
   c.strokeStyle = "rgba(229,72,30,.75)";
-  c.lineWidth = 7;
+  c.lineWidth = w * 0.007;
   c.beginPath();
-  c.roundRect(22, 22, w - 44, h - 44, 50);
+  c.roundRect(w * 0.026, w * 0.026, w - w * 0.052, h - w * 0.052, w * 0.058);
   c.stroke();
   c.setLineDash([]);
   // buco dell'etichetta
   c.fillStyle = "#2c4a32";
   c.beginPath();
-  c.arc(w / 2, 70, 18, 0, Math.PI * 2);
+  c.arc(w / 2, h * 0.085, w * 0.026, 0, Math.PI * 2);
   c.fill();
-  c.fillStyle = "rgba(28,36,29,.7)";
-  c.font = `34px ${famiglia("--font-bricolage", "system-ui, sans-serif")}`;
+  const testo = famiglia("--font-bricolage", "system-ui, sans-serif");
   c.textAlign = "center";
-  c.fillText("Farai il regalo a", w / 2, 150);
+  c.textBaseline = "middle";
+  c.fillStyle = "rgba(28,36,29,.7)";
+  c.font = `${w * 0.045}px ${testo}`;
+  c.fillText("Farai il regalo a", w / 2, h * 0.165);
   // toppa col personaggio
-  const cy = 330;
+  const cy = h * 0.4;
+  const r = w * 0.22;
   c.fillStyle = "#f1e4c8";
   c.beginPath();
-  c.arc(w / 2, cy, 140, 0, Math.PI * 2);
+  c.arc(w / 2, cy, r, 0, Math.PI * 2);
   c.fill();
   if (avatar) {
     c.save();
     c.beginPath();
-    c.arc(w / 2, cy, 140, 0, Math.PI * 2);
+    c.arc(w / 2, cy, r, 0, Math.PI * 2);
     c.clip();
-    c.drawImage(avatar, w / 2 - 140, cy - 140 + 22, 280, 280);
+    c.drawImage(avatar, w / 2 - r, cy - r + r * 0.16, r * 2, r * 2);
     c.restore();
   }
-  c.setLineDash([12, 10]);
+  c.setLineDash([w * 0.014, w * 0.012]);
   c.strokeStyle = "rgba(44,74,50,.55)";
-  c.lineWidth = 4;
+  c.lineWidth = w * 0.005;
   c.beginPath();
-  c.arc(w / 2, cy, 126, 0, Math.PI * 2);
+  c.arc(w / 2, cy, r - w * 0.014, 0, Math.PI * 2);
   c.stroke();
   c.setLineDash([]);
-  // nome, il più grande possibile
-  const fam = famiglia("--font-basteleur", "Georgia, serif");
-  let px = 92;
-  c.font = `${px}px ${fam}`;
-  while (c.measureText(nome).width > w - 90 && px > 40) c.font = `${(px -= 4)}px ${fam}`;
+  // nome
   c.fillStyle = "#e5481e";
-  c.fillText(nome, w / 2, 590);
+  c.font = `${w * fontNome(nome)}px ${famiglia("--font-basteleur", "Georgia, serif")}`;
+  c.fillText(nome, w / 2, h * 0.665);
+  // frase
+  c.fillStyle = "#1c241d";
+  c.font = `${w * 0.043}px ${testo}`;
+  c.fillText("Acqua in bocca! Guarda la sua bacheca", w / 2, h * 0.795);
+  c.fillText("per farti venire un'idea.", w / 2, h * 0.855);
   c.restore();
 }
 
@@ -240,7 +248,7 @@ const morbido = (t: number) => {
   return x * x * (3 - 2 * x);
 };
 
-export type FaseBusta = "cade" | "neve" | "vola" | "sigillo" | "lembo" | "biglietto";
+export type FaseBusta = "attesa" | "cade" | "neve" | "vola" | "sigillo" | "lembo" | "biglietto";
 
 // Piccolo sistema di particelle (neve che sbuffa, briciole di ceralacca, scintille)
 function particelle(scena: THREE.Scene, punto: THREE.Texture, n: number, colore: number, dimensione: number, additivo: boolean, gravita: number) {
@@ -295,16 +303,26 @@ export default function ScenaBusta({
   onFase,
   onPrimoTocco,
   onAperta,
+  parti,
+  sigilloSulloSchermo,
+  postoCard,
 }: {
   nome: string;
   avatarSvg: () => string | null;
   onFase: (f: FaseBusta, tocchi?: number) => void;
   onPrimoTocco: () => void;
+  parti: boolean; // la slot si è rotta: la busta comincia a cadere
+  sigilloSulloSchermo: () => DOMRect | null; // dov'era il sigillo nella slot (la busta parte da lì)
+  postoCard: () => DOMRect | null; // dove sta la card finale (il biglietto 3D ci vola esattamente sopra)
   onAperta: () => void;
 }) {
   const contenitore = useRef<HTMLDivElement>(null);
   const callback = useRef({ onFase, onPrimoTocco, onAperta });
-  const dati = useRef({ nome, avatarSvg }); // letti una volta sola, all'avvio della scena
+  const dati = useRef({ nome, avatarSvg, sigilloSulloSchermo, postoCard }); // letti dalla scena quando servono
+  const partiRef = useRef(parti);
+  useEffect(() => {
+    partiRef.current = parti;
+  }, [parti]);
 
   useEffect(() => {
     callback.current = { onFase, onPrimoTocco, onAperta };
@@ -320,14 +338,31 @@ export default function ScenaBusta({
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
-    scena.background = tela(4, 256, (c) => {
-      const g = c.createLinearGradient(0, 0, 0, 256);
-      g.addColorStop(0, "#10251a");
-      g.addColorStop(0.55, "#2a5236");
-      g.addColorStop(1, "#163a25");
+    const cielo = document.createElement("canvas");
+    function disegnaCielo() {
+      const w = 128;
+      const h = Math.round((128 * box.clientHeight) / Math.max(1, box.clientWidth));
+      cielo.width = w;
+      cielo.height = h;
+      const c = cielo.getContext("2d")!;
+      // come lo sfondo del sito: radial-gradient(120% 60% at 30% 0%, #355a3c, #284530 55%, #1e3826)
+      c.fillStyle = "#1e3826";
+      c.fillRect(0, 0, w, h);
+      c.save();
+      c.translate(w * 0.3, 0);
+      c.scale(1.2 * w, 0.6 * h);
+      const g = c.createRadialGradient(0, 0, 0, 0, 0, 1);
+      g.addColorStop(0, "#355a3c");
+      g.addColorStop(0.55, "#284530");
+      g.addColorStop(1, "#1e3826");
       c.fillStyle = g;
-      c.fillRect(0, 0, 4, 256);
-    });
+      c.fillRect(-1, -1, 2, 2);
+      c.restore();
+      texCielo.needsUpdate = true;
+    }
+    const texCielo = new THREE.CanvasTexture(cielo);
+    texCielo.colorSpace = THREE.SRGBColorSpace;
+    scena.background = texCielo;
     scena.fog = new THREE.Fog(0x163a25, 14, 38);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
     scena.add(new THREE.HemisphereLight(0xfff8ea, 0xbfb08f, EFFETTI.notte ? 1.3 : 2.2));
@@ -620,6 +655,7 @@ export default function ScenaBusta({
       const w = box.clientWidth;
       const h = box.clientHeight;
       renderer.setSize(w, h);
+      disegnaCielo();
       composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(w, h);
       bagliore.resolution.set(w / 2, h / 2);
@@ -633,7 +669,7 @@ export default function ScenaBusta({
     ro.observe(box);
 
     // ---------- inquadrature ----------
-    const CAM_CIELO = { pos: new THREE.Vector3(0, 3.6, 9), guarda: new THREE.Vector3(0, 4.2, 0) };
+    const CAM_CIELO = { pos: new THREE.Vector3(0, 3.6, 9), guarda: new THREE.Vector3(0, 6.5, 0) };
     const CAM_NEVE = { pos: new THREE.Vector3(0, 0.1, 6.2), guarda: new THREE.Vector3(0, -1.5, 0.4) };
     const CAM_DAVANTI = { pos: new THREE.Vector3(0, 0, 9), guarda: new THREE.Vector3(0, 0, 0) };
     const guardaOra = new THREE.Vector3();
@@ -645,7 +681,8 @@ export default function ScenaBusta({
     const POSA_NEVE = { pos: new THREE.Vector3(0, -1.68, 0.4), rot: new THREE.Euler(-0.35, 0.15, 0.16) };
 
     // ---------- stato della storia ----------
-    let fase: FaseBusta = "cade";
+    let fase: FaseBusta = "attesa";
+    let partenzaBusta: { pos: THREE.Vector3; quat: THREE.Quaternion; scala: number } | null = null;
     let inizioFase = 0;
     let tocchi = 0;
     let salto = 0; // altezza del sobbalzo
@@ -664,7 +701,8 @@ export default function ScenaBusta({
       inizioFase = orologio.getElapsedTime();
       callback.current.onFase(f, tocchi);
     };
-    callback.current.onFase("cade");
+    busta.visible = false;
+    callback.current.onFase("attesa");
 
     // ---------- tocchi e dita ----------
     const raggio = new THREE.Raycaster();
@@ -725,11 +763,9 @@ export default function ScenaBusta({
       } else if (fase === "sigillo") {
         if (colpisci(e, [cera])) {
           grattando = true;
-          renderer.domElement.setPointerCapture(e.pointerId);
         }
       } else if (fase === "lembo") {
         trascinoLembo = { y: e.clientY, da: apertura };
-        renderer.domElement.setPointerCapture(e.pointerId);
       }
     };
     const muovi = (e: PointerEvent) => {
@@ -746,10 +782,13 @@ export default function ScenaBusta({
         obiettivoApertura = apertura > 0.4 ? 1 : 0; // oltre metà si apre da solo, altrimenti torna giù
       }
     };
-    renderer.domElement.addEventListener("pointerdown", giu);
-    renderer.domElement.addEventListener("pointermove", muovi);
-    renderer.domElement.addEventListener("pointerup", su);
-    renderer.domElement.addEventListener("pointercancel", su);
+    // la scena sta dietro la pagina: ascolto le dita su tutta la finestra (ma non sui tasti)
+    const suTasto = (e: PointerEvent) => !!(e.target as HTMLElement).closest?.("a,button");
+    const giuFinestra = (e: PointerEvent) => !suTasto(e) && giu(e);
+    window.addEventListener("pointerdown", giuFinestra);
+    window.addEventListener("pointermove", muovi);
+    window.addEventListener("pointerup", su);
+    window.addEventListener("pointercancel", su);
 
     // ---------- animazione ----------
     let frame = 0;
@@ -762,14 +801,46 @@ export default function ScenaBusta({
       const f = t - inizioFase;
       const sNeve = scalaBase * 0.72;
 
-      if (fase === "cade") {
-        // la busta cade dal cielo girando; l'inquadratura scende con lei
-        const k = Math.min(1, f / 1.7);
+      if (fase === "attesa") {
+        inquadra(CAM_CIELO, CAM_NEVE, 0);
+        if (partiRef.current) {
+          // metto la busta esattamente dove c'era il sigillo nella slot, girata verso di te
+          const r = dati.current.sigilloSulloSchermo();
+          const w = box.clientWidth;
+          const h = box.clientHeight;
+          const cx = r ? r.left + r.width / 2 : w / 2;
+          const cy = r ? r.top + r.height / 2 : h / 2;
+          const distanza = 6;
+          const punto = new THREE.Vector3((cx / w) * 2 - 1, -(cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
+          const pos = camera.position.clone().add(punto.multiplyScalar(distanza));
+          const perPixel = (2 * distanza * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
+          // grande quanto basta perché il suo sigillo sia dov'era quello della slot, ma mai più larga dell'85% dello schermo
+          const scala = Math.min(((r ? r.width : 92) * perPixel) / (2 * R_CERA), (w * 0.85 * perPixel) / LARGHEZZA);
+          // il centro della busta sta un po' sotto il sigillo
+          const quat = camera.quaternion.clone();
+          pos.add(new THREE.Vector3(0, -cera.position.y * scala, 0).applyQuaternion(quat));
+          partenzaBusta = { pos, quat, scala };
+          busta.visible = true;
+          vaiA("cade");
+        }
+      } else if (fase === "cade" && partenzaBusta) {
+        // dal posto del sigillo la busta cade nella neve girando; l'inquadratura scende con lei
+        // un attimo sospesa (dondola mentre i pezzi volano via), poi cade
+        const SOSPESA = 0.65;
+        const k = Math.min(1, Math.max(0, f - SOSPESA) / 2);
         const caduta = k * k; // accelera come un oggetto che cade
-        busta.position.set(Math.sin(f * 3) * 0.5 * (1 - k), 8 + (POSA_NEVE.pos.y - 8) * caduta, POSA_NEVE.pos.z);
-        busta.rotation.set(POSA_NEVE.rot.x * k + Math.sin(f * 5) * 0.6 * (1 - k), f * 4 * (1 - k), POSA_NEVE.rot.z + Math.cos(f * 4) * 0.5 * (1 - k));
-        busta.scale.setScalar(sNeve);
-        inquadra(CAM_CIELO, CAM_NEVE, morbido((f - 0.2) / 1.9));
+        const finale = new THREE.Quaternion().setFromEuler(POSA_NEVE.rot);
+        const fc = Math.max(0, f - SOSPESA); // tempo di caduta
+        // un solo giro morbido che rallenta, più un dondolio leggero (come un foglio che cade)
+        const giro = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(Math.sin(fc * 3) * 0.3 * (1 - k), Math.PI * 2 * (1 - morbido(k)), Math.sin(fc * 2.2) * 0.25 * (1 - k)),
+        );
+        busta.quaternion.copy(partenzaBusta.quat).slerp(finale, morbido(k)).multiply(giro);
+        if (f < SOSPESA) busta.rotateZ(Math.sin(f * 18) * 0.05 * (1 - f / SOSPESA));
+        busta.position.lerpVectors(partenzaBusta.pos, POSA_NEVE.pos, caduta);
+        busta.position.x += Math.sin(Math.max(0, f - SOSPESA) * 3) * 0.4 * (1 - k);
+        busta.scale.setScalar(partenzaBusta.scala + (sNeve - partenzaBusta.scala) * morbido(k));
+        inquadra(CAM_CIELO, CAM_NEVE, morbido((f - SOSPESA - 0.1) / 2));
         if (k >= 1) {
           sbuffi.emetti(new THREE.Vector3(0, SUOLO + 0.1, POSA_NEVE.pos.z), 70, 2.4, 1);
           vaiA("neve");
@@ -836,6 +907,7 @@ export default function ScenaBusta({
           busta.getWorldPosition(punto3);
           scintille.emetti(punto3.add(new THREE.Vector3(0, ALTEZZA / 2 * scalaBase, 0)), 90, 2.5);
           vaiA("biglietto");
+          obiettivoApertura = 1.36; // il lembo si ripiega dietro la busta: non copre più il biglietto
         }
       }
 
@@ -875,15 +947,22 @@ export default function ScenaBusta({
           const k = facile((a - 1.3) / 1.1);
           const zFinale = 2.5;
           const hVis = 2 * (9 - zFinale) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-          const scalaFinale = Math.min((hVis * camera.aspect * 0.86) / B_LARGO, (hVis * 0.62) / B_ALTO);
+          const posto = dati.current.postoCard();
+          const W = box.clientWidth;
+          const H = box.clientHeight;
+          const scalaFinale = posto ? (posto.height / H) * (hVis / B_ALTO) : Math.min((hVis * camera.aspect * 0.86) / B_LARGO, (hVis * 0.62) / B_ALTO);
+          const xFinale = posto ? ((posto.left + posto.width / 2) / W - 0.5) * hVis * camera.aspect : 0;
+          const yFinale = posto ? -((posto.top + posto.height / 2) / H - 0.5) * hVis : 0;
           const p0 = partenzaBiglietto.pos;
-          biglietto.position.set(p0.x * (1 - k), p0.y * (1 - k), p0.z + (zFinale - p0.z) * k);
+          biglietto.position.set(p0.x + (xFinale - p0.x) * k, p0.y + (yFinale - p0.y) * k, p0.z + (zFinale - p0.z) * k);
           biglietto.scale.setScalar(partenzaBiglietto.scala + (scalaFinale - partenzaBiglietto.scala) * k);
           biglietto.rotation.set(0, facile((a - 1.6) / 0.8) * Math.PI, Math.sin(k * Math.PI) * 0.08);
         }
         if (a > 2.55 && !finita) {
           finita = true;
           callback.current.onAperta();
+          // la card vera prende il suo posto (identica): tolgo quella 3D un attimo dopo
+          setTimeout(() => (biglietto.visible = false), 150);
         }
       }
 
@@ -922,10 +1001,10 @@ export default function ScenaBusta({
     return () => {
       cancelAnimationFrame(frame);
       ro.disconnect();
-      renderer.domElement.removeEventListener("pointerdown", giu);
-      renderer.domElement.removeEventListener("pointermove", muovi);
-      renderer.domElement.removeEventListener("pointerup", su);
-      renderer.domElement.removeEventListener("pointercancel", su);
+      window.removeEventListener("pointerdown", giuFinestra);
+      window.removeEventListener("pointermove", muovi);
+      window.removeEventListener("pointerup", su);
+      window.removeEventListener("pointercancel", su);
       composer.dispose();
       renderer.dispose();
       scena.traverse((o) => {

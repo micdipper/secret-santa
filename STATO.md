@@ -70,3 +70,10 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
 - Neve della scena: azzurro ghiaccio (#a8cbe2, cumuli #c9e0ef) per staccarsi dalla busta crema; nebbia più lontana.
 - Luci della scena (interruttori EFFETTI in cima a scena-busta.tsx): ombre morbide + alone sotto la busta, bagliore (si spegne da solo se il telefono va sotto 35 fps), controluce fredda, notte (luce calda + angoli scuri), brillii sulla neve, vivido (contrasto 1.18, saturazione 1.25). Cielo disegnato dentro la scena.
 - Busta: niente più fodera a righe; l'apertura a V del corpo è trasparente e da lì si vede l'interno (crema scuro) e il biglietto infilato dentro già mentre si apre il lembo. Bagliore SPENTO (sul telefono vero sbiancava la neve).
+- Apertura busta come scena unica (10/11):
+  - la scena 3D sta DIETRO la pagina (fixed -z-10, cielo disegnato uguale allo sfondo del sito) e parte già mentre la slot gira (neve che cade dietro);
+  - la slot si ferma sul sigillo, il VETRO della finestrella si crepa e va in frantumi (schegge), il sigillo si rimpicciolisce a 70px, il telaio di feltro si apre in due metà vuote che cadono, la leva cade, il riquadro "Chi ti è uscito?" cade giù; resta il verde con la busta 3D intatta (parte esattamente dal posto del sigillo) che cade nella neve con la telecamera che la segue;
+  - il lembo si ripiega dietro mentre esce il biglietto (niente riga beige);
+  - il biglietto 3D vola esattamente al posto della card finale (stesso disegno 4:5, misure in frazioni della larghezza: disegnaFronte in scena-busta.tsx = BigliettoOlografico); cambio invisibile, la neve resta dietro;
+  - card olografica stile Pokémon: bande arcobaleno + brillantini + riflesso SOTTO scritte e personaggio; si accende 0,3 s dopo il cambio.
+- Pulizia: cancellati i gruppi "Test E2E Natale". I gruppi A, D, F, H, J sono di Marzia (non toccati).
