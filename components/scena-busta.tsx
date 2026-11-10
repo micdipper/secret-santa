@@ -1,14 +1,17 @@
 "use client";
 
-// Scena 3D della busta (three.js, caricato solo qui).
-// La busta arriva volando e girando, si posa tra neve e stelline;
-// quando "aperta" diventa vero, il lembo si solleva, esce una luce e la busta scende via.
+// Scena 3D della busta (three.js, caricato solo qui), raccontata come una piccola storia:
+// 1) la busta cade dal cielo e si pianta nella neve, l'inquadratura scende con lei;
+// 2) tre tocchi: sobbalza, sobbalza di più, poi vola davanti a te;
+// 3) il sigillo di ceralacca si gratta via sfregando col dito;
+// 4) il lembo si apre trascinando in su, curvandosi come carta;
+// 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 const LARGHEZZA = 3.4;
 const ALTEZZA = 2.2;
-const DURATA_ARRIVO = 1.9; // secondi
+const SUOLO = -2; // altezza della neve
 
 function tela(w: number, h: number, disegna: (c: CanvasRenderingContext2D) => void) {
   const cv = document.createElement("canvas");
@@ -60,22 +63,28 @@ function texturaCorpo() {
 }
 
 // Lembo: triangolo crema con la ceralacca in punta.
+// Lembo: triangolo di carta su fondo trasparente (la forma la dà la texture)
+const ALTO_LEMBO = ALTEZZA * 0.6;
 function texturaLembo() {
-  return tela(1024, 512, (c) => {
-    c.fillStyle = "#efe3c9";
-    c.fillRect(0, 0, 1024, 512);
-    c.strokeStyle = "rgba(0,0,0,.1)";
-    c.lineWidth = 6;
+  const h = Math.round((1024 * ALTO_LEMBO) / LARGHEZZA);
+  return tela(1024, h, (c) => {
     c.beginPath();
     c.moveTo(0, 0);
-    c.lineTo(512, 500);
     c.lineTo(1024, 0);
+    c.lineTo(512, h - 2);
+    c.closePath();
+    c.fillStyle = "#efe3c9";
+    c.fill();
+    c.strokeStyle = "rgba(0,0,0,.12)";
+    c.lineWidth = 5;
     c.stroke();
+    c.fillStyle = "rgba(120,90,40,.06)";
+    for (let i = 0; i < 700; i++) c.fillRect(Math.random() * 1024, Math.random() * h * 0.6, 2, 2);
   });
 }
 
-function texturaCeralacca() {
-  return tela(256, 256, (c) => {
+function disegnaCeralacca(c: CanvasRenderingContext2D) {
+  {
     const g = c.createRadialGradient(100, 90, 10, 128, 128, 128);
     g.addColorStop(0, "#e2493c");
     g.addColorStop(1, "#7e1414");
@@ -95,7 +104,7 @@ function texturaCeralacca() {
     p.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
     c.closePath();
     c.fill();
-  });
+  }
 }
 
 // Puntino morbido per neve e scintille
@@ -211,30 +220,80 @@ function disegnaFronte(c: CanvasRenderingContext2D, w: number, h: number, nome: 
 
 const facile = (t: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
+const morbido = (t: number) => {
+  const x = Math.min(1, Math.max(0, t));
+  return x * x * (3 - 2 * x);
+};
+
+export type FaseBusta = "cade" | "neve" | "vola" | "sigillo" | "lembo" | "biglietto";
+
+// Piccolo sistema di particelle (neve che sbuffa, briciole di ceralacca, scintille)
+function particelle(scena: THREE.Scene, punto: THREE.Texture, n: number, colore: number, dimensione: number, additivo: boolean, gravita: number) {
+  const pos = new Float32Array(n * 3);
+  const vel = new Float32Array(n * 3);
+  const vita = new Float32Array(n);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    map: punto,
+    size: dimensione,
+    color: colore,
+    transparent: true,
+    depthWrite: false,
+    blending: additivo ? THREE.AdditiveBlending : THREE.NormalBlending,
+  });
+  const punti = new THREE.Points(geo, mat);
+  punti.frustumCulled = false;
+  scena.add(punti);
+  for (let i = 0; i < n; i++) pos[i * 3 + 1] = -999;
+  let prossimo = 0;
+  return {
+    emetti(da: THREE.Vector3, quanti: number, forza: number, su = 0.6) {
+      for (let q = 0; q < quanti; q++) {
+        const i = prossimo;
+        prossimo = (prossimo + 1) % n;
+        const a = Math.random() * Math.PI * 2;
+        const v = forza * (0.3 + Math.random());
+        pos.set([da.x, da.y, da.z], i * 3);
+        vel.set([Math.cos(a) * v, Math.random() * v * su + v * 0.2, Math.sin(a) * v * 0.6], i * 3);
+        vita[i] = 1;
+      }
+    },
+    aggiorna(dt: number) {
+      for (let i = 0; i < n; i++) {
+        if (vita[i] <= 0) continue;
+        vita[i] -= dt * 0.9;
+        vel[i * 3 + 1] -= gravita * dt;
+        pos[i * 3] += vel[i * 3] * dt;
+        pos[i * 3 + 1] += vel[i * 3 + 1] * dt;
+        pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
+        if (vita[i] <= 0) pos[i * 3 + 1] = -999;
+      }
+      geo.attributes.position.needsUpdate = true;
+    },
+  };
+}
+
 export default function ScenaBusta({
-  aperta,
   nome,
   avatarSvg,
-  onPronta,
+  onFase,
+  onPrimoTocco,
   onAperta,
 }: {
-  aperta: boolean;
   nome: string;
   avatarSvg: () => string | null;
-  onPronta: () => void;
+  onFase: (f: FaseBusta, tocchi?: number) => void;
+  onPrimoTocco: () => void;
   onAperta: () => void;
 }) {
   const contenitore = useRef<HTMLDivElement>(null);
-  const apertaRef = useRef(aperta);
-  const callback = useRef({ onPronta, onAperta });
+  const callback = useRef({ onFase, onPrimoTocco, onAperta });
   const dati = useRef({ nome, avatarSvg }); // letti una volta sola, all'avvio della scena
 
   useEffect(() => {
-    apertaRef.current = aperta;
-  }, [aperta]);
-  useEffect(() => {
-    callback.current = { onPronta, onAperta };
-  }, [onPronta, onAperta]);
+    callback.current = { onFase, onPrimoTocco, onAperta };
+  }, [onFase, onPrimoTocco, onAperta]);
 
   useEffect(() => {
     const box = contenitore.current!;
@@ -242,61 +301,138 @@ export default function ScenaBusta({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.localClippingEnabled = true; // per nascondere il biglietto finché è dentro la busta
+    renderer.domElement.style.touchAction = "none";
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
+    scena.fog = new THREE.Fog(0x163a25, 10, 34);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 0, 9);
-    scena.add(new THREE.AmbientLight(0xffffff, 1.6));
-    const sole = new THREE.DirectionalLight(0xfff1d6, 1.6);
-    sole.position.set(2, 3, 6);
-    scena.add(sole);
+    scena.add(new THREE.HemisphereLight(0xfff8ea, 0xd9cdb0, 2.2));
+    const luna = new THREE.DirectionalLight(0xfff1d6, 1.4);
+    luna.position.set(2, 5, 6);
+    scena.add(luna);
+    const punto = texturaPunto();
+
+    // ---------- paesaggio illustrato: neve di feltro crema, cumuli tondi, abeti ----------
+    // ombre a tre toni, come un disegno (niente realismo)
+    const toni = new THREE.DataTexture(new Uint8Array([150, 150, 150, 255, 215, 215, 215, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat);
+    toni.minFilter = toni.magFilter = THREE.NearestFilter;
+    toni.needsUpdate = true;
+    const cartone = (colore: number) => new THREE.MeshToonMaterial({ color: colore, gradientMap: toni });
+    const suolo = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), cartone(0xe6efe9)); // neve bianca e fredda: la busta crema si stacca
+    suolo.rotation.x = -Math.PI / 2;
+    suolo.position.y = SUOLO;
+    scena.add(suolo);
+    const matCumulo = cartone(0xf4f8f5);
+    [[-2.3, -1.4, 0.9], [2.5, -2.6, 1.2], [-4.2, -6, 1.8], [4, 0.3, 0.8], [0.6, -8, 2.2], [-1.4, 1.8, 0.6]].forEach(([x, z, r]) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), matCumulo);
+      m.scale.y = 0.38;
+      m.position.set(x, SUOLO, z);
+      scena.add(m);
+    });
+    // il mucchietto di neve davanti alla busta: la fa sembrare piantata
+    const mucchio = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), matCumulo);
+    mucchio.scale.set(1.25, 0.32, 0.45);
+    mucchio.position.set(0.05, SUOLO, 0.85);
+    scena.add(mucchio);
+    // abeti stilizzati con la punta innevata
+    const matAbete = cartone(0x2c4a32);
+    const matAbeteScuro = cartone(0x1e3826);
+    const matNeveAlbero = cartone(0xf4f8f5);
+    const matTronco = cartone(0x6b4a2b);
+    [[-3.6, -5, 1.1], [-6.5, -9, 1.6], [3.4, -6.5, 1.3], [6.8, -10, 1.8], [-1.2, -13, 1.5], [1.8, -15, 2], [-9, -14, 1.7], [9.5, -15, 1.9]].forEach(([x, z, h], i) => {
+      const albero = new THREE.Group();
+      const tronco = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.6, 8), matTronco);
+      tronco.position.y = 0.3;
+      albero.add(tronco);
+      [0, 1, 2].forEach((k) => {
+        const r = 1.1 - k * 0.3;
+        const piano = new THREE.Mesh(new THREE.ConeGeometry(r, 1.2, 9), k % 2 ? matAbeteScuro : matAbete);
+        piano.position.y = 0.9 + k * 0.62;
+        albero.add(piano);
+      });
+      const punta = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.45, 9), matNeveAlbero);
+      punta.position.y = 2.42;
+      albero.add(punta);
+      albero.scale.setScalar(h);
+      albero.rotation.y = i;
+      albero.position.set(x, SUOLO, z);
+      scena.add(albero);
+    });
 
     // ---------- busta ----------
     const busta = new THREE.Group();
     scena.add(busta);
-    const matCorpo = new THREE.MeshStandardMaterial({ map: texturaCorpo(), roughness: 0.9, transparent: true });
+    const matCorpo = new THREE.MeshToonMaterial({ map: texturaCorpo(), gradientMap: toni, transparent: true });
     const corpo = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA, ALTEZZA), matCorpo);
     busta.add(corpo);
-    // retro (il davanti della busta, visibile mentre gira)
-    const matDavanti = new THREE.MeshStandardMaterial({ color: 0xf3e8cf, roughness: 0.9, transparent: true });
+    const matDavanti = new THREE.MeshToonMaterial({ color: 0xf3e8cf, gradientMap: toni, transparent: true });
     const davanti = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA, ALTEZZA), matDavanti);
     davanti.rotation.y = Math.PI;
     davanti.position.z = -0.005;
     busta.add(davanti);
 
-    const cerniera = new THREE.Group(); // il lembo ruota attorno al bordo in alto
-    cerniera.position.set(0, ALTEZZA / 2, 0.012);
-    busta.add(cerniera);
-    const forma = new THREE.Shape();
-    forma.moveTo(-LARGHEZZA / 2, 0);
-    forma.lineTo(LARGHEZZA / 2, 0);
-    forma.lineTo(0, -ALTEZZA * 0.6);
-    forma.closePath();
-    const geoLembo = new THREE.ShapeGeometry(forma);
-    // coordinate della texture sul triangolo
-    const pos = geoLembo.attributes.position;
-    const uv = new Float32Array(pos.count * 2);
-    for (let i = 0; i < pos.count; i++) {
-      uv[i * 2] = pos.getX(i) / LARGHEZZA + 0.5;
-      uv[i * 2 + 1] = 1 + pos.getY(i) / (ALTEZZA * 0.6);
-    }
-    geoLembo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-    const matLembo = new THREE.MeshStandardMaterial({ map: texturaLembo(), roughness: 0.85, side: THREE.DoubleSide, transparent: true });
+    // lembo: un foglio a strisce che si curva come carta (cerniera in alto)
+    const RIGHE = 28;
+    const geoLembo = new THREE.PlaneGeometry(LARGHEZZA, ALTO_LEMBO, 1, RIGHE);
+    geoLembo.translate(0, -ALTO_LEMBO / 2, 0);
+    const matLembo = new THREE.MeshToonMaterial({ map: texturaLembo(), gradientMap: toni, side: THREE.DoubleSide, transparent: true, alphaTest: 0.5 });
     const lembo = new THREE.Mesh(geoLembo, matLembo);
-    cerniera.add(lembo);
-    const matCera = new THREE.MeshStandardMaterial({ map: texturaCeralacca(), roughness: 0.35, metalness: 0.1, transparent: true });
-    const cera = new THREE.Mesh(new THREE.CircleGeometry(0.34, 48), matCera);
-    cera.position.set(0, -ALTEZZA * 0.6 + 0.3, 0.01);
-    cerniera.add(cera);
+    lembo.position.set(0, ALTEZZA / 2, 0.012);
+    busta.add(lembo);
+    const posLembo = geoLembo.attributes.position;
+    // la riga di ogni vertice la calcolo una volta sola dalla forma piatta
+    const rigaDi = new Int16Array(posLembo.count);
+    for (let i = 0; i < posLembo.count; i++) rigaDi[i] = Math.round((-posLembo.getY(i) / ALTO_LEMBO) * RIGHE);
+    function piega(p: number) {
+      const A = p * Math.PI * 1.1;
+      const curva = Math.sin(Math.PI * Math.min(p, 1)) * 1.1;
+      const passo = ALTO_LEMBO / RIGHE;
+      let y = 0;
+      let z = 0;
+      const righe: [number, number][] = [[0, 0]];
+      for (let j = 1; j <= RIGHE; j++) {
+        const d = j / RIGHE;
+        const a = A + curva * d * d;
+        y -= Math.cos(a) * passo;
+        z += Math.sin(a) * passo;
+        righe.push([y, z]);
+      }
+      for (let i = 0; i < posLembo.count; i++) {
+        const r = righe[rigaDi[i]];
+        posLembo.setY(i, r[0]);
+        posLembo.setZ(i, r[1]);
+      }
+      posLembo.needsUpdate = true;
+      geoLembo.computeVertexNormals();
+    }
+    piega(0);
+
+    // sigillo: una tela che si gratta via
+    const telaCera = document.createElement("canvas");
+    telaCera.width = telaCera.height = 256;
+    const cc = telaCera.getContext("2d")!;
+    disegnaCeralacca(cc);
+    const texCera = new THREE.CanvasTexture(telaCera);
+    texCera.colorSpace = THREE.SRGBColorSpace;
+    const matCera = new THREE.MeshStandardMaterial({ map: texCera, roughness: 0.35, metalness: 0.1, transparent: true, alphaTest: 0.1, emissive: new THREE.Color(0xffb86b), emissiveIntensity: 0 });
+    const R_CERA = 0.36;
+    const cera = new THREE.Mesh(new THREE.CircleGeometry(R_CERA, 48), matCera);
+    cera.position.set(0, ALTEZZA / 2 - ALTO_LEMBO + 0.3, 0.03);
+    busta.add(cera);
+    // per sapere quanto è stato grattato: una griglia di celle dentro il cerchio
+    const GRIGLIA = 16;
+    const grattate = new Set<number>();
+    let celleDentro = 0;
+    for (let gx = 0; gx < GRIGLIA; gx++)
+      for (let gy = 0; gy < GRIGLIA; gy++) if (Math.hypot(gx + 0.5 - GRIGLIA / 2, gy + 0.5 - GRIGLIA / 2) < GRIGLIA / 2 - 0.3) celleDentro++;
 
     // luce che esce dalla busta aperta
-    const punto = texturaPunto();
     const matLuce = new THREE.SpriteMaterial({ map: punto, color: 0xffd98a, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
     const luce = new THREE.Sprite(matLuce);
-    luce.position.set(0, ALTEZZA * 0.3, -0.02); // dietro al corpo: si vede uscire da sopra
+    luce.position.set(0, ALTEZZA * 0.3, -0.02);
     luce.scale.set(3, 2, 1);
-    luce.renderOrder = -1; // disegnata per prima: il corpo della busta la copre
+    luce.renderOrder = -1;
     busta.add(luce);
 
     // ---------- biglietto dentro la busta ----------
@@ -316,7 +452,6 @@ export default function ScenaBusta({
     });
     disegnaRetro(telaRetro.getContext("2d")!, tw, th);
     disegnaFronte(telaFronte.getContext("2d")!, tw, th, dati.current.nome, null);
-    // quando i caratteri e il personaggio sono pronti, ridisegno
     (async () => {
       await document.fonts.ready;
       disegnaRetro(telaRetro.getContext("2d")!, tw, th);
@@ -331,8 +466,7 @@ export default function ScenaBusta({
       disegnaFronte(telaFronte.getContext("2d")!, tw, th, dati.current.nome, img);
       texFronte.needsUpdate = true;
     })();
-    const taglio = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // nasconde ciò che sta sotto la busta
-    // colori pieni (senza ombre), uguali al biglietto finale
+    const taglio = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const matRetro = new THREE.MeshBasicMaterial({ map: texRetro, transparent: true, alphaTest: 0.5, clippingPlanes: [taglio] });
     const matFronte = new THREE.MeshBasicMaterial({ map: texFronte, transparent: true, alphaTest: 0.5, clippingPlanes: [taglio] });
     const biglietto = new THREE.Group();
@@ -344,64 +478,24 @@ export default function ScenaBusta({
     biglietto.visible = false;
     scena.add(biglietto);
     const Y_DENTRO = ALTEZZA / 2 - 0.12 - B_ALTO / 2;
-    const Y_FUORI = ALTEZZA / 2 + B_ALTO * 0.25; // esce per tre quarti
-    const punto3 = new THREE.Vector3();
-    let partenza: { pos: THREE.Vector3; scala: number } | null = null;
+    const Y_FUORI = ALTEZZA / 2 + B_ALTO * 0.25;
 
-    // ---------- neve ----------
-    const N_NEVE = 260;
+    // ---------- neve che cade e particelle ----------
+    const N_NEVE = 320;
     const neve = new Float32Array(N_NEVE * 3);
     const velNeve = new Float32Array(N_NEVE);
     for (let i = 0; i < N_NEVE; i++) {
-      neve[i * 3] = (Math.random() - 0.5) * 8;
-      neve[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      neve[i * 3 + 2] = (Math.random() - 0.5) * 4;
-      velNeve[i] = 0.25 + Math.random() * 0.5;
+      neve.set([(Math.random() - 0.5) * 12, Math.random() * 12 - 3, (Math.random() - 0.5) * 8], i * 3);
+      velNeve[i] = 0.3 + Math.random() * 0.5;
     }
     const geoNeve = new THREE.BufferGeometry();
     geoNeve.setAttribute("position", new THREE.BufferAttribute(neve, 3));
-    const matNeve = new THREE.PointsMaterial({ map: punto, size: 0.09, transparent: true, opacity: 0, depthWrite: false, color: 0xffffff });
-    scena.add(new THREE.Points(geoNeve, matNeve));
-
-    // ---------- scintille (esplosioni) ----------
-    const N_SC = 220;
-    const sc = new Float32Array(N_SC * 3);
-    const velSc = new Float32Array(N_SC * 3);
-    const geoSc = new THREE.BufferGeometry();
-    geoSc.setAttribute("position", new THREE.BufferAttribute(sc, 3));
-    const matSc = new THREE.PointsMaterial({ map: punto, size: 0.16, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, color: 0xffd36b });
-    scena.add(new THREE.Points(geoSc, matSc));
-    let inizioScoppio = -10;
-    function scoppio(y: number, forza: number) {
-      for (let i = 0; i < N_SC; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const b = (Math.random() - 0.5) * Math.PI;
-        const v = forza * (0.4 + Math.random());
-        sc[i * 3] = 0;
-        sc[i * 3 + 1] = y;
-        sc[i * 3 + 2] = 0.3;
-        velSc[i * 3] = Math.cos(a) * Math.cos(b) * v;
-        velSc[i * 3 + 1] = Math.sin(b) * v + 0.6;
-        velSc[i * 3 + 2] = Math.sin(a) * Math.cos(b) * v * 0.4;
-      }
-      geoSc.attributes.position.needsUpdate = true;
-      inizioScoppio = orologio.getElapsedTime();
-    }
-
-    // ---------- inclinazione col dito o col telefono ----------
-    let inclX = 0;
-    let inclY = 0;
-    const muovi = (e: PointerEvent) => {
-      inclY = (e.clientX / window.innerWidth - 0.5) * 0.5;
-      inclX = (e.clientY / window.innerHeight - 0.5) * 0.4;
-    };
-    const giroscopio = (e: DeviceOrientationEvent) => {
-      if (e.gamma == null || e.beta == null) return;
-      inclY = Math.max(-0.4, Math.min(0.4, e.gamma / 60));
-      inclX = Math.max(-0.3, Math.min(0.3, (e.beta - 45) / 90));
-    };
-    window.addEventListener("pointermove", muovi);
-    window.addEventListener("deviceorientation", giroscopio);
+    const fiocchi = new THREE.Points(geoNeve, new THREE.PointsMaterial({ map: punto, size: 0.09, transparent: true, depthWrite: false, color: 0xffffff }));
+    fiocchi.frustumCulled = false;
+    scena.add(fiocchi);
+    const sbuffi = particelle(scena, punto, 200, 0xffffff, 0.16, false, 3);
+    const briciole = particelle(scena, punto, 260, 0xb3261e, 0.07, false, 6);
+    const scintille = particelle(scena, punto, 220, 0xffd36b, 0.15, true, 1.2);
 
     // ---------- dimensioni ----------
     let scalaBase = 1;
@@ -411,88 +505,252 @@ export default function ScenaBusta({
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      const altezzaVisibile = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const altezzaVisibile = 2 * 9 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
       scalaBase = Math.min((altezzaVisibile * camera.aspect * 0.82) / LARGHEZZA, 1.2);
     };
     ridimensiona();
     const ro = new ResizeObserver(ridimensiona);
     ro.observe(box);
 
-    // ---------- animazione ----------
-    const orologio = new THREE.Clock();
-    let pronta = false;
-    let inizioApertura = -1;
+    // ---------- inquadrature ----------
+    const CAM_CIELO = { pos: new THREE.Vector3(0, 3.6, 9), guarda: new THREE.Vector3(0, 4.2, 0) };
+    const CAM_NEVE = { pos: new THREE.Vector3(0, 0.1, 6.2), guarda: new THREE.Vector3(0, -1.5, 0.4) };
+    const CAM_DAVANTI = { pos: new THREE.Vector3(0, 0, 9), guarda: new THREE.Vector3(0, 0, 0) };
+    const guardaOra = new THREE.Vector3();
+    function inquadra(da: typeof CAM_CIELO, a: typeof CAM_CIELO, k: number) {
+      camera.position.lerpVectors(da.pos, a.pos, k);
+      guardaOra.lerpVectors(da.guarda, a.guarda, k);
+      camera.lookAt(guardaOra);
+    }
+    const POSA_NEVE = { pos: new THREE.Vector3(0, -1.68, 0.4), rot: new THREE.Euler(-0.35, 0.15, 0.16) };
+
+    // ---------- stato della storia ----------
+    let fase: FaseBusta = "cade";
+    let inizioFase = 0;
+    let tocchi = 0;
+    let salto = 0; // altezza del sobbalzo
+    let velSalto = 0;
+    let dondolio = 0;
+    let apertura = 0; // 0 = lembo chiuso, 1 = aperto
+    let obiettivoApertura = 0;
+    let trascinoLembo: { y: number; da: number } | null = null;
+    let grattando = false;
+    let sigilloVia = -1;
+    let partenzaBiglietto: { pos: THREE.Vector3; scala: number } | null = null;
     let finita = false;
+    const orologio = new THREE.Clock();
+    const vaiA = (f: FaseBusta) => {
+      fase = f;
+      inizioFase = orologio.getElapsedTime();
+      callback.current.onFase(f, tocchi);
+    };
+    callback.current.onFase("cade");
+
+    // ---------- tocchi e dita ----------
+    const raggio = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const colpisci = (e: PointerEvent, oggetti: THREE.Object3D[]) => {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      raggio.setFromCamera(ndc, camera);
+      return raggio.intersectObjects(oggetti, false)[0];
+    };
+    const punto3 = new THREE.Vector3();
+
+    function gratta(e: PointerEvent) {
+      const h = colpisci(e, [cera]);
+      if (!h?.uv) return;
+      const x = h.uv.x * 256;
+      const y = (1 - h.uv.y) * 256;
+      cc.save();
+      cc.globalCompositeOperation = "destination-out";
+      cc.beginPath();
+      cc.arc(x, y, 30, 0, Math.PI * 2);
+      cc.fill();
+      cc.restore();
+      texCera.needsUpdate = true;
+      const gx0 = Math.floor((x / 256) * GRIGLIA);
+      const gy0 = Math.floor((y / 256) * GRIGLIA);
+      for (let dx = -2; dx <= 2; dx++)
+        for (let dy = -2; dy <= 2; dy++) {
+          const gx = gx0 + dx;
+          const gy = gy0 + dy;
+          if (gx < 0 || gy < 0 || gx >= GRIGLIA || gy >= GRIGLIA) continue;
+          if (Math.hypot(dx, dy) <= 2 && Math.hypot(gx + 0.5 - GRIGLIA / 2, gy + 0.5 - GRIGLIA / 2) < GRIGLIA / 2 - 0.3) grattate.add(gx * GRIGLIA + gy);
+        }
+      briciole.emetti(h.point, 4, 1.2, 0.8);
+      if (grattate.size / celleDentro > 0.55 && sigilloVia < 0) {
+        // il resto del sigillo si sbriciola e cade
+        sigilloVia = orologio.getElapsedTime();
+        cera.getWorldPosition(punto3);
+        briciole.emetti(punto3, 60, 2, 0.6);
+        scintille.emetti(punto3, 40, 1.5);
+      }
+    }
+
+    const giu = (e: PointerEvent) => {
+      if (fase === "neve") {
+        if (!colpisci(e, [corpo, davanti, lembo, cera])) return;
+        if (tocchi === 0) callback.current.onPrimoTocco();
+        tocchi++;
+        busta.getWorldPosition(punto3);
+        punto3.y = SUOLO + 0.1;
+        sbuffi.emetti(punto3, 30 + tocchi * 15, 1.6 + tocchi * 0.5, 1);
+        if (tocchi >= 3) vaiA("vola");
+        else {
+          velSalto = tocchi === 1 ? 2.2 : 3.4;
+          dondolio = tocchi === 1 ? 0.25 : 0.45;
+          callback.current.onFase("neve", tocchi);
+        }
+      } else if (fase === "sigillo") {
+        if (colpisci(e, [cera])) {
+          grattando = true;
+          renderer.domElement.setPointerCapture(e.pointerId);
+        }
+      } else if (fase === "lembo") {
+        trascinoLembo = { y: e.clientY, da: apertura };
+        renderer.domElement.setPointerCapture(e.pointerId);
+      }
+    };
+    const muovi = (e: PointerEvent) => {
+      if (fase === "sigillo" && grattando) gratta(e);
+      if (fase === "lembo" && trascinoLembo) {
+        const corsa = box.clientHeight * 0.3;
+        obiettivoApertura = apertura = Math.min(1, Math.max(0, trascinoLembo.da + (trascinoLembo.y - e.clientY) / corsa));
+      }
+    };
+    const su = () => {
+      grattando = false;
+      if (fase === "lembo" && trascinoLembo) {
+        trascinoLembo = null;
+        obiettivoApertura = apertura > 0.4 ? 1 : 0; // oltre metà si apre da solo, altrimenti torna giù
+      }
+    };
+    renderer.domElement.addEventListener("pointerdown", giu);
+    renderer.domElement.addEventListener("pointermove", muovi);
+    renderer.domElement.addEventListener("pointerup", su);
+    renderer.domElement.addEventListener("pointercancel", su);
+
+    // ---------- animazione ----------
     let frame = 0;
     let ultimo = 0;
-    matCera.emissive = new THREE.Color(0xffb86b);
-
     const ciclo = () => {
       frame = requestAnimationFrame(ciclo);
       const t = orologio.getElapsedTime();
       const dt = Math.min(t - ultimo, 0.05);
       ultimo = t;
+      const f = t - inizioFase;
+      const sNeve = scalaBase * 0.72;
 
-      // arrivo: da lontano, girando su se stessa
-      const k = facile(t / DURATA_ARRIVO);
-      const s = scalaBase * (0.2 + 0.8 * k);
-      busta.scale.set(s, s, s);
-      busta.position.set(0, (1 - k) * 3 - 0.55 * k + Math.sin(t * 1.6) * 0.06 * k, -14 * (1 - k));
-      busta.rotation.y = (1 - k) * Math.PI * 4 + inclY * k;
-      busta.rotation.x = inclX * k;
-      busta.rotation.z = (1 - k) * 0.6 + Math.sin(t * 1.1) * 0.02;
-      matNeve.opacity = Math.min(0.9, t / 1.5);
-      if (!pronta && t > DURATA_ARRIVO) {
-        pronta = true;
-        scoppio(0, 2.2);
-        callback.current.onPronta();
+      if (fase === "cade") {
+        // la busta cade dal cielo girando; l'inquadratura scende con lei
+        const k = Math.min(1, f / 1.7);
+        const caduta = k * k; // accelera come un oggetto che cade
+        busta.position.set(Math.sin(f * 3) * 0.5 * (1 - k), 8 + (POSA_NEVE.pos.y - 8) * caduta, POSA_NEVE.pos.z);
+        busta.rotation.set(POSA_NEVE.rot.x * k + Math.sin(f * 5) * 0.6 * (1 - k), f * 4 * (1 - k), POSA_NEVE.rot.z + Math.cos(f * 4) * 0.5 * (1 - k));
+        busta.scale.setScalar(sNeve);
+        inquadra(CAM_CIELO, CAM_NEVE, morbido((f - 0.2) / 1.9));
+        if (k >= 1) {
+          sbuffi.emetti(new THREE.Vector3(0, SUOLO + 0.1, POSA_NEVE.pos.z), 70, 2.4, 1);
+          vaiA("neve");
+        }
+      } else if (fase === "neve") {
+        inquadra(CAM_CIELO, CAM_NEVE, 1);
+        // sobbalzi
+        velSalto -= 14 * dt;
+        salto = Math.max(0, salto + velSalto * dt);
+        if (salto === 0 && velSalto < 0) {
+          if (velSalto < -2) sbuffi.emetti(new THREE.Vector3(0, SUOLO + 0.1, POSA_NEVE.pos.z), 20, 1.2, 1);
+          velSalto = 0;
+        }
+        dondolio *= Math.exp(-3 * dt);
+        busta.position.copy(POSA_NEVE.pos).add(new THREE.Vector3(0, salto, 0));
+        busta.rotation.set(POSA_NEVE.rot.x, POSA_NEVE.rot.y, POSA_NEVE.rot.z + Math.sin(t * 18) * dondolio);
+        busta.scale.setScalar(sNeve);
+        matCera.emissiveIntensity = 0.08 + 0.08 * Math.sin(t * 4);
+      } else if (fase === "vola") {
+        // si alza in volo con una giravolta e si mette davanti
+        const k = morbido(f / 1.6);
+        busta.position.set(
+          POSA_NEVE.pos.x * (1 - k) + Math.sin(k * Math.PI) * 0.6,
+          POSA_NEVE.pos.y * (1 - k) + Math.sin(k * Math.PI) * 1.6,
+          POSA_NEVE.pos.z * (1 - k),
+        );
+        busta.rotation.set(POSA_NEVE.rot.x * (1 - k), POSA_NEVE.rot.y * (1 - k) + k * Math.PI * 2, POSA_NEVE.rot.z * (1 - k));
+        busta.scale.setScalar(sNeve + (scalaBase - sNeve) * k);
+        inquadra(CAM_NEVE, CAM_DAVANTI, k);
+        if (f > 0.3 && f < 1.2) scintille.emetti(busta.getWorldPosition(punto3), 2, 0.6);
+        if (f >= 1.6) {
+          busta.getWorldPosition(punto3);
+          scintille.emetti(punto3, 80, 2);
+          vaiA("sigillo");
+        }
+      } else {
+        // davanti a te: dondola appena
+        inquadra(CAM_NEVE, CAM_DAVANTI, 1);
+        if (fase !== "biglietto") {
+          busta.position.set(0, Math.sin(t * 1.6) * 0.05, 0);
+          busta.rotation.set(Math.sin(t * 0.9) * 0.03, Math.sin(t * 0.7) * 0.05, 0);
+          busta.scale.setScalar(scalaBase);
+        }
       }
-      // la ceralacca luccica
-      matCera.emissiveIntensity = pronta && inizioApertura < 0 ? 0.15 + 0.15 * Math.sin(t * 4) : 0;
 
-      // apertura
-      if (apertaRef.current && pronta && inizioApertura < 0) {
-        inizioApertura = t;
-        scoppio(ALTEZZA / 2 * scalaBase, 3);
+      // il sigillo che si sbriciola
+      if (sigilloVia >= 0) {
+        const a = t - sigilloVia;
+        cera.position.y = ALTEZZA / 2 - ALTO_LEMBO + 0.3 - a * a * 3;
+        cera.rotation.z = a * 4;
+        matCera.opacity = Math.max(0, 1 - a * 2);
+        if (a > 0.5 && fase === "sigillo") {
+          cera.visible = false;
+          vaiA("lembo");
+        }
       }
-      if (inizioApertura >= 0) {
-        const a = t - inizioApertura;
-        cerniera.rotation.x = facile(a / 0.8) * Math.PI * 0.92;
-        // la luce si accende, resta un attimo e si spegne piano (prima che la scena sparisca)
-        matLuce.opacity = 0.85 * Math.min(1, a / 0.4) * (a < 0.9 ? 1 : Math.max(0, 1 - (a - 0.9) / 0.6));
-        luce.scale.set(3 + a * 1.5, 2 + a, 1);
-        // 1) il biglietto sale fuori dalla busta (mostra il retro col "?")
-        if (a > 0.5 && a <= 1.9) {
+
+      // il lembo segue il dito; lasciato, va verso aperto o chiuso con una molla
+      if (fase === "lembo" || fase === "biglietto") {
+        if (!trascinoLembo) apertura += (obiettivoApertura - apertura) * Math.min(1, dt * 7);
+        piega(apertura);
+        matLuce.opacity = Math.min(0.85, apertura * 0.9) * (fase === "biglietto" ? Math.max(0, 1 - (t - inizioFase - 0.8) / 0.6) : 1);
+        if (fase === "lembo" && obiettivoApertura === 1 && apertura > 0.97) {
+          busta.getWorldPosition(punto3);
+          scintille.emetti(punto3.add(new THREE.Vector3(0, ALTEZZA / 2 * scalaBase, 0)), 90, 2.5);
+          vaiA("biglietto");
+        }
+      }
+
+      // il biglietto esce, la busta scende via, il biglietto viene avanti e si gira
+      if (fase === "biglietto") {
+        const a = t - inizioFase;
+        if (a <= 1.3) {
           biglietto.visible = true;
-          const k = facile((a - 0.5) / 1.3);
+          const k = facile(a / 1.3);
           busta.localToWorld(punto3.set(0, Y_DENTRO + (Y_FUORI - Y_DENTRO) * k, -0.02));
           biglietto.position.copy(punto3);
           biglietto.quaternion.copy(busta.quaternion);
           biglietto.scale.copy(busta.scale);
-          // taglio all'altezza del bordo in basso della busta
           busta.localToWorld(punto3.set(0, -ALTEZZA / 2, 0));
           taglio.constant = -punto3.y;
-        }
-        // 2) la busta scende via; il biglietto viene verso di te e si gira
-        if (a > 1.9) {
-          if (!partenza) {
-            partenza = { pos: biglietto.position.clone(), scala: biglietto.scale.x };
+        } else {
+          if (!partenzaBiglietto) {
+            partenzaBiglietto = { pos: biglietto.position.clone(), scala: biglietto.scale.x };
             matRetro.clippingPlanes = [];
             matFronte.clippingPlanes = [];
             matRetro.needsUpdate = matFronte.needsUpdate = true;
           }
-          const g = facile((a - 1.9) / 0.9);
-          busta.position.y -= g * 5;
-          [matCorpo, matDavanti, matLembo, matCera].forEach((m) => (m.opacity = 1 - g));
-          const k = facile((a - 1.9) / 1.1);
+          const g = facile((a - 1.3) / 0.9);
+          busta.position.y = -g * 5;
+          [matCorpo, matDavanti, matLembo].forEach((m) => (m.opacity = 1 - g));
+          const k = facile((a - 1.3) / 1.1);
           const zFinale = 2.5;
-          const hVis = 2 * (camera.position.z - zFinale) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+          const hVis = 2 * (9 - zFinale) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
           const scalaFinale = Math.min((hVis * camera.aspect * 0.86) / B_LARGO, (hVis * 0.62) / B_ALTO);
-          biglietto.position.set(partenza.pos.x * (1 - k), partenza.pos.y * (1 - k), partenza.pos.z + (zFinale - partenza.pos.z) * k);
-          biglietto.scale.setScalar(partenza.scala + (scalaFinale - partenza.scala) * k);
-          biglietto.rotation.set(0, facile((a - 2.2) / 0.8) * Math.PI, Math.sin(k * Math.PI) * 0.08);
+          const p0 = partenzaBiglietto.pos;
+          biglietto.position.set(p0.x * (1 - k), p0.y * (1 - k), p0.z + (zFinale - p0.z) * k);
+          biglietto.scale.setScalar(partenzaBiglietto.scala + (scalaFinale - partenzaBiglietto.scala) * k);
+          biglietto.rotation.set(0, facile((a - 1.6) / 0.8) * Math.PI, Math.sin(k * Math.PI) * 0.08);
         }
-        if (a > 3.15 && !finita) {
+        if (a > 2.55 && !finita) {
           finita = true;
           callback.current.onAperta();
         }
@@ -502,18 +760,12 @@ export default function ScenaBusta({
       for (let i = 0; i < N_NEVE; i++) {
         neve[i * 3 + 1] -= velNeve[i] * dt;
         neve[i * 3] += Math.sin(t + i) * 0.002;
-        if (neve[i * 3 + 1] < -5) neve[i * 3 + 1] = 5;
+        if (neve[i * 3 + 1] < SUOLO) neve[i * 3 + 1] = 9;
       }
       geoNeve.attributes.position.needsUpdate = true;
-
-      // scintille che si allargano e si spengono
-      const vita = t - inizioScoppio;
-      if (vita < 1.6) {
-        for (let i = 0; i < N_SC * 3; i++) sc[i] += velSc[i] * dt;
-        for (let i = 0; i < N_SC; i++) velSc[i * 3 + 1] -= 1.2 * dt;
-        geoSc.attributes.position.needsUpdate = true;
-        matSc.opacity = 1 - vita / 1.6;
-      } else matSc.opacity = 0;
+      sbuffi.aggiorna(dt);
+      briciole.aggiorna(dt);
+      scintille.aggiorna(dt);
 
       renderer.render(scena, camera);
     };
@@ -522,8 +774,10 @@ export default function ScenaBusta({
     return () => {
       cancelAnimationFrame(frame);
       ro.disconnect();
-      window.removeEventListener("pointermove", muovi);
-      window.removeEventListener("deviceorientation", giroscopio);
+      renderer.domElement.removeEventListener("pointerdown", giu);
+      renderer.domElement.removeEventListener("pointermove", muovi);
+      renderer.domElement.removeEventListener("pointerup", su);
+      renderer.domElement.removeEventListener("pointercancel", su);
       renderer.dispose();
       scena.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Points || o instanceof THREE.Sprite) {
@@ -537,5 +791,5 @@ export default function ScenaBusta({
     };
   }, []);
 
-  return <div ref={contenitore} className="absolute inset-0" aria-hidden />;
+  return <div ref={contenitore} className="absolute inset-0" />;
 }

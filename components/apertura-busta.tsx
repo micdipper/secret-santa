@@ -13,6 +13,7 @@ import { clientSoloBrowser } from "@/lib/supabase/client";
 // three.js si scarica solo quando serve (durante il giro della slot machine)
 const caricaScena = () => import("@/components/scena-busta");
 const ScenaBusta = dynamic(caricaScena, { ssr: false });
+type FaseBusta = import("@/components/scena-busta").FaseBusta;
 const Leva3D = dynamic(() => import("@/components/leva-3d"), { ssr: false });
 
 export type Persona = { id: string; nome: string; look: Look | null };
@@ -21,6 +22,16 @@ const ALTEZZA_VOCE = 120; // altezza di un personaggio nel rullo (px)
 const GIRI = 46; // quanti personaggi passano prima di fermarsi
 const DURATA_GIRO = 7.5; // secondi
 const CORSA_LEVA = 84; // quanto scende il pomello (px)
+// Cosa dire in alto, passo per passo
+const ISTRUZIONI: Record<FaseBusta, (tocchi: number) => string> = {
+  cade: () => "Attenzione… arriva!",
+  neve: (n) => (n === 0 ? "È finita nella neve! Toccala per tirarla fuori" : n === 1 ? "Ancora un colpetto!" : "Dai, ultimo tocco!"),
+  vola: () => "Eccola!",
+  sigillo: () => "Gratta via il sigillo col dito",
+  lembo: () => "Ora apri la busta: trascina il lembo in su",
+  biglietto: () => "Ecco a chi!",
+};
+
 const COLORI = ["#e5481e", "#e9a81c", "#f3e8cf", "#2c4a32", "#f4a9c4"];
 
 function webglDisponibile() {
@@ -59,7 +70,8 @@ export function AperturaBusta({
   const [busta3d, setBusta3d] = useState(true);
   const [bustaPronta, setBustaPronta] = useState(false);
   const [aperta, setAperta] = useState(false);
-  const [lampo, setLampo] = useState(false);
+  const [faseScena, setFaseScena] = useState<FaseBusta>("cade");
+  const [tocchi, setTocchi] = useState(0);
   const [rivelato, setRivelato] = useState(false);
   const avatarNascosto = useRef<HTMLDivElement>(null);
   // il personaggio come immagine, per disegnarlo sul biglietto 3D
@@ -102,19 +114,25 @@ export function AperturaBusta({
     animaMacchina(macchina.current, { scale: [1, 1.05, 1], rotate: [0, 1.5, -1.5, 0] }, { duration: 0.5 });
     if (!ridotto) confetti({ particleCount: 60, spread: 80, startVelocity: 35, origin: { y: 0.45 }, colors: COLORI });
     setTimeout(() => {
-      if (!ridotto) setLampo(true);
       setFase("scena");
     }, 1500);
   }
 
   // ---------- busta ----------
-  async function apriLaBusta() {
-    // Su iPhone il permesso per il movimento si può chiedere solo dopo un tocco
+  // Su iPhone il permesso per il movimento si può chiedere solo dopo un tocco
+  function chiediMovimento() {
     const D = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof D?.requestPermission === "function") D.requestPermission().catch(() => {});
-    setAperta(true);
-    if (!busta3d) bustaAperta();
-    // Me lo ricordo: la pagina del gruppo mostrerà il promemoria (e sblocca il premio calendario)
+  }
+
+  // versione semplice (senza 3D): un tocco e si apre
+  function apriLaBusta() {
+    chiediMovimento();
+    bustaAperta();
+  }
+
+  // Me lo ricordo: la pagina del gruppo mostrerà il promemoria (e sblocca il premio calendario)
+  async function segnaAperta() {
     const { data } = await supabase.auth.getSession();
     const uid = data.session?.user.id;
     if (uid) {
@@ -130,6 +148,8 @@ export function AperturaBusta({
   // il biglietto è fuori: festa! (in 2D il biglietto si gira da solo, quindi aspetto un attimo)
   function bustaAperta() {
     setRivelato(true);
+    setAperta(true);
+    segnaAperta();
     if (!ridotto) {
       setTimeout(
         () => {
@@ -174,7 +194,7 @@ export function AperturaBusta({
                   <div ref={rullo} className="absolute inset-x-0 top-[40px]" style={{ filter: sfocato && !ridotto ? "blur(2px)" : "none", transition: "filter .6s" }}>
                     {voci.map((p, i) => (
                       <div key={i} className="flex items-center justify-center" style={{ height: ALTEZZA_VOCE }}>
-                        {p === "?" ? <Pacchetto /> : <ToppaAvatar look={p.look} dimensione={92} />}
+                        {p === "?" ? <Sigillo /> : <ToppaAvatar look={p.look} dimensione={92} />}
                       </div>
                     ))}
                   </div>
@@ -255,27 +275,39 @@ export function AperturaBusta({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.9, ease: "easeInOut" } }}
           >
-            {lampo && (
-              <motion.div
-                className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(circle_at_50%_45%,#fff7dd,transparent_60%)]"
-                initial={{ opacity: 0.95 }}
-                animate={{ opacity: 0 }}
-                transition={{ duration: 1.2 }}
-              />
-            )}
             <div className="relative z-10 flex items-center gap-4 px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
               {rivelato && (
                 <Link href={`/gruppo/${groupId}`} aria-label="Torna al gruppo" title="Torna al gruppo" className="tasto-tondo cucitura cliccabile stoffa-chiara">
                   {Icone.indietro}
                 </Link>
               )}
-              <p className="flex-1 text-center font-titolo text-[32px] leading-none text-crema">{aperta ? "Ecco a chi!" : "Una busta per te"}</p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={rivelato ? "fine" : busta3d ? `${faseScena}-${tocchi}` : "semplice"}
+                  className="flex-1 text-center font-titolo text-2xl leading-tight text-balance text-crema"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  aria-live="polite"
+                >
+                  {rivelato || aperta ? "Ecco a chi!" : busta3d ? ISTRUZIONI[faseScena](tocchi) : "Una busta per te"}
+                </motion.p>
+              </AnimatePresence>
               {rivelato && <span className="w-14" />}
             </div>
             {/* la scena occupa tutto lo schermo; titolo e tasto stanno sopra */}
             <motion.div className="absolute inset-0" animate={{ opacity: rivelato && busta3d ? 0 : 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
               {busta3d ? (
-                <ScenaBusta aperta={aperta} nome={destinatario.nome} avatarSvg={prendiSvg} onPronta={() => setBustaPronta(true)} onAperta={bustaAperta} />
+                <ScenaBusta
+                  nome={destinatario.nome}
+                  avatarSvg={prendiSvg}
+                  onFase={(f, n) => {
+                    setFaseScena(f);
+                    setTocchi(n ?? 0);
+                  }}
+                  onPrimoTocco={chiediMovimento}
+                  onAperta={bustaAperta}
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center px-8">
                   <motion.div
@@ -311,7 +343,7 @@ export function AperturaBusta({
                 </motion.div>
               )}
               <AnimatePresence>
-                {(bustaPronta || ridotto) && !aperta && (
+                {!busta3d && (bustaPronta || ridotto) && !aperta && (
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                     <Tasto onClick={apriLaBusta}>Apri la busta</Tasto>
                   </motion.div>
@@ -341,14 +373,20 @@ function Lampadine({ fase }: { fase: string }) {
   );
 }
 
-// Pacchetto misterioso: carta a righe, nastro dorato e un "?".
-function Pacchetto() {
+// Il sigillo di ceralacca: è lo stesso che chiude la busta (quello che si gratta via).
+function Sigillo() {
   return (
-    <span className="relative flex size-[92px] items-center justify-center overflow-hidden rounded-full shadow-[0_2px_4px_rgba(0,0,0,.25)]" style={{ background: "repeating-linear-gradient(45deg, #e5481e 0 10px, #f3e8cf 10px 20px)" }}>
-      <span className="absolute inset-y-0 left-1/2 w-3 -translate-x-1/2 bg-senape" />
-      <span className="absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 bg-senape" />
-      <span className="relative flex size-12 items-center justify-center rounded-full bg-abete font-titolo text-3xl text-crema">?</span>
-    </span>
+    <svg viewBox="0 0 100 100" className="size-[92px] drop-shadow-[0_3px_4px_rgba(0,0,0,.3)]" aria-hidden>
+      <defs>
+        <radialGradient id="sigillo-cera" cx="38%" cy="35%" r="70%">
+          <stop offset="0" stopColor="#e2493c" />
+          <stop offset="1" stopColor="#7e1414" />
+        </radialGradient>
+      </defs>
+      <circle cx="50" cy="50" r="46" fill="url(#sigillo-cera)" />
+      <circle cx="50" cy="50" r="31" fill="none" stroke="#5c0d0d" strokeOpacity=".5" strokeWidth="3" />
+      <path d="M50 27l5 18 18 5-18 5-5 18-5-18-18-5 18-5z" fill="#f1d27a" />
+    </svg>
   );
 }
 
