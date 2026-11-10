@@ -8,7 +8,7 @@
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { useEffect } from "react";
 import { Avatar, type Look } from "@/components/avatar";
-import { OLOGRAFIA_SCELTA, OLOGRAFIE, type Olografia } from "@/lib/olografie";
+import { BRINA, OLOGRAFIA_SCELTA, OLOGRAFIE, type Olografia } from "@/lib/olografie";
 
 export function fontNome(nome: string) {
   return Math.min(0.1, 0.86 / Math.max(1, nome.length * 0.56)); // frazione della larghezza (uguale al 3D)
@@ -38,6 +38,12 @@ export function BigliettoOlografico({
   const luceY = useTransform(sx, [-18, 18], [85, 15]);
   const riflesso = useMotionTemplate`radial-gradient(circle at ${luceX}% ${luceY}%, rgba(255,255,255,.75), rgba(255,255,255,0) 42%)`;
   // olografia delicata: più si inclina, più si accende (ma resta tenue)
+  const lamaPos = useTransform(sy, [-18, 18], [-20, 120]);
+  const lama = useMotionTemplate`linear-gradient(115deg, transparent calc(${lamaPos}% - 14%), rgba(255,255,255,.85) ${lamaPos}%, transparent calc(${lamaPos}% + 14%))`;
+  const brinaX = useTransform(sy, [-18, 18], [40, 60]);
+  const brinaY = useTransform(sx, [-18, 18], [40, 60]);
+  const posBrina = useMotionTemplate`${brinaX}% ${brinaY}%`;
+  const forzaBrina = useTransform([sx, sy], ([a, b]: number[]) => 0.35 + Math.min(0.55, (Math.abs(a) + Math.abs(b)) / 25));
   const forza = useTransform([sx, sy], ([a, b]: number[]) => 0.32 + Math.min(0.22, (Math.abs(a) + Math.abs(b)) / 50));
 
   useEffect(() => {
@@ -90,6 +96,19 @@ export function BigliettoOlografico({
               backgroundPosition: posBande,
             }}
           />
+          {olografia === "ghiaccio e argento" && (
+            <>
+              {/* brina: cristalli che brillano quando la luce li prende */}
+              <motion.div
+                className="absolute inset-0 mix-blend-overlay"
+                style={{ opacity: forzaBrina, backgroundImage: BRINA, backgroundSize: "34% auto", backgroundPosition: posBrina }}
+              />
+              {/* bordi gelati */}
+              <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_62%,rgba(225,240,255,.75)_100%)]" />
+              {/* lama di luce argentata che scorre */}
+              <motion.div className="absolute inset-0 mix-blend-overlay" style={{ backgroundImage: lama }} />
+            </>
+          )}
           <motion.div className="absolute inset-0 mix-blend-soft-light" style={{ backgroundImage: riflesso }} />
         </motion.div>
 
