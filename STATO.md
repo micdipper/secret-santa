@@ -17,7 +17,7 @@ Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole)
 | Rivelazione: busta 3D con three.js, biglietto olografico, neve (oggi c'è una versione semplice) | ⏳ da fare |
 | Suoni (tocchi, sottofondo, oggetti) + tasto per togliere l'audio | ⏳ da fare (decidere: generati dal codice o file con licenza libera) |
 | Pubblicazione: unire il ramo in `main` → sito ufficiale su Vercel (Production) | ⏳ a fine Fase 1 |
-| Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` (pelle, capelli, colore, maglione) + accessori sbloccati dal database (sciarpa, gomitolo, fiocco, stellina; cappello col quiz) | ✅ fatto (tabella `profiles`, `save_avatar` rifiuta accessori non sbloccati; chi entra riceve un personaggio a caso e va subito al profilo) |
+| Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` + personaggio anche in "Crea un gruppo" (riquadro "Tu") | ✅ fatto: 12 tagli, barba/baffi, occhiali, pelle, colore capelli, maglione. Premi: accessori (sciarpa, gomitolo, fiocco, stellina), taglio **Super** (10 cose sulla bacheca), capelli **olografici** (tutti e 4 gli accessori), cappello col quiz. Il database rifiuta i premi non sbloccati. Niente login separato (deciso da Marzia: resta tutto com'era). |
 | Apertura busta "a slot machine" con gli avatar, poi busta 3D | ⏳ prossimo |
 | Fase 2: chat anonima, feed del gruppo, rivelazione finale | ⏳ dopo |
 
@@ -48,3 +48,6 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
 - **Pulizia dei dati di prova**: cancellare **solo** i dati creati dai test (es. il gruppo "Test E2E Natale" e gli accessi che fanno parte solo di quel gruppo). Mai cancellare per tipo di email: anche gli accessi veri usano `@users.secretsanta.local`. Chiedere sempre prima.
 - **Gruppo di prova di Marzia "Cja"**: creato quando l'accesso era ancora con il PIN → quell'accesso non funziona più da un altro telefono con il nuovo sistema a password; conviene ricrearlo.
 - Figma: file "Secret Santa – look and feel" (team personale) con le immagini generate per le prove di atmosfera.
+
+- 10/11: su richiesta di Marzia cancellati tutti i suoi gruppi di prova (Cja, Ciao, df) e i loro accessi. Resta solo una vecchia foto di prova nello Storage `moodboard` (si toglie dalla dashboard).
+- Galleria di tutti i personaggi in `/stile` (in cima) per controllare i disegni.

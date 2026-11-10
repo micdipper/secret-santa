@@ -3,7 +3,7 @@ import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, U
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { ToppaAvatar, lookIniziale } from "@/components/avatar";
+import { Avatar, NOMI_BARBA, NOMI_CAPELLI, ToppaAvatar, lookIniziale } from "@/components/avatar";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
 export const metadata = { title: "Base grafica – Secret Santa" };
@@ -39,6 +39,19 @@ function Separatore({ titolo }: { titolo: string }) {
 export default function Stile() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-5 pb-16">
+      {/* Galleria dei personaggi: tutti i tagli, le barbe e i premi */}
+      <section id="personaggi" className="grid grid-cols-3 gap-3 pt-6">
+        {NOMI_CAPELLI.map((n, i) => (
+          <figure key={n} className="toppa aspect-square w-full overflow-hidden">
+            <Avatar look={{ pelle: i % 6, capelli: i, coloreCapelli: i === 12 ? 7 : i % 7, barba: 0, occhiali: 0, maglione: i % 6, accessori: [] }} className="relative top-[8%] h-full w-full" titolo={n} />
+          </figure>
+        ))}
+        {NOMI_BARBA.slice(1).map((n, i) => (
+          <figure key={n} className="toppa aspect-square w-full overflow-hidden">
+            <Avatar look={{ pelle: (i + 2) % 6, capelli: [0, 8, 5, 11][i], coloreCapelli: [0, 2, 3, 5][i], barba: i + 1, occhiali: i % 3, maglione: i, accessori: ["sciarpa", "stellina"] }} className="relative top-[8%] h-full w-full" titolo={n} />
+          </figure>
+        ))}
+      </section>
       {/* ================= Pagina del gruppo ================= */}
       <header className="relative pt-10">
         <Profondita intensita={8} className="absolute -top-2 right-0 w-16">

@@ -4,14 +4,23 @@ export type Look = {
   pelle: number;
   capelli: number;
   coloreCapelli: number;
+  barba: number;
+  occhiali: number;
   maglione: number;
   accessori: string[];
 };
 
 export const PELLI = ["#f6d7bf", "#efc2a0", "#d9a07a", "#b97a52", "#8d5a3b", "#5e3b28"];
-export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e9d9b5", "#b8442b", "#7c7c7c"];
+// L'ultimo colore (olografico) è un premio da sbloccare
+export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e9d9b5", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
 export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#f3e8cf"];
-export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati"];
+// L'ultimo taglio (Super) è un premio da sbloccare
+export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super"];
+export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
+export const NOMI_OCCHIALI = ["Niente", "Tondi", "Grandi"];
+
+export const CAPELLI_SUPER = 12;
+export const COLORE_OLOGRAFICO = 7;
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
   { id: "sciarpa", nome: "Sciarpa a maglia", comeSbloccarlo: "Attacca alla tua bacheca almeno una toppa di ogni tipo (simbolo, parola, palette)." },
@@ -19,18 +28,22 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "fiocco", nome: "Fiocco", comeSbloccarlo: "Attacca alla tua bacheca almeno una foto o un'immagine." },
   { id: "stellina", nome: "Spilla stellina", comeSbloccarlo: "Apri la tua busta." },
 ];
+export const COME_SBLOCCARE_SUPER = "Metti almeno 10 cose sulla tua bacheca.";
+export const COME_SBLOCCARE_OLOGRAFICO = "Sblocca tutti e 4 gli accessori.";
 
-export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, maglione: 0, accessori: [] };
+export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
-// Un look iniziale diverso per ognuno (deciso dall'id, così resta sempre lo stesso)
+// Un look iniziale diverso per ognuno (deciso dal seme, così resta sempre lo stesso)
 export function lookIniziale(seme: string): Look {
   let h = 0;
   for (const ch of seme) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return {
     pelle: h % PELLI.length,
-    capelli: (h >> 3) % NOMI_CAPELLI.length,
-    coloreCapelli: (h >> 6) % COLORI_CAPELLI.length,
-    maglione: (h >> 9) % MAGLIONI.length,
+    capelli: (h >> 3) % CAPELLI_SUPER,
+    coloreCapelli: (h >> 7) % COLORE_OLOGRAFICO,
+    barba: 0,
+    occhiali: 0,
+    maglione: (h >> 11) % MAGLIONI.length,
     accessori: [],
   };
 }
@@ -43,6 +56,8 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
     pelle: n(x.pelle, PELLI.length, base.pelle),
     capelli: n(x.capelli, NOMI_CAPELLI.length, base.capelli),
     coloreCapelli: n(x.coloreCapelli, COLORI_CAPELLI.length, base.coloreCapelli),
+    barba: n(x.barba, NOMI_BARBA.length, 0),
+    occhiali: n(x.occhiali, NOMI_OCCHIALI.length, 0),
     maglione: n(x.maglione, MAGLIONI.length, base.maglione),
     accessori: Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string") : [],
   };
@@ -88,9 +103,98 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
           ))}
         </g>
       );
-    default: // rasati
+    case 5: // rasati
       return dietro ? null : <path d="M31 40c1-12 9-19 19-19s18 7 19 19c-6-4-12-6-19-6s-13 2-19 6z" fill={c} opacity=".55" />;
+    case 6: // cresta
+      return dietro ? null : (
+        <g fill={c}>
+          <path d="M31 40c1-12 9-19 19-19s18 7 19 19c-6-4-12-6-19-6s-13 2-19 6z" opacity=".45" />
+          <path d="M43 32l-1-14 5 7 2-15 4 13 4-11 1 14 4-6-2 14c-5-3-12-4-17-2z" />
+        </g>
+      );
+    case 7: // afro
+      return dietro ? (
+        <circle cx="50" cy="36" r="29" fill={c} />
+      ) : (
+        <path d="M30 43c0-14 9-22 20-22s20 8 20 22c-5-6-12-9-20-9s-15 3-20 9z" fill={c} />
+      );
+    case 8: // ciuffo
+      return dietro ? null : (
+        <path d="M30 43c-2-14 5-25 18-27 9-2 16 1 21-5 4 7 2 15-4 19 3 3 5 7 5 13-6-7-13-10-21-10-8 0-14 3-19 10z" fill={c} />
+      );
+    case 9: // codini
+      return dietro ? (
+        <g fill={c}>
+          <ellipse cx="22" cy="54" rx="7" ry="12" transform="rotate(18 22 54)" />
+          <ellipse cx="78" cy="54" rx="7" ry="12" transform="rotate(-18 78 54)" />
+          <circle cx="27" cy="43" r="3" fill="#e5481e" />
+          <circle cx="73" cy="43" r="3" fill="#e5481e" />
+        </g>
+      ) : (
+        <path d="M30 41c0-13 9-21 20-21s20 8 20 21c-4-5-9-8-14-8l-6 4-6-4c-5 0-10 3-14 8z" fill={c} />
+      );
+    case 10: // treccia
+      return dietro ? (
+        <g fill={c}>
+          <path d="M27 44c0-16 10-25 23-25s23 9 23 25v6H27z" />
+          {[52, 60, 68, 76, 84].map((y, i) => (
+            <ellipse key={y} cx={68 - i * 0.5} cy={y} rx="6" ry="5" />
+          ))}
+        </g>
+      ) : (
+        <path d="M29 44c0-15 9-24 21-24s21 9 21 24c-6-8-16-12-30-10-5 2-9 5-12 10z" fill={c} />
+      );
+    case 11: // spettinati
+      return dietro ? null : (
+        <path d="M30 42l-3-12 8 2-1-11 8 5 4-10 5 9 6-8 2 10 8-5-2 10 8-1-3 11c-5-8-12-11-20-11s-15 3-20 11z" fill={c} />
+      );
+    default: // super (premio)
+      return dietro ? (
+        <path d="M26 48L12 32l15 1-9-21 18 10 2-20 11 17 9-19 5 20 16-13-5 22 16-2-15 21z" fill={c} />
+      ) : (
+        <path d="M30 42l3-12 6 7 4-12 7 10 6-10 4 12 6-7 4 12c-6-8-13-11-20-11s-14 3-20 11z" fill={c} />
+      );
   }
+}
+
+function Barba({ tipo, c }: { tipo: number; c: string }) {
+  switch (tipo) {
+    case 1: // corta
+      return <path d="M31 47c0 13 8 20 19 20s19-7 19-20c-2 5-5 9-9 10-3-1-6-1-10-1s-7 0-10 1c-4-1-7-5-9-10z" fill={c} />;
+    case 2: // folta
+      return <path d="M30 44c-1 18 7 30 20 30s21-12 20-30c-2 7-6 12-10 13-3-1-6-1-10-1s-7 0-10 1c-4-1-8-6-10-13z" fill={c} />;
+    case 3: // baffoni a manubrio
+      return <path d="M50 51c-3 0-6 1-8 3-2 2-6 2-7-1-1 4 3 7 7 6 3-1 5-3 8-3s5 2 8 3c4 1 8-2 7-6-1 3-5 3-7 1-2-2-5-3-8-3z" fill={c} />;
+    case 4: // pizzetto
+      return (
+        <g fill={c}>
+          <path d="M44 52c2-1 4-2 6-2s4 1 6 2c-2 1-4 1-6 1s-4 0-6-1z" />
+          <path d="M46 59c1 4 2 7 4 7s3-3 4-7c-1 1-3 1-4 1s-3 0-4-1z" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+function Occhiali({ tipo }: { tipo: number }) {
+  if (tipo === 1)
+    return (
+      <g fill="#fff" fillOpacity=".2" stroke="#1c241d" strokeWidth="1.6">
+        <circle cx="43" cy="47" r="5" />
+        <circle cx="57" cy="47" r="5" />
+        <path d="M48 47h4M38 46l-7-2M62 46l7-2" fill="none" />
+      </g>
+    );
+  if (tipo === 2)
+    return (
+      <g fill="#fff" fillOpacity=".25" stroke="#e5481e" strokeWidth="2">
+        <rect x="35" y="41" width="13" height="11" rx="5" />
+        <rect x="52" y="41" width="13" height="11" rx="5" />
+        <path d="M48 46h4M35 45l-5-2M65 45l5-2" fill="none" />
+      </g>
+    );
+  return null;
 }
 
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
@@ -101,6 +205,17 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const ha = (a: string) => look.accessori.includes(a);
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
+      {look.coloreCapelli === COLORE_OLOGRAFICO && (
+        <defs>
+          <linearGradient id="avatar-olografico" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ff9ad5" />
+            <stop offset=".3" stopColor="#9ee7ff" />
+            <stop offset=".55" stopColor="#c7a6ff" />
+            <stop offset=".8" stopColor="#fff2a0" />
+            <stop offset="1" stopColor="#8cf0c4" />
+          </linearGradient>
+        </defs>
+      )}
       {/* capelli dietro */}
       <Capelli stile={look.capelli} c={capelli} dietro />
       {/* spalle e maglione */}
@@ -115,12 +230,20 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       <circle cx="50" cy="45" r="20" fill={pelle} />
       <circle cx="30.5" cy="47" r="3.5" fill={pelle} />
       <circle cx="69.5" cy="47" r="3.5" fill={pelle} />
+      <Barba tipo={look.barba} c={capelli} />
       {/* viso */}
       <circle cx="43" cy="47" r="2.2" fill="#1c241d" />
       <circle cx="57" cy="47" r="2.2" fill="#1c241d" />
       <circle cx="39" cy="53" r="3.6" fill="#e5481e" opacity=".28" />
       <circle cx="61" cy="53" r="3.6" fill="#e5481e" opacity=".28" />
-      <path d="M46 55c2 2.4 6 2.4 8 0" fill="none" stroke="#1c241d" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M46 55c2 2.4 6 2.4 8 0"
+        fill="none"
+        stroke={look.barba === 1 || look.barba === 2 ? "#f3e8cf" : "#1c241d"}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Occhiali tipo={look.occhiali} />
       {/* capelli davanti */}
       <Capelli stile={look.capelli} c={capelli} dietro={false} />
 

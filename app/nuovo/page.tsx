@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Avatar, LOOK_BASE, normalizzaLook, type Look } from "@/components/avatar";
+import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { CampoPassword } from "@/components/scelte";
 import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
@@ -22,9 +24,23 @@ export default function NuovoGruppo() {
   const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [invio, setInvio] = useState(false);
+  const [look, setLook] = useState<Look>(LOOK_BASE);
+  const [sbloccati, setSbloccati] = useState<string[]>([]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setCollegato(!!data.session));
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const uid = data.session?.user.id;
+      setCollegato(!!uid);
+      if (!uid) return;
+      // Ho già un personaggio: parto da quello
+      const [{ data: p }, { data: acc }] = await Promise.all([
+        supabase.from("profiles").select("look").eq("user_id", uid).maybeSingle(),
+        supabase.rpc("my_unlocked_accessories"),
+      ]);
+      if (p) setLook(normalizzaLook(p.look, uid));
+      setSbloccati((acc as string[] | null) ?? []);
+    })();
   }, [supabase]);
 
   function aggiungiNome() {
@@ -73,6 +89,7 @@ export default function NuovoGruppo() {
           : "Non sono riuscito a creare il gruppo. Riprova.",
       );
     }
+    await supabase.rpc("save_avatar", { p_look: look });
     router.push(`/gruppo/${risultato[0].group_id}/organizza?nuovo=1`);
   }
 
@@ -103,6 +120,17 @@ export default function NuovoGruppo() {
           <p className="mt-2 text-sm text-inchiostro/70">Partecipi anche tu all&apos;estrazione, come gli altri.</p>
           <div className="mt-5 flex flex-col gap-5">
             <Campo id="mio-nome" etichetta="Il tuo nome" placeholder="Nome e cognome" value={mioNome} onChange={(e) => setMioNome(e.target.value)} maxLength={60} />
+            <div>
+              <p className="font-medium">Il tuo personaggio</p>
+              <p className="text-sm text-inchiostro/70">Lo vedranno gli amici. Potrai cambiarlo quando vuoi.</p>
+            </div>
+            {/* resta in vista mentre scorri le scelte */}
+            <div className="sticky top-[calc(env(safe-area-inset-top)+8px)] z-10 flex justify-center">
+              <span className="toppa size-32 overflow-hidden shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
+                <Avatar look={look} className="relative top-[8%] h-full w-full" titolo="Il tuo personaggio" />
+              </span>
+            </div>
+            <EditorPersonaggio look={look} sbloccati={sbloccati} onCambia={(campi) => setLook({ ...look, ...campi })} />
             {!collegato && (
               <CampoPassword id="password" nuova etichetta="Scegli una password" valore={password} onCambia={setPassword} aiuto="Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno." />
             )}
