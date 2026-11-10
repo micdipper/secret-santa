@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { suoni } from "@/lib/suoni";
 import { Pallina } from "./ornamenti";
 
 // La pallina dondola quando si scuote il telefono (o quando la si tocca).
@@ -20,6 +21,7 @@ export function PallinaCheDondola({ className = "" }: { className?: string }) {
       if (forza > 14 && ora - ultimo.current > 1500) {
         ultimo.current = ora;
         setDondola(true);
+        suoni.pallina();
       }
     };
     window.addEventListener("devicemotion", scossa);
@@ -30,7 +32,10 @@ export function PallinaCheDondola({ className = "" }: { className?: string }) {
     <button
       type="button"
       aria-label="Fai dondolare la pallina"
-      onClick={() => setDondola(true)}
+      onClick={() => {
+        setDondola(true);
+        suoni.pallina();
+      }}
       onAnimationEnd={() => setDondola(false)}
       className={`block origin-top ${dondola ? "dondola" : ""} ${className}`}
     >

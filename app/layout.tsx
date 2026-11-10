@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { AscoltaTocchi } from "@/components/audio";
 
 // Titoli: Basteleur Bold (Velvetyne, licenza SIL OFL in app/fonts/Basteleur-OFL.txt)
 const basteleur = localFont({
@@ -18,7 +19,7 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: "Secret Santa",
-  description: "Il Secret Santa tra amici, con moodboard e wishlist.",
+  description: "Il Secret Santa tra amici, con la bacheca di ognuno.",
 };
 
 export const viewport: Viewport = {
@@ -31,7 +32,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="it" className={`${basteleur.variable} ${bricolage.variable} antialiased`}>
-      <body className="min-h-dvh flex flex-col">{children}</body>
+      <body className="min-h-dvh flex flex-col">
+        <AscoltaTocchi />
+        {children}
+      </body>
     </html>
   );
 }

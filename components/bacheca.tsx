@@ -5,6 +5,7 @@ import { CATALOGO, NOMI_TIPI, trovaToppa, type TipoToppa } from "@/components/to
 import { useRouter } from "next/navigation";
 import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
+import { suoni } from "@/lib/suoni";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -412,7 +413,10 @@ export function Bacheca({
                     <li key={t.id} className={t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}>
                       <button
                         aria-label={`Attacca: ${t.nome}`}
-                        onClick={() => aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26)}
+                        onClick={() => {
+                          suoni.toppa();
+                          aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26);
+                        }}
                         className="block w-full transition-transform active:scale-95"
                         style={{ aspectRatio: String(t.rapporto) }}
                       >
@@ -597,10 +601,12 @@ function StratoRicamo({
           const p = puntoDa(ev);
           ultima.current = p;
           cuci(p.c, p.r);
+          suoni.punto();
         }}
         onPointerMove={(ev) => {
           if (!attivo || !ultima.current) return;
           const p = puntoDa(ev);
+          if (p.c !== ultima.current.c || p.r !== ultima.current.r) suoni.punto();
           cuciLinea(ultima.current, p);
           ultima.current = p;
         }}

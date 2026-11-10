@@ -23,6 +23,8 @@ import {
   TitoloRiquadro,
 } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
+import { suoni } from "@/lib/suoni";
+import { TastoAudio } from "@/components/audio";
 
 // three.js si scarica solo quando serve (mentre gira la slot machine)
 const caricaScena = () => import("@/components/scena-busta");
@@ -232,6 +234,7 @@ export function AperturaBusta({
   async function tiraLaLeva() {
     if (partito.current) return;
     partito.current = true;
+    suoni.leva();
     if (y.get() < CORSA_LEVA * 0.8)
       await animate(y, CORSA_LEVA, { duration: 0.18 });
     animate(y, 0, { type: "spring", stiffness: 260, damping: 9 });
@@ -252,6 +255,20 @@ export function AperturaBusta({
     await new Promise((ok) => requestAnimationFrame(ok));
     const durata = ridotto ? 0.8 : DURATA_GIRO;
     setTimeout(() => setSfocato(false), durata * 600);
+    // tic-tic: un clic ogni personaggio che passa (rallenta col rullo)
+    let ultimaVoce = 0;
+    let girando = true;
+    const ascolta = () => {
+      if (!girando || !rullo.current) return;
+      const m = new DOMMatrix(getComputedStyle(rullo.current).transform);
+      const voce = Math.floor(-m.m42 / ALTEZZA_VOCE);
+      if (voce !== ultimaVoce) {
+        ultimaVoce = voce;
+        suoni.tic();
+      }
+      requestAnimationFrame(ascolta);
+    };
+    requestAnimationFrame(ascolta);
     await animate(
       rullo.current!,
       { y: [0, ARRIVO - 14, ARRIVO] },
@@ -262,7 +279,9 @@ export function AperturaBusta({
       },
     );
 
+    girando = false;
     setFase("fermo");
+    suoni.fermo();
     await animaMacchina(
       macchina.current,
       { scale: [1, 1.05, 1] },
@@ -282,6 +301,8 @@ export function AperturaBusta({
       i === N ? 0 : (i % 3 === 0 ? -1 : 1) * (0.3 + 3 * (i / N) ** 2),
     );
     const tremoreR = tremoreX.map((x) => x * 0.22);
+    // scricchiolii sempre più fitti
+    [300, 650, 950, 1150, 1300, 1450, 1560, 1660, 1750, 1830, 1900].forEach((ms) => setTimeout(() => suoni.scricchiolio(), ms));
     setTimeout(() => setFase("crepa"), 1100); // a metà del tremore il vetro comincia a creparsi
     await animaMacchina(
       macchina.current,
@@ -295,6 +316,7 @@ export function AperturaBusta({
         finestra: finestra.current.getBoundingClientRect(),
       });
     setFase("rotta");
+    suoni.vetroRotto();
     setTimeout(() => setFase("scena"), 1700);
   }
 
@@ -324,6 +346,7 @@ export function AperturaBusta({
 
   // il biglietto è fuori: festa!
   function bustaAperta() {
+    suoni.fanfara();
     setRivelato(true);
     segnaAperta();
     if (!ridotto) {
@@ -795,6 +818,7 @@ export function AperturaBusta({
                   </Link>
                 </motion.div>
               )}
+              {!rivelato && <span className="w-14 flex-none" />}
             </AnimatePresence>
             <AnimatePresence mode="wait">
               <motion.p
@@ -819,7 +843,9 @@ export function AperturaBusta({
                     : "Una busta per te"}
               </motion.p>
             </AnimatePresence>
-            {rivelato && <span className="w-14" />}
+            <div className="pointer-events-auto">
+              <TastoAudio />
+            </div>
           </div>
 
           {/* il posto della card: il biglietto 3D ci vola esattamente sopra, poi la card vera prende il suo posto */}

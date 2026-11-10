@@ -8,6 +8,7 @@
 // 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
 import { fontNome } from "@/components/biglietto-olografico";
+import { suoni } from "@/lib/suoni";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
@@ -667,6 +668,7 @@ export default function ScenaBusta({
     let obiettivoApertura = 0;
     let trascinoLembo: { y: number; da: number } | null = null;
     let grattando = false;
+    let ultimaGrattata = 0;
     let sigilloVia = -1;
     let partenzaBiglietto: { pos: THREE.Vector3; scala: number } | null = null;
     let finita = false;
@@ -711,6 +713,11 @@ export default function ScenaBusta({
           if (Math.hypot(dx, dy) <= 2 && Math.hypot(gx + 0.5 - GRIGLIA / 2, gy + 0.5 - GRIGLIA / 2) < GRIGLIA / 2 - 0.3) grattate.add(gx * GRIGLIA + gy);
         }
       briciole.emetti(h.point, 4, 1.2, 0.8);
+      const ora = performance.now();
+      if (ora - ultimaGrattata > 70) {
+        ultimaGrattata = ora;
+        suoni.gratta();
+      }
       if (grattate.size / celleDentro > 0.55 && sigilloVia < 0) {
         // il resto del sigillo si sbriciola e cade
         sigilloVia = orologio.getElapsedTime();
@@ -725,6 +732,7 @@ export default function ScenaBusta({
         if (!colpisci(e, [corpo, davanti, lembo, cera])) return;
         if (tocchi === 0) callback.current.onPrimoTocco();
         tocchi++;
+        suoni.puff();
         busta.getWorldPosition(punto3);
         punto3.y = SUOLO + 0.1;
         sbuffi.emetti(punto3, 30 + tocchi * 15, 1.6 + tocchi * 0.5, 1);
@@ -740,6 +748,7 @@ export default function ScenaBusta({
         }
       } else if (fase === "lembo") {
         trascinoLembo = { y: e.clientY, da: apertura };
+        suoni.carta();
       }
     };
     const muovi = (e: PointerEvent) => {
@@ -754,6 +763,7 @@ export default function ScenaBusta({
       if (fase === "lembo" && trascinoLembo) {
         trascinoLembo = null;
         obiettivoApertura = apertura > 0.4 ? 1 : 0; // oltre metà si apre da solo, altrimenti torna giù
+        if (obiettivoApertura) suoni.carta();
       }
     };
     // la scena sta dietro la pagina: ascolto le dita su tutta la finestra (ma non sui tasti)
@@ -824,6 +834,7 @@ export default function ScenaBusta({
         inquadra(CAM_CIELO, CAM_NEVE, morbido((f - SOSPESA - 0.1) / 2));
         if (k >= 1) {
           sbuffi.emetti(new THREE.Vector3(0, SUOLO + 0.1, POSA_NEVE.pos.z), 70, 2.4, 1);
+          suoni.tonfoNeve();
           vaiA("neve");
         }
       } else if (fase === "neve") {
