@@ -8,6 +8,22 @@
 // 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { VignetteShader } from "three/examples/jsm/shaders/VignetteShader.js";
+
+// Effetti di luce: ognuno si può spegnere qui (true → false)
+const EFFETTI = {
+  ombre: true, // ombre morbide sulla neve + alone scuro sotto la busta
+  bagliore: true, // le cose luminose (luce della busta, scintille, ceralacca) emanano luce
+  contorno: true, // luce fredda da dietro che disegna i bordi
+  notte: true, // luce calda davanti, fredda dietro, angoli più scuri
+  brillii: true, // puntini che brillano sulla neve
+  vivido: true, // più contrasto e colori più pieni
+};
 
 const LARGHEZZA = 3.4;
 const ALTEZZA = 2.2;
@@ -305,35 +321,63 @@ export default function ScenaBusta({
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
+    scena.background = tela(4, 256, (c) => {
+      const g = c.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, "#10251a");
+      g.addColorStop(0.55, "#2a5236");
+      g.addColorStop(1, "#163a25");
+      c.fillStyle = g;
+      c.fillRect(0, 0, 4, 256);
+    });
     scena.fog = new THREE.Fog(0x163a25, 14, 38);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    scena.add(new THREE.HemisphereLight(0xfff8ea, 0xd9cdb0, 2.2));
-    const luna = new THREE.DirectionalLight(0xfff1d6, 1.4);
-    luna.position.set(2, 5, 6);
-    scena.add(luna);
+    scena.add(new THREE.HemisphereLight(0xfff8ea, 0xbfb08f, EFFETTI.notte ? 1.3 : 2.2));
+    // luce principale: calda (come una lanterna) se "notte" è acceso
+    const luna = new THREE.DirectionalLight(EFFETTI.notte ? 0xffdcaa : 0xfff1d6, EFFETTI.notte ? 2.4 : 1.4);
+    luna.position.set(2.5, 6, 6);
+    luna.target.position.set(0, SUOLO, 0);
+    scena.add(luna, luna.target);
+    if (EFFETTI.ombre) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      luna.castShadow = true;
+      luna.shadow.mapSize.set(1024, 1024);
+      luna.shadow.radius = 6;
+      luna.shadow.bias = -0.002;
+      Object.assign(luna.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 0.5, far: 30 });
+    }
+    if (EFFETTI.contorno) {
+      // luce fredda da dietro: disegna un filo luminoso sui bordi
+      const controluce = new THREE.DirectionalLight(0x9cc6ff, 1.3);
+      controluce.position.set(-2, 4, -8);
+      scena.add(controluce);
+    }
     const punto = texturaPunto();
 
     // ---------- paesaggio illustrato: neve di feltro crema, cumuli tondi, abeti ----------
     // ombre a tre toni, come un disegno (niente realismo)
-    const toni = new THREE.DataTexture(new Uint8Array([150, 150, 150, 255, 215, 215, 215, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat);
+    const toni = new THREE.DataTexture(new Uint8Array([105, 105, 105, 255, 195, 195, 195, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat);
     toni.minFilter = toni.magFilter = THREE.NearestFilter;
     toni.needsUpdate = true;
     const cartone = (colore: number) => new THREE.MeshToonMaterial({ color: colore, gradientMap: toni });
     const suolo = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), cartone(0xa8cbe2)); // neve azzurro ghiaccio: la busta crema calda si stacca bene
     suolo.rotation.x = -Math.PI / 2;
     suolo.position.y = SUOLO;
+    suolo.receiveShadow = true;
     scena.add(suolo);
     const matCumulo = cartone(0xc9e0ef);
     [[-2.3, -1.4, 0.9], [2.5, -2.6, 1.2], [-4.2, -6, 1.8], [4, 0.3, 0.8], [0.6, -8, 2.2], [-1.4, 1.8, 0.6]].forEach(([x, z, r]) => {
       const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), matCumulo);
       m.scale.y = 0.38;
       m.position.set(x, SUOLO, z);
+      m.receiveShadow = m.castShadow = EFFETTI.ombre;
       scena.add(m);
     });
     // il mucchietto di neve davanti alla busta: la fa sembrare piantata
     const mucchio = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), matCumulo);
     mucchio.scale.set(1.25, 0.32, 0.45);
     mucchio.position.set(0.05, SUOLO, 0.85);
+    mucchio.receiveShadow = true;
     scena.add(mucchio);
     // abeti stilizzati con la punta innevata
     const matAbete = cartone(0x2c4a32);
@@ -357,6 +401,7 @@ export default function ScenaBusta({
       albero.scale.setScalar(h);
       albero.rotation.y = i;
       albero.position.set(x, SUOLO, z);
+      albero.traverse((o) => (o.castShadow = EFFETTI.ombre));
       scena.add(albero);
     });
 
@@ -365,6 +410,7 @@ export default function ScenaBusta({
     scena.add(busta);
     const matCorpo = new THREE.MeshToonMaterial({ map: texturaCorpo(), gradientMap: toni, transparent: true });
     const corpo = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA, ALTEZZA), matCorpo);
+    corpo.castShadow = EFFETTI.ombre;
     busta.add(corpo);
     const matDavanti = new THREE.MeshToonMaterial({ color: 0xf3e8cf, gradientMap: toni, transparent: true });
     const davanti = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA, ALTEZZA), matDavanti);
@@ -379,6 +425,7 @@ export default function ScenaBusta({
     const matLembo = new THREE.MeshToonMaterial({ map: texturaLembo(), gradientMap: toni, side: THREE.DoubleSide, transparent: true, alphaTest: 0.5 });
     const lembo = new THREE.Mesh(geoLembo, matLembo);
     lembo.position.set(0, ALTEZZA / 2, 0.012);
+    lembo.castShadow = EFFETTI.ombre;
     busta.add(lembo);
     const posLembo = geoLembo.attributes.position;
     // la riga di ogni vertice la calcolo una volta sola dalla forma piatta
@@ -497,12 +544,81 @@ export default function ScenaBusta({
     const briciole = particelle(scena, punto, 260, 0xb3261e, 0.07, false, 6);
     const scintille = particelle(scena, punto, 220, 0xffd36b, 0.15, true, 1.2);
 
+    // alone scuro morbido sotto la busta (la fa "appoggiare" alla neve)
+    const alone = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: tela(128, 128, (c) => {
+          const g = c.createRadialGradient(64, 64, 0, 64, 64, 64);
+          g.addColorStop(0, "rgba(20,40,60,.55)");
+          g.addColorStop(1, "rgba(20,40,60,0)");
+          c.fillStyle = g;
+          c.fillRect(0, 0, 128, 128);
+        }),
+        transparent: true,
+        depthWrite: false,
+      }),
+    );
+    alone.rotation.x = -Math.PI / 2;
+    alone.position.y = SUOLO + 0.02;
+    alone.visible = EFFETTI.ombre;
+    scena.add(alone);
+
+    // puntini che brillano sulla neve, a gruppi che si accendono a turno
+    const brillii: THREE.PointsMaterial[] = [];
+    if (EFFETTI.brillii) {
+      for (let gr = 0; gr < 4; gr++) {
+        const n = 50;
+        const p = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) p.set([(Math.random() - 0.5) * 14, SUOLO + 0.04, Math.random() * 7 - 5], i * 3);
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+        const m = new THREE.PointsMaterial({ map: punto, size: 0.12, color: 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+        brillii.push(m);
+        scena.add(new THREE.Points(g, m));
+      }
+    }
+
+    // ---------- bagliore e angoli scuri (post-produzione) ----------
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scena, camera));
+    const bagliore = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.6, 0.82);
+    bagliore.enabled = EFFETTI.bagliore;
+    composer.addPass(bagliore);
+    const vignetta = new ShaderPass(VignetteShader);
+    vignetta.uniforms.offset.value = 0.75; // quanto si allarga lo scuro
+    vignetta.uniforms.darkness.value = 1.0; // 1 = verso il nero (sotto 1 diventa grigio)
+    vignetta.enabled = EFFETTI.notte;
+    composer.addPass(vignetta);
+    composer.addPass(new OutputPass());
+    // più contrasto e colori più pieni (niente aspetto sbiadito)
+    const vivido = new ShaderPass({
+      uniforms: { tDiffuse: { value: null }, contrasto: { value: 1.18 }, saturazione: { value: 1.25 } },
+      vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: `uniform sampler2D tDiffuse; uniform float contrasto; uniform float saturazione; varying vec2 vUv;
+        void main() {
+          vec4 c = texture2D(tDiffuse, vUv);
+          float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+          vec3 col = mix(vec3(l), c.rgb, saturazione);
+          col = (col - 0.5) * contrasto + 0.5;
+          gl_FragColor = vec4(clamp(col, 0.0, 1.0), c.a);
+        }`,
+    });
+    vivido.enabled = EFFETTI.vivido;
+    composer.addPass(vivido);
+    // se il telefono fa fatica, tolgo il bagliore da solo
+    let tempi = 0;
+    let fotogrammi = 0;
+
     // ---------- dimensioni ----------
     let scalaBase = 1;
     const ridimensiona = () => {
       const w = box.clientWidth;
       const h = box.clientHeight;
       renderer.setSize(w, h);
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(w, h);
+      bagliore.resolution.set(w / 2, h / 2);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       const altezzaVisibile = 2 * 9 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
@@ -667,7 +783,7 @@ export default function ScenaBusta({
         busta.position.copy(POSA_NEVE.pos).add(new THREE.Vector3(0, salto, 0));
         busta.rotation.set(POSA_NEVE.rot.x, POSA_NEVE.rot.y, POSA_NEVE.rot.z + Math.sin(t * 18) * dondolio);
         busta.scale.setScalar(sNeve);
-        matCera.emissiveIntensity = 0.08 + 0.08 * Math.sin(t * 4);
+        matCera.emissiveIntensity = 0.12 + 0.12 * Math.sin(t * 4);
       } else if (fase === "vola") {
         // si alza in volo con una giravolta e si mette davanti
         const k = morbido(f / 1.6);
@@ -767,7 +883,24 @@ export default function ScenaBusta({
       briciole.aggiorna(dt);
       scintille.aggiorna(dt);
 
-      renderer.render(scena, camera);
+      // alone che segue la busta (più chiaro quando è in alto)
+      if (alone.visible) {
+        busta.getWorldPosition(punto3);
+        const alto = Math.max(0, punto3.y - SUOLO);
+        alone.position.x = punto3.x;
+        alone.position.z = punto3.z + 0.1;
+        const largo = LARGHEZZA * busta.scale.x * (1.1 + alto * 0.25);
+        alone.scale.set(largo, largo * 0.5, 1);
+        (alone.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - alto / 3.5) * (fase === "biglietto" ? 0 : 1);
+      }
+      brillii.forEach((m, i) => (m.opacity = Math.max(0, Math.sin(t * 1.3 + i * 1.6)) * 0.9));
+      if (bagliore.enabled && t < 4) {
+        tempi += dt;
+        fotogrammi++;
+        if (t > 3 && fotogrammi / tempi < 35) bagliore.enabled = false;
+      }
+
+      composer.render();
     };
     ciclo();
 
@@ -778,6 +911,7 @@ export default function ScenaBusta({
       renderer.domElement.removeEventListener("pointermove", muovi);
       renderer.domElement.removeEventListener("pointerup", su);
       renderer.domElement.removeEventListener("pointercancel", su);
+      composer.dispose();
       renderer.dispose();
       scena.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Points || o instanceof THREE.Sprite) {
