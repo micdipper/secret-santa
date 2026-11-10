@@ -305,7 +305,7 @@ export default function ScenaBusta({
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
-    scena.fog = new THREE.Fog(0x163a25, 10, 34);
+    scena.fog = new THREE.Fog(0x163a25, 14, 38);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
     scena.add(new THREE.HemisphereLight(0xfff8ea, 0xd9cdb0, 2.2));
     const luna = new THREE.DirectionalLight(0xfff1d6, 1.4);
@@ -319,11 +319,11 @@ export default function ScenaBusta({
     toni.minFilter = toni.magFilter = THREE.NearestFilter;
     toni.needsUpdate = true;
     const cartone = (colore: number) => new THREE.MeshToonMaterial({ color: colore, gradientMap: toni });
-    const suolo = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), cartone(0xe6efe9)); // neve bianca e fredda: la busta crema si stacca
+    const suolo = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), cartone(0xa8cbe2)); // neve azzurro ghiaccio: la busta crema calda si stacca bene
     suolo.rotation.x = -Math.PI / 2;
     suolo.position.y = SUOLO;
     scena.add(suolo);
-    const matCumulo = cartone(0xf4f8f5);
+    const matCumulo = cartone(0xc9e0ef);
     [[-2.3, -1.4, 0.9], [2.5, -2.6, 1.2], [-4.2, -6, 1.8], [4, 0.3, 0.8], [0.6, -8, 2.2], [-1.4, 1.8, 0.6]].forEach(([x, z, r]) => {
       const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), matCumulo);
       m.scale.y = 0.38;
@@ -338,7 +338,7 @@ export default function ScenaBusta({
     // abeti stilizzati con la punta innevata
     const matAbete = cartone(0x2c4a32);
     const matAbeteScuro = cartone(0x1e3826);
-    const matNeveAlbero = cartone(0xf4f8f5);
+    const matNeveAlbero = cartone(0xc9e0ef);
     const matTronco = cartone(0x6b4a2b);
     [[-3.6, -5, 1.1], [-6.5, -9, 1.6], [3.4, -6.5, 1.3], [6.8, -10, 1.8], [-1.2, -13, 1.5], [1.8, -15, 2], [-9, -14, 1.7], [9.5, -15, 1.9]].forEach(([x, z, h], i) => {
       const albero = new THREE.Group();
