@@ -110,12 +110,124 @@ function texturaPunto() {
   });
 }
 
+// ---------- biglietto (retro con "?" e fronte col nome) ----------
+const B_LARGO = 2.6;
+const B_ALTO = 2.9;
+const PX = 640 / B_LARGO; // pixel della texture per unità
+
+function arrotonda(c: CanvasRenderingContext2D, w: number, h: number, r: number) {
+  c.beginPath();
+  c.roundRect(0, 0, w, h, r);
+  c.clip();
+}
+
+function famiglia(variabile: string, riserva: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(variabile).trim() || riserva;
+}
+
+function disegnaRetro(c: CanvasRenderingContext2D, w: number, h: number) {
+  c.clearRect(0, 0, w, h);
+  c.save();
+  arrotonda(c, w, h, 70);
+  c.fillStyle = "#f3e8cf";
+  c.fillRect(0, 0, w, h);
+  c.strokeStyle = "#e5481e";
+  c.lineWidth = 34;
+  for (let x = -h; x < w + h; x += 72) {
+    c.beginPath();
+    c.moveTo(x, 0);
+    c.lineTo(x + h, h);
+    c.stroke();
+  }
+  c.fillStyle = "#e9a81c";
+  c.beginPath();
+  c.arc(w / 2, h / 2, 150, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#2c4a32";
+  c.beginPath();
+  c.arc(w / 2, h / 2, 132, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#f3e8cf";
+  c.font = `200px ${famiglia("--font-basteleur", "Georgia, serif")}`;
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.fillText("?", w / 2, h / 2 + 10);
+  c.restore();
+}
+
+function disegnaFronte(c: CanvasRenderingContext2D, w: number, h: number, nome: string, avatar: HTMLImageElement | null) {
+  c.clearRect(0, 0, w, h);
+  c.save();
+  arrotonda(c, w, h, 70);
+  c.fillStyle = "#f3e8cf";
+  c.fillRect(0, 0, w, h);
+  // cucitura
+  c.setLineDash([22, 16]);
+  c.strokeStyle = "rgba(229,72,30,.75)";
+  c.lineWidth = 7;
+  c.beginPath();
+  c.roundRect(22, 22, w - 44, h - 44, 50);
+  c.stroke();
+  c.setLineDash([]);
+  // buco dell'etichetta
+  c.fillStyle = "#2c4a32";
+  c.beginPath();
+  c.arc(w / 2, 70, 18, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "rgba(28,36,29,.7)";
+  c.font = `34px ${famiglia("--font-bricolage", "system-ui, sans-serif")}`;
+  c.textAlign = "center";
+  c.fillText("Farai il regalo a", w / 2, 150);
+  // toppa col personaggio
+  const cy = 330;
+  c.fillStyle = "#f1e4c8";
+  c.beginPath();
+  c.arc(w / 2, cy, 140, 0, Math.PI * 2);
+  c.fill();
+  if (avatar) {
+    c.save();
+    c.beginPath();
+    c.arc(w / 2, cy, 140, 0, Math.PI * 2);
+    c.clip();
+    c.drawImage(avatar, w / 2 - 140, cy - 140 + 22, 280, 280);
+    c.restore();
+  }
+  c.setLineDash([12, 10]);
+  c.strokeStyle = "rgba(44,74,50,.55)";
+  c.lineWidth = 4;
+  c.beginPath();
+  c.arc(w / 2, cy, 126, 0, Math.PI * 2);
+  c.stroke();
+  c.setLineDash([]);
+  // nome, il più grande possibile
+  const fam = famiglia("--font-basteleur", "Georgia, serif");
+  let px = 92;
+  c.font = `${px}px ${fam}`;
+  while (c.measureText(nome).width > w - 90 && px > 40) c.font = `${(px -= 4)}px ${fam}`;
+  c.fillStyle = "#e5481e";
+  c.fillText(nome, w / 2, 590);
+  c.restore();
+}
+
 const facile = (t: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
-export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boolean; onPronta: () => void; onAperta: () => void }) {
+export default function ScenaBusta({
+  aperta,
+  nome,
+  avatarSvg,
+  onPronta,
+  onAperta,
+}: {
+  aperta: boolean;
+  nome: string;
+  avatarSvg: () => string | null;
+  onPronta: () => void;
+  onAperta: () => void;
+}) {
   const contenitore = useRef<HTMLDivElement>(null);
   const apertaRef = useRef(aperta);
   const callback = useRef({ onPronta, onAperta });
+  const dati = useRef({ nome, avatarSvg }); // letti una volta sola, all'avvio della scena
 
   useEffect(() => {
     apertaRef.current = aperta;
@@ -129,6 +241,7 @@ export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boo
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.localClippingEnabled = true; // per nascondere il biglietto finché è dentro la busta
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
@@ -185,6 +298,55 @@ export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boo
     luce.scale.set(3, 2, 1);
     luce.renderOrder = -1; // disegnata per prima: il corpo della busta la copre
     busta.add(luce);
+
+    // ---------- biglietto dentro la busta ----------
+    const tw = 640;
+    const th = Math.round(B_ALTO * PX);
+    const telaRetro = document.createElement("canvas");
+    telaRetro.width = tw;
+    telaRetro.height = th;
+    const telaFronte = document.createElement("canvas");
+    telaFronte.width = tw;
+    telaFronte.height = th;
+    const texRetro = new THREE.CanvasTexture(telaRetro);
+    const texFronte = new THREE.CanvasTexture(telaFronte);
+    [texRetro, texFronte].forEach((t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
+    });
+    disegnaRetro(telaRetro.getContext("2d")!, tw, th);
+    disegnaFronte(telaFronte.getContext("2d")!, tw, th, dati.current.nome, null);
+    // quando i caratteri e il personaggio sono pronti, ridisegno
+    (async () => {
+      await document.fonts.ready;
+      disegnaRetro(telaRetro.getContext("2d")!, tw, th);
+      texRetro.needsUpdate = true;
+      const svg = dati.current.avatarSvg();
+      let img: HTMLImageElement | null = null;
+      if (svg) {
+        img = new Image();
+        img.src = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+        await img.decode().catch(() => (img = null));
+      }
+      disegnaFronte(telaFronte.getContext("2d")!, tw, th, dati.current.nome, img);
+      texFronte.needsUpdate = true;
+    })();
+    const taglio = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // nasconde ciò che sta sotto la busta
+    // colori pieni (senza ombre), uguali al biglietto finale
+    const matRetro = new THREE.MeshBasicMaterial({ map: texRetro, transparent: true, alphaTest: 0.5, clippingPlanes: [taglio] });
+    const matFronte = new THREE.MeshBasicMaterial({ map: texFronte, transparent: true, alphaTest: 0.5, clippingPlanes: [taglio] });
+    const biglietto = new THREE.Group();
+    const retro = new THREE.Mesh(new THREE.PlaneGeometry(B_LARGO, B_ALTO), matRetro);
+    const fronte = new THREE.Mesh(new THREE.PlaneGeometry(B_LARGO, B_ALTO), matFronte);
+    fronte.rotation.y = Math.PI;
+    fronte.position.z = -0.003;
+    biglietto.add(retro, fronte);
+    biglietto.visible = false;
+    scena.add(biglietto);
+    const Y_DENTRO = ALTEZZA / 2 - 0.12 - B_ALTO / 2;
+    const Y_FUORI = ALTEZZA / 2 + B_ALTO * 0.25; // esce per tre quarti
+    const punto3 = new THREE.Vector3();
+    let partenza: { pos: THREE.Vector3; scala: number } | null = null;
 
     // ---------- neve ----------
     const N_NEVE = 260;
@@ -275,7 +437,7 @@ export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boo
       const k = facile(t / DURATA_ARRIVO);
       const s = scalaBase * (0.2 + 0.8 * k);
       busta.scale.set(s, s, s);
-      busta.position.set(0, (1 - k) * 3 + Math.sin(t * 1.6) * 0.06 * k, -14 * (1 - k));
+      busta.position.set(0, (1 - k) * 3 - 0.55 * k + Math.sin(t * 1.6) * 0.06 * k, -14 * (1 - k));
       busta.rotation.y = (1 - k) * Math.PI * 4 + inclY * k;
       busta.rotation.x = inclX * k;
       busta.rotation.z = (1 - k) * 0.6 + Math.sin(t * 1.1) * 0.02;
@@ -299,12 +461,38 @@ export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boo
         // la luce si accende, resta un attimo e si spegne piano (prima che la scena sparisca)
         matLuce.opacity = 0.85 * Math.min(1, a / 0.4) * (a < 0.9 ? 1 : Math.max(0, 1 - (a - 0.9) / 0.6));
         luce.scale.set(3 + a * 1.5, 2 + a, 1);
-        if (a > 1.0) {
-          const g = facile((a - 1.0) / 0.9);
-          busta.position.y -= g * 4;
-          [matCorpo, matDavanti, matLembo, matCera].forEach((m) => (m.opacity = 1 - g));
+        // 1) il biglietto sale fuori dalla busta (mostra il retro col "?")
+        if (a > 0.5 && a <= 1.9) {
+          biglietto.visible = true;
+          const k = facile((a - 0.5) / 1.3);
+          busta.localToWorld(punto3.set(0, Y_DENTRO + (Y_FUORI - Y_DENTRO) * k, -0.02));
+          biglietto.position.copy(punto3);
+          biglietto.quaternion.copy(busta.quaternion);
+          biglietto.scale.copy(busta.scale);
+          // taglio all'altezza del bordo in basso della busta
+          busta.localToWorld(punto3.set(0, -ALTEZZA / 2, 0));
+          taglio.constant = -punto3.y;
         }
-        if (a > 1.5 && !finita) {
+        // 2) la busta scende via; il biglietto viene verso di te e si gira
+        if (a > 1.9) {
+          if (!partenza) {
+            partenza = { pos: biglietto.position.clone(), scala: biglietto.scale.x };
+            matRetro.clippingPlanes = [];
+            matFronte.clippingPlanes = [];
+            matRetro.needsUpdate = matFronte.needsUpdate = true;
+          }
+          const g = facile((a - 1.9) / 0.9);
+          busta.position.y -= g * 5;
+          [matCorpo, matDavanti, matLembo, matCera].forEach((m) => (m.opacity = 1 - g));
+          const k = facile((a - 1.9) / 1.1);
+          const zFinale = 2.5;
+          const hVis = 2 * (camera.position.z - zFinale) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+          const scalaFinale = Math.min((hVis * camera.aspect * 0.86) / B_LARGO, (hVis * 0.62) / B_ALTO);
+          biglietto.position.set(partenza.pos.x * (1 - k), partenza.pos.y * (1 - k), partenza.pos.z + (zFinale - partenza.pos.z) * k);
+          biglietto.scale.setScalar(partenza.scala + (scalaFinale - partenza.scala) * k);
+          biglietto.rotation.set(0, facile((a - 2.2) / 0.8) * Math.PI, Math.sin(k * Math.PI) * 0.08);
+        }
+        if (a > 3.15 && !finita) {
           finita = true;
           callback.current.onAperta();
         }

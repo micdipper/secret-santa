@@ -4,9 +4,10 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, animate, motion, useAnimate, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
-import { ToppaAvatar, type Look } from "@/components/avatar";
+import Link from "next/link";
+import { Avatar, ToppaAvatar, type Look } from "@/components/avatar";
 import { BigliettoOlografico } from "@/components/biglietto-olografico";
-import { Feltro, Tasto, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { Feltro, Icone, Tasto, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 // three.js si scarica solo quando serve (durante il giro della slot machine)
@@ -59,6 +60,13 @@ export function AperturaBusta({
   const [bustaPronta, setBustaPronta] = useState(false);
   const [aperta, setAperta] = useState(false);
   const [lampo, setLampo] = useState(false);
+  const [rivelato, setRivelato] = useState(false);
+  const avatarNascosto = useRef<HTMLDivElement>(null);
+  // il personaggio come immagine, per disegnarlo sul biglietto 3D
+  const prendiSvg = () => {
+    const el = avatarNascosto.current?.querySelector("svg");
+    return el ? new XMLSerializer().serializeToString(el) : null;
+  };
   const [macchina, animaMacchina] = useAnimate();
   const rullo = useRef<HTMLDivElement>(null);
   const partito = useRef(false);
@@ -119,13 +127,17 @@ export function AperturaBusta({
     }
   }
 
+  // il biglietto è fuori: festa! (in 2D il biglietto si gira da solo, quindi aspetto un attimo)
   function bustaAperta() {
-    setFase("biglietto");
+    setRivelato(true);
     if (!ridotto) {
-      setTimeout(() => {
-        confetti({ particleCount: 120, spread: 100, startVelocity: 45, origin: { y: 0.5 }, colors: COLORI });
-        confetti({ particleCount: 40, spread: 360, startVelocity: 20, shapes: ["star"], colors: ["#f1d27a", "#e9a81c"], origin: { y: 0.4 } });
-      }, 1300);
+      setTimeout(
+        () => {
+          confetti({ particleCount: 120, spread: 100, startVelocity: 45, origin: { y: 0.5 }, colors: COLORI, zIndex: 60 });
+          confetti({ particleCount: 40, spread: 360, startVelocity: 20, shapes: ["star"], colors: ["#f1d27a", "#e9a81c"], origin: { y: 0.4 }, zIndex: 60 });
+        },
+        busta3d ? 0 : 1300,
+      );
     }
   }
 
@@ -174,13 +186,17 @@ export function AperturaBusta({
                 <Lampadine fase={fase} />
               </div>
 
+              {/* attacco di feltro verde sul fianco, da cui esce la leva */}
+              <span className="absolute top-[176px] -right-[16px] h-12 w-5 rounded-r-xl bg-abete shadow-[inset_-2px_-3px_4px_rgba(0,0,0,.25)]">
+                <span className="absolute inset-[3px] rounded-r-lg border-2 border-dashed border-crema/50 border-l-0" />
+              </span>
               {/* Leva 3D attaccata al fianco (se il 3D non c'è, quella semplice) */}
-              <div className="absolute top-[40px] -right-[60px] h-[230px] w-[76px]">
+              <div className="absolute top-0 -right-[70px] z-20 h-[300px] w-[120px]">
                 <Leva3D
                   attiva={fase === "leva" && candidati.length > 0}
                   onTira={tiraLaLeva}
                   riserva={
-                    <div className="absolute top-[38px] left-0 h-[150px] w-[34px]">
+                    <div className="pointer-events-auto absolute top-[64px] left-[56px] h-[150px] w-[34px]">
                 {/* attacco dorato sul fianco */}
                 <span className="absolute bottom-0 left-0 h-9 w-6 rounded-r-xl bg-[linear-gradient(90deg,#9c7a22,#f1d27a_45%,#b8922f)] shadow-[0_2px_4px_rgba(0,0,0,.35)]" />
                 {/* asta cromata */}
@@ -210,7 +226,7 @@ export function AperturaBusta({
                 {fase === "leva" && !ridotto && (
                   <motion.span
                     aria-hidden
-                    className="pointer-events-none absolute top-24 -right-3 font-titolo text-2xl text-senape"
+                    className="pointer-events-none absolute top-[96px] right-0 font-titolo text-2xl text-senape"
                     animate={{ y: [0, 16, 0], opacity: [1, 0.4, 1] }}
                     transition={{ repeat: Infinity, duration: 1.3 }}
                   >
@@ -226,11 +242,15 @@ export function AperturaBusta({
         </Feltro>
       )}
 
+      <div ref={avatarNascosto} className="hidden" aria-hidden>
+        {destinatario.look && <Avatar look={destinatario.look} />}
+      </div>
+
       {/* ---------- la scena della busta (a tutto schermo) ---------- */}
       <AnimatePresence>
         {fase === "scena" && (
           <motion.div
-            className="fixed inset-0 z-50 flex flex-col bg-[radial-gradient(120%_80%_at_50%_40%,#2f5a39,#10251a)]"
+            className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[radial-gradient(120%_80%_at_50%_40%,#2f5a39,#10251a)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.9, ease: "easeInOut" } }}
@@ -243,13 +263,19 @@ export function AperturaBusta({
                 transition={{ duration: 1.2 }}
               />
             )}
-            <p className="relative z-10 px-6 pt-[calc(env(safe-area-inset-top)+40px)] text-center font-titolo text-[32px] leading-none text-crema">
-              {aperta ? "Ecco a chi!" : "Una busta per te"}
-            </p>
+            <div className="relative z-10 flex items-center gap-4 px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
+              {rivelato && (
+                <Link href={`/gruppo/${groupId}`} aria-label="Torna al gruppo" title="Torna al gruppo" className="tasto-tondo cucitura cliccabile stoffa-chiara">
+                  {Icone.indietro}
+                </Link>
+              )}
+              <p className="flex-1 text-center font-titolo text-[32px] leading-none text-crema">{aperta ? "Ecco a chi!" : "Una busta per te"}</p>
+              {rivelato && <span className="w-14" />}
+            </div>
             {/* la scena occupa tutto lo schermo; titolo e tasto stanno sopra */}
-            <div className="absolute inset-0">
+            <motion.div className="absolute inset-0" animate={{ opacity: rivelato && busta3d ? 0 : 1 }} transition={{ duration: 0.5, delay: 0.15 }}>
               {busta3d ? (
-                <ScenaBusta aperta={aperta} onPronta={() => setBustaPronta(true)} onAperta={bustaAperta} />
+                <ScenaBusta aperta={aperta} nome={destinatario.nome} avatarSvg={prendiSvg} onPronta={() => setBustaPronta(true)} onAperta={bustaAperta} />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center px-8">
                   <motion.div
@@ -263,8 +289,27 @@ export function AperturaBusta({
                   </motion.div>
                 </div>
               )}
-            </div>
-            <div className="relative z-10 mx-auto mt-auto w-full max-w-md px-5 pb-[max(24px,env(safe-area-inset-bottom))]">
+            </motion.div>
+            {/* il biglietto vero (olografico, da inclinare) prende il posto di quello 3D */}
+            {rivelato && (
+              <motion.div
+                className="relative z-10 mx-auto my-auto w-full max-w-md px-5"
+                initial={busta3d ? { opacity: 0, scale: 0.96 } : false}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+              >
+                <BigliettoOlografico nome={destinatario.nome} look={destinatario.look} conIngresso={!busta3d} />
+              </motion.div>
+            )}
+            <div className={`relative z-10 mx-auto w-full max-w-md px-5 pb-[max(24px,env(safe-area-inset-bottom))] ${rivelato ? "" : "mt-auto"}`}>
+              {rivelato && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: busta3d ? 0.6 : 1.8 }}>
+                  <p className="text-center text-sm text-crema/75">Inclinalo col dito o muovendo il telefono.</p>
+                  <TastoLink href={`/gruppo/${groupId}/bacheca/${destinatario.id}`} className="mt-4">
+                    Guarda la bacheca di {nomeBreve}
+                  </TastoLink>
+                </motion.div>
+              )}
               <AnimatePresence>
                 {(bustaPronta || ridotto) && !aperta && (
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>

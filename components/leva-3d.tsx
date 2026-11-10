@@ -39,40 +39,41 @@ export default function Leva3D({ attiva, onTira, riserva }: { attiva: boolean; o
     const pmrem = new THREE.PMREMGenerator(renderer);
     const ambiente = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     scena.environment = ambiente;
-    scena.environmentIntensity = 0.9;
+    scena.environmentIntensity = 0.7;
     const luce = new THREE.DirectionalLight(0xfff3e0, 2.2);
     luce.position.set(3, 5, 6);
     scena.add(luce);
 
+    // Tela larga 120px che copre il fianco della macchinetta (75 px per unità a z=0)
     const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
-    camera.position.set(1.1, 0.7, 8);
-    camera.lookAt(0, 0.35, 0);
+    camera.position.set(0.15, 0, 8);
+    camera.lookAt(0.15, 0, 0);
 
-    // attacco dorato che entra nel fianco della macchinetta
-    const oro = new THREE.MeshStandardMaterial({ color: 0xd9a93a, metalness: 1, roughness: 0.28 });
-    const attacco = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 1.1, 40), oro);
+    // perno a metà del fianco: esce dall'attacco di feltro verde (disegnato sulla macchinetta)
+    const PERNO = new THREE.Vector3(0.28, -0.67, 0);
+    const oro = new THREE.MeshStandardMaterial({ color: 0xe0ad3a, metalness: 0.85, roughness: 0.32 });
+    const attacco = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.42, 40), oro);
     attacco.rotation.z = Math.PI / 2;
-    attacco.position.set(-0.45, -1.1, 0);
+    attacco.position.set(PERNO.x - 0.2, PERNO.y, 0);
     scena.add(attacco);
-    const borchia = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 16), oro);
-    borchia.position.set(0.1, -1.1, 0);
+    const borchia = new THREE.Mesh(new THREE.SphereGeometry(0.21, 32, 16), oro);
+    borchia.position.copy(PERNO);
     scena.add(borchia);
 
-    // perno: tutta la leva ruota attorno a questo punto
+    // tutta la leva ruota attorno al perno
     const perno = new THREE.Group();
-    perno.position.set(0.1, -1.1, 0);
+    perno.position.copy(PERNO);
     scena.add(perno);
-    const cromo = new THREE.MeshStandardMaterial({ color: 0xf2f4f7, metalness: 1, roughness: 0.12 });
-    const asta = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 2.3, 24), cromo);
-    asta.position.y = 1.15;
+    const asta = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 2.1, 24), oro);
+    asta.position.y = 1.05;
     perno.add(asta);
-    const anello = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.035, 12, 32), oro);
+    const anello = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.03, 12, 32), oro);
     anello.rotation.x = Math.PI / 2;
-    anello.position.y = 2.1;
+    anello.position.y = 1.95;
     perno.add(anello);
-    const lacca = new THREE.MeshPhysicalMaterial({ color: 0xd8300a, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.3 });
-    const pomello = new THREE.Mesh(new THREE.SphereGeometry(0.42, 48, 32), lacca);
-    pomello.position.y = 2.55;
+    const lacca = new THREE.MeshPhysicalMaterial({ color: 0xd8300a, roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.3 });
+    const pomello = new THREE.Mesh(new THREE.SphereGeometry(0.33, 48, 32), lacca);
+    pomello.position.y = 2.3;
     perno.add(pomello);
 
     // ombra morbida sotto, finta (un disco scuro sfumato)
@@ -85,7 +86,7 @@ export default function Leva3D({ attiva, onTira, riserva }: { attiva: boolean; o
     oc.fillStyle = g;
     oc.fillRect(0, 0, 64, 64);
     const ombra = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ombraTela), transparent: true, depthWrite: false }));
-    ombra.position.set(0.1, -1.5, -0.2);
+    ombra.position.set(PERNO.x, PERNO.y - 0.35, -0.2);
     scena.add(ombra);
 
     const ridimensiona = () => {
@@ -145,13 +146,13 @@ export default function Leva3D({ attiva, onTira, riserva }: { attiva: boolean; o
   if (senza3d) return <>{riserva}</>;
 
   return (
-    <div ref={contenitore} className="absolute inset-0">
+    <div ref={contenitore} className="pointer-events-none absolute inset-0 [&>button]:pointer-events-auto">
       {/* il tasto invisibile sopra la leva: dito, mouse e tastiera */}
       <button
         type="button"
         aria-label="Tira la leva"
         disabled={!attiva}
-        className="absolute inset-0 z-10 cursor-grab touch-none rounded-2xl opacity-0 focus-visible:opacity-100 disabled:cursor-default"
+        className="absolute inset-y-0 right-0 left-[50px] z-10 cursor-grab touch-none rounded-2xl opacity-0 focus-visible:opacity-100 disabled:cursor-default"
         onPointerDown={(e) => {
           if (!attiva) return;
           e.currentTarget.setPointerCapture(e.pointerId);
