@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { AscoltaTocchi } from "@/components/audio";
+import { AvvisoPremi } from "@/components/avviso-premi";
 
 // Titoli: Basteleur Bold (Velvetyne, licenza SIL OFL in app/fonts/Basteleur-OFL.txt)
 const basteleur = localFont({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="it" className={`${basteleur.variable} ${bricolage.variable} antialiased`}>
       <body className="min-h-dvh flex flex-col">
         <AscoltaTocchi />
+        <AvvisoPremi />
         {children}
       </body>
     </html>

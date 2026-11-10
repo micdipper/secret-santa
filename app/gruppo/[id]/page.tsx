@@ -34,12 +34,13 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // i totem di chi ha fatto il sondaggio (badge accanto al personaggio)
   const [{ data: risultati }, { data: nomiTotem }] = await Promise.all([
     supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
-    supabase.from("quiz_totems").select("profilo, nome").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
   ]);
   const totemDi = (m: Membro) => {
     const r = risultati?.find((x) => x.user_id === m.user_id);
     if (!r) return null;
-    return { profilo: r.profilo as Profilo, nome: nomiTotem?.find((t) => t.profilo === r.profilo)?.nome ?? "" };
+    const t = nomiTotem?.find((x) => x.profilo === r.profilo);
+    return { profilo: r.profilo as Profilo, nome: t?.nome ?? "", immagine: t?.immagine };
   };
   const io = membri.find((m) => m.user_id === userId);
   const organizzatore = gruppo.organizer_id === userId;

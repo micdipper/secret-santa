@@ -17,7 +17,7 @@ export const SPIEGA_PROFILO: Record<Profilo, string> = {
 
 export const TOTEM_PREDEFINITI: Record<Profilo, { nome: string; descrizione: string }> = {
   IMPEGNO_ALTO_RICEVE_TUTTO: { nome: "Elfo stakanovista", descrizione: "Dà l'anima per il regalo, e accetta felice anche un sasso." },
-  IMPEGNO_ALTO_ESIGENTE: { nome: "Giudice di MasterChef", descrizione: "Dà il massimo, e si aspetta lo stesso livello." },
+  IMPEGNO_ALTO_ESIGENTE: { nome: "L'avvocato", descrizione: "Dà il massimo, e si aspetta lo stesso livello." },
   IMPEGNO_BASSO_RICEVE_TUTTO: {
     nome: "Autogrill core",
     descrizione: "Il regalo lo prende il 24 alle 19:40 in autogrill, ma qualsiasi cosa riceva è felice uguale.",
@@ -75,5 +75,24 @@ export function profiloDa(impegno: number, esigenza: number): Profilo {
   return esigenza < 0 ? "IMPEGNO_BASSO_RICEVE_TUTTO" : "IMPEGNO_BASSO_ESIGENTE";
 }
 
-export type TotemGruppo = { profilo: Profilo; nome: string; descrizione: string | null };
+export type TotemGruppo = { profilo: Profilo; nome: string; descrizione: string | null; immagine?: string | null };
 export const descrizioneDi = (t: { profilo: Profilo; descrizione: string | null }) => t.descrizione || TOTEM_PREDEFINITI[t.profilo].descrizione;
+
+// Foto del totem: ritaglio a francobollo (stesse proporzioni del riquadro interno, 84×104) e JPEG leggero
+export async function fotoPerFrancobollo(file: File): Promise<string> {
+  const img = await createImageBitmap(file);
+  const W = 336;
+  const H = 416;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const scala = Math.max(W / img.width, H / img.height); // riempie tutto, taglia quello che avanza
+  const w = img.width * scala;
+  const h = img.height * scala;
+  c.getContext("2d")!.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  for (const q of [0.82, 0.7, 0.55]) {
+    const url = c.toDataURL("image/jpeg", q);
+    if (url.length < 190000) return url;
+  }
+  return c.toDataURL("image/jpeg", 0.4);
+}

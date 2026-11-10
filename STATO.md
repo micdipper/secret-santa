@@ -99,3 +99,11 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - DA FARE dopo: toppe personalizzate per i 5 totem (simboli e parole; ognuno vede SOLO quelle del suo totem, quelle degli altri si scoprono nelle loro bacheche).
   - Sala prove: /prove/sondaggio (domande predefinite, calcolo nel browser, non salva).
   - Test e2e: scratchpad/e2e/sondaggio.js (tutto il flusso); slot.js/tasto.js/avatar3.js aggiornati col passaggio del sondaggio.
+- 11/11 pomeriggio:
+  - tasti: il "tump" suona al click vero (evento click), non al passaggio del dito;
+  - totem IMPEGNO_ALTO_ESIGENTE rinominato "L'avvocato" (predefinito + gruppi esistenti); l'organizzatore può mettere una FOTO al posto del disegno (quiz_totems.immagine: JPEG data-URL ritagliato 336×416 = proporzioni del francobollo, ≤200 KB; "Usa una tua foto" / "Torna al disegno");
+  - biglietto: si gira solo con un tocco vero (giù e su sul biglietto, senza trascinare), poi trema per 0,9 s sempre di più e BAM si gira (0,38 s, pop di grandezza, scintille);
+  - suono della toppa: fruscio di stoffa + colpetto sordo + "crrk" di adesivo;
+  - bacheca: il tasto coi due quadrati ora è "Duplica" (copia accanto all'originale); ciò che tocchi passa davanti da solo; la foto si cancella dall'archivio solo se nessun duplicato la usa;
+  - POP-UP PREMI (components/avviso-premi.tsx nel layout): quando si sblocca un premio compare "Hai vinto un premio!" con il personaggio che lo indossa, "Vai al guardaroba" (→ /profilo) e "Chiudi"; controlla a ogni cambio pagina, ogni 20 s e subito dopo bacheca/ricamo/sondaggio; mai durante la busta (si vede tornando al gruppo) né nella sala prove; premi già visti ricordati nel telefono (localStorage premi-visti:<uid>);
+  - avatar: con barba corta o folta il sorriso non si vede.

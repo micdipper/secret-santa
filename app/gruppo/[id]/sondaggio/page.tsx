@@ -11,13 +11,14 @@ import {
   SLOT,
   SPIEGA_PROFILO,
   TOTEM_PREDEFINITI,
+  fotoPerFrancobollo,
   type Domanda,
   type Parametro,
   type Profilo,
   type Punti,
 } from "@/lib/totem";
 
-type Totem = { nome: string; descrizione: string };
+type Totem = { nome: string; descrizione: string; immagine: string | null };
 
 export default function PaginaSondaggio() {
   return (
@@ -37,7 +38,7 @@ function Sondaggio() {
   const [nomeGruppo, setNomeGruppo] = useState("");
   const [domande, setDomande] = useState<Domanda[]>(DOMANDE_PREDEFINITE);
   const [totem, setTotem] = useState<Record<Profilo, Totem>>(
-    Object.fromEntries(PROFILI.map((p) => [p, { ...TOTEM_PREDEFINITI[p] }])) as Record<Profilo, Totem>,
+    Object.fromEntries(PROFILI.map((p) => [p, { ...TOTEM_PREDEFINITI[p], immagine: null }])) as Record<Profilo, Totem>,
   );
   const [bloccate, setBloccate] = useState(false); // qualcuno ha già risposto
   const [errore, setErrore] = useState("");
@@ -53,7 +54,7 @@ function Sondaggio() {
       if (g.quiz_salvato_at) {
         const [{ data: q }, { data: t }, { count }] = await Promise.all([
           supabase.from("quiz_questions").select("id, parametro, ordine, testo, quiz_answers(testo, punti)").eq("group_id", id).order("ordine"),
-          supabase.from("quiz_totems").select("profilo, nome, descrizione").eq("group_id", id),
+          supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", id),
           supabase.from("quiz_results").select("user_id", { count: "exact", head: true }).eq("group_id", id),
         ]);
         if (q?.length) {
@@ -68,7 +69,8 @@ function Sondaggio() {
         if (t?.length) {
           setTotem((prima) => {
             const nuovo = { ...prima };
-            for (const r of t) nuovo[r.profilo as Profilo] = { nome: r.nome, descrizione: r.descrizione ?? TOTEM_PREDEFINITI[r.profilo as Profilo].descrizione };
+            for (const r of t)
+              nuovo[r.profilo as Profilo] = { nome: r.nome, descrizione: r.descrizione ?? TOTEM_PREDEFINITI[r.profilo as Profilo].descrizione, immagine: r.immagine };
             return nuovo;
           });
         }
@@ -99,6 +101,7 @@ function Sondaggio() {
         nome: totem[p].nome,
         // se è uguale a quella predefinita, la salvo vuota (= usa la predefinita)
         descrizione: totem[p].descrizione.trim() === TOTEM_PREDEFINITI[p].descrizione ? "" : totem[p].descrizione,
+        immagine: totem[p].immagine ?? "",
       })),
     });
     if (error) {
@@ -247,9 +250,34 @@ function Sondaggio() {
             {PROFILI.map((p) => (
               <div key={p} className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <FrancobolloTotem profilo={p} className="w-16 flex-none" />
+                  <FrancobolloTotem profilo={p} immagine={totem[p].immagine} className="w-16 flex-none" />
                   <p className="text-sm text-inchiostro/70">{SPIEGA_PROFILO[p]}</p>
                 </div>
+                {/* foto dalla galleria al posto del disegno (ritagliata a francobollo) */}
+                <label className="tasto cucitura cliccabile stoffa-chiara cursor-pointer">
+                  <span>{totem[p].immagine ? "Cambia la foto" : "Usa una tua foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (!f) return;
+                      try {
+                        const immagine = await fotoPerFrancobollo(f);
+                        setTotem((t) => ({ ...t, [p]: { ...t[p], immagine } }));
+                      } catch {
+                        setErrore("Non riesco a leggere questa foto. Prova con un'altra.");
+                      }
+                    }}
+                  />
+                </label>
+                {totem[p].immagine && (
+                  <Tasto tipo="secondario" onClick={() => setTotem({ ...totem, [p]: { ...totem[p], immagine: null } })}>
+                    Torna al disegno
+                  </Tasto>
+                )}
                 <div className="campo-cucito">
                   <input aria-label="Nome del totem" maxLength={60} value={totem[p].nome} onChange={(e) => setTotem({ ...totem, [p]: { ...totem[p], nome: e.target.value } })} />
                 </div>

@@ -293,13 +293,10 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       <circle cx="57" cy="47" r="2.2" fill="#1c241d" />
       <circle cx="39" cy="53" r="3.6" fill="#e5481e" opacity=".28" />
       <circle cx="61" cy="53" r="3.6" fill="#e5481e" opacity=".28" />
-      <path
-        d="M46 55c2 2.4 6 2.4 8 0"
-        fill="none"
-        stroke={look.barba === 1 || look.barba === 2 ? "#f3e8cf" : "#1c241d"}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+      {/* il sorriso: con la barba piena non si vede (è coperto) */}
+      {look.barba !== 1 && look.barba !== 2 && (
+        <path d="M46 55c2 2.4 6 2.4 8 0" fill="none" stroke="#1c241d" strokeWidth="1.8" strokeLinecap="round" />
+      )}
       <Occhiali tipo={look.occhiali} />
       {/* capelli davanti */}
       <g className={olografico ? "capelli-olografici" : undefined}>
@@ -343,7 +340,7 @@ export function ToppaAvatar({
   cliccabile?: boolean;
   novita?: boolean;
   nome?: string;
-  totem?: { profilo: Profilo; nome: string } | null; // il badge del totem accanto al personaggio
+  totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il badge del totem accanto al personaggio
 }) {
   const toppa = (
     <span className={`toppa overflow-hidden ${cliccabile ? "cliccabile stoffa-chiara" : ""}`} style={{ width: dimensione, height: dimensione }}>
@@ -361,7 +358,7 @@ export function ToppaAvatar({
   return (
     <span className="relative inline-flex flex-none">
       {toppa}
-      <BadgeTotem profilo={totem.profilo} nome={totem.nome} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -right-1 -bottom-1" />
+      <BadgeTotem profilo={totem.profilo} nome={totem.nome} immagine={totem.immagine} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -right-1 -bottom-1" />
     </span>
   );
 }

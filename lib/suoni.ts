@@ -110,9 +110,13 @@ export const suoni = {
     campana(1568, 0, 0.12);
     campana(2093, 0.09, 0.08);
   },
+  // toppa attaccata: fruscio di stoffa premuta, un colpetto sordo e il "crrk" del velcro/adesivo
   toppa() {
-    nota(520, 0.12, { volume: 0.2, scivola: 1.6 });
+    rumore(0.16, { volume: 0.16, filtro: 1400, tipoFiltro: "bandpass", q: 0.8, scendi: 0.5 });
+    nota(95, 0.12, { volume: 0.22, scivola: 0.7, ritardo: 0.04 });
+    for (let k = 0; k < 6; k++) rumore(0.018, { volume: 0.05, filtro: 3200, tipoFiltro: "bandpass", q: 2, ritardo: 0.08 + k * 0.022 });
   },
+
   punto() {
     rumore(0.04, { volume: 0.05, filtro: 3500, tipoFiltro: "bandpass", q: 2 });
   },

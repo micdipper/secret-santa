@@ -27,7 +27,7 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
     ? await supabase.from("quiz_results").select("profilo").eq("group_id", id).eq("user_id", persona.user_id).maybeSingle()
     : { data: null };
   const { data: totem } = risultato
-    ? await supabase.from("quiz_totems").select("profilo, nome, descrizione").eq("group_id", id).eq("profilo", risultato.profilo).maybeSingle()
+    ? await supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", id).eq("profilo", risultato.profilo).maybeSingle()
     : { data: null };
 
   return (
@@ -47,7 +47,7 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
       {/* il totem, appuntato in cima alla bacheca */}
       {totem && (
         <div className="mt-6 flex items-center gap-4">
-          <FrancobolloTotem profilo={totem.profilo as Profilo} className="w-16 flex-none -rotate-3 drop-shadow-[0_4px_6px_rgba(0,0,0,.35)]" titolo={totem.nome} />
+          <FrancobolloTotem profilo={totem.profilo as Profilo} immagine={totem.immagine} className="w-16 flex-none -rotate-3 drop-shadow-[0_4px_6px_rgba(0,0,0,.35)]" titolo={totem.nome} />
           <div>
             <p className="text-sm text-crema/75">{mia ? "Il tuo totem" : `Il totem di ${nome}`}</p>
             <p className="font-titolo text-2xl leading-tight text-senape">{totem.nome}</p>

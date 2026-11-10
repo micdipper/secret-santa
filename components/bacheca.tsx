@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
+import { controllaPremi } from "@/components/avviso-premi";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -155,9 +156,24 @@ export function Bacheca({
     [supabase, traccia, prova],
   );
 
-  async function aggiungi(kind: Elemento["kind"], content: Elemento["content"], width: number) {
+  async function aggiungi(
+    kind: Elemento["kind"],
+    content: Elemento["content"],
+    width: number,
+    dove?: { x: number; y: number; rotation: number }, // per i duplicati: accanto all'originale
+  ) {
     const z = Math.max(0, ...elementi.map((e) => e.z)) + 1;
-    const nuovo = { member_id: memberId, kind, content, x: 50 + spostamentoCasuale(18), y: ALTEZZA / 2 + spostamentoCasuale(24), width, height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1), rotation: inclinazioneCasuale(), z };
+    const nuovo = {
+      member_id: memberId,
+      kind,
+      content,
+      x: dove?.x ?? 50 + spostamentoCasuale(18),
+      y: dove?.y ?? ALTEZZA / 2 + spostamentoCasuale(24),
+      width,
+      height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1),
+      rotation: dove?.rotation ?? inclinazioneCasuale(),
+      z,
+    };
     const { data, error } = prova
       ? { data: { id: crypto.randomUUID(), kind, content, x: nuovo.x, y: nuovo.y, width, rotation: nuovo.rotation, z }, error: null }
       : await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
@@ -165,6 +181,7 @@ export function Bacheca({
     setErrore("");
     setElementi((l) => [...l, data as Elemento]);
     setSelezionato(data.id);
+    if (!prova) controllaPremi(); // magari ha appena vinto il lupetto
   }
 
   async function togli(id: string) {
@@ -173,14 +190,26 @@ export function Bacheca({
     setSelezionato(null);
     if (prova) return;
     await traccia(supabase.from("moodboard_items").delete().eq("id", id));
-    if (e?.kind === "foto" && e.content.path) await traccia(supabase.storage.from("moodboard").remove([e.content.path]));
+    // la foto si cancella dall'archivio solo se nessun duplicato la usa ancora
+    const usataAncora = elementi.some((x) => x.id !== id && x.content.path && x.content.path === e?.content.path);
+    if (e?.kind === "foto" && e.content.path && !usataAncora) await traccia(supabase.storage.from("moodboard").remove([e.content.path]));
   }
 
-  function portaSopra(id: string) {
-    const z = Math.max(0, ...elementi.map((e) => e.z)) + 1;
-    setElementi((l) => l.map((e) => (e.id === id ? { ...e, z } : e)));
+  // Duplica: una copia identica, appena spostata, che passa davanti
+  function duplica(e: Elemento) {
+    suoni.toppa();
+    aggiungi(e.kind, e.content, e.width, { x: Math.min(95, e.x + 6), y: Math.min(ALTEZZA - 5, e.y + 6), rotation: e.rotation + 4 });
+  }
+
+  // quello che tocchi passa davanti agli altri
+  function portaSopra(id: string): number | null {
+    const max = Math.max(0, ...elementi.map((e) => e.z));
     const e = elementi.find((x) => x.id === id);
-    if (e) salvaPosizione({ ...e, z });
+    if (!e || (e.z === max && elementi.filter((x) => x.z === max).length === 1)) return null;
+    const z = max + 1;
+    setElementi((l) => l.map((x) => (x.id === id ? { ...x, z } : x)));
+    salvaPosizione({ ...e, z });
+    return z;
   }
 
   async function aggiungiFoto(file: File) {
@@ -228,7 +257,9 @@ export function Bacheca({
     (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
     tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     setSelezionato(el.id);
-    const corrente = elementi.find((x) => x.id === el.id) ?? el;
+    const zNuova = portaSopra(el.id);
+    const trovato = elementi.find((x) => x.id === el.id) ?? el;
+    const corrente = zNuova ? { ...trovato, z: zNuova } : trovato;
     partenza.current = { e: corrente, punti: [...tocchi.current.values()] };
   }
 
@@ -368,7 +399,7 @@ export function Bacheca({
                   setSelezionato(null);
                 }}
               />
-              <TastoTondo etichetta="Porta sopra" icona={Icone.sopra} disabled={!sel} onClick={() => sel && portaSopra(sel.id)} />
+              <TastoTondo etichetta="Duplica" icona={Icone.sopra} disabled={!sel} onClick={() => sel && duplica(sel)} />
               <TastoTondo etichetta="Togli dalla bacheca" icona={Icone.cestino} disabled={!sel} onClick={() => sel && togli(sel.id)} />
             </div>
           )}
@@ -551,6 +582,7 @@ function StratoRicamo({
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
         if (error) onErrore("Non sono riuscito a salvare il ricamo.");
+        else controllaPremi();
       } else {
         const { data, error } = await supabase
           .from("moodboard_items")

@@ -4,6 +4,7 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { controllaPremi } from "@/components/avviso-premi";
 import { FrancobolloTotem } from "@/components/totem";
 import { Errore, Feltro, Tasto, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -55,7 +56,7 @@ export function SondaggioTotem({
       }
       const [{ data: righe }, { data: t }] = await Promise.all([
         supabase.rpc("get_quiz", { p_group_id: groupId }),
-        supabase.from("quiz_totems").select("profilo, nome, descrizione").eq("group_id", groupId),
+        supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", groupId),
       ]);
       const mappa = new Map<string, Domanda & { ordine: number }>();
       for (const r of (righe ?? []) as { question_id: string; ordine: number; domanda: string; answer_id: string; risposta: string }[]) {
@@ -147,12 +148,11 @@ export function SondaggioTotem({
           animate={{ y: 0, rotate: -4, scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 110, damping: 11 }}
         >
-          <FrancobolloTotem profilo={t.profilo} className="w-full drop-shadow-[0_12px_18px_rgba(0,0,0,.45)]" titolo={t.nome} />
+          <FrancobolloTotem profilo={t.profilo} immagine={t.immagine} className="w-full drop-shadow-[0_12px_18px_rgba(0,0,0,.45)]" titolo={t.nome} />
         </motion.div>
         <motion.div initial={ridotto ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.5 }}>
           <p className="mt-6 font-titolo text-[32px] leading-none text-senape">{t.nome}</p>
           <p className="mt-3 text-crema/90">{descrizioneDi(t)}</p>
-          {!prova && <p className="mt-3 text-sm text-crema/70">Hai sbloccato un premio per il tuo personaggio: “Così ti ricordi i compleanni”.</p>}
           <Tasto className="mt-6" onClick={onFinito}>
             {prova ? "Rifai la prova" : "Apri la bacheca"}
           </Tasto>
@@ -222,5 +222,14 @@ export function SondaggioTotem({
 // Nella bacheca: finito il sondaggio, ricarico la pagina (si apre la bacheca col totem)
 export function SondaggioPerBacheca({ groupId, rifiutato }: { groupId: string; rifiutato: boolean }) {
   const router = useRouter();
-  return <SondaggioTotem groupId={groupId} rifiutato={rifiutato} onFinito={() => router.refresh()} />;
+  return (
+    <SondaggioTotem
+      groupId={groupId}
+      rifiutato={rifiutato}
+      onFinito={() => {
+        router.refresh();
+        controllaPremi(); // il premio del sondaggio
+      }}
+    />
+  );
 }

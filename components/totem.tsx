@@ -111,7 +111,17 @@ const DISEGNO: Record<Profilo, () => ReactNode> = {
 };
 
 // Francobollo: bordo dentellato, cornice, illustrazione. "nome" (facoltativo) va sotto, ricamato.
-export function FrancobolloTotem({ profilo, className = "", titolo }: { profilo: Profilo; className?: string; titolo?: string }) {
+export function FrancobolloTotem({
+  profilo,
+  className = "",
+  titolo,
+  immagine,
+}: {
+  profilo: Profilo;
+  className?: string;
+  titolo?: string;
+  immagine?: string | null; // foto scelta dall'organizzatore al posto del disegno
+}) {
   const Disegno = DISEGNO[profilo];
   const denti = [];
   for (let i = 0; i <= 10; i++) {
@@ -132,19 +142,35 @@ export function FrancobolloTotem({ profilo, className = "", titolo }: { profilo:
         <rect x="0" y="0" width="100" height="120" fill={C.carta} />
       </g>
       <rect x="8" y="8" width="84" height="104" fill={FONDO[profilo]} />
+      {immagine ? (
+        <image href={immagine} x="8" y="8" width="84" height="104" preserveAspectRatio="xMidYMid slice" />
+      ) : (
+        <g transform="translate(5 10)">
+          <Disegno />
+        </g>
+      )}
       <rect x="8" y="8" width="84" height="104" fill="none" stroke={C.verm} strokeWidth="1.4" strokeDasharray="3 2.4" />
-      <g transform="translate(5 10)">
-        <Disegno />
-      </g>
     </svg>
   );
 }
 
 // Badge accanto al personaggio: un piccolo francobollo inclinato
-export function BadgeTotem({ profilo, nome, dimensione = 26, className = "" }: { profilo: Profilo; nome?: string; dimensione?: number; className?: string }) {
+export function BadgeTotem({
+  profilo,
+  nome,
+  immagine,
+  dimensione = 26,
+  className = "",
+}: {
+  profilo: Profilo;
+  nome?: string;
+  immagine?: string | null;
+  dimensione?: number;
+  className?: string;
+}) {
   return (
     <span className={`inline-block rotate-[8deg] drop-shadow-[0_2px_2px_rgba(0,0,0,.35)] ${className}`} style={{ width: dimensione }} title={nome}>
-      <FrancobolloTotem profilo={profilo} className="block w-full" titolo={nome} />
+      <FrancobolloTotem profilo={profilo} className="block w-full" titolo={nome} immagine={immagine} />
     </span>
   );
 }

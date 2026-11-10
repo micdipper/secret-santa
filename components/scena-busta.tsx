@@ -670,6 +670,10 @@ export default function ScenaBusta({
     let grattando = false;
     let aspettoGiro = false; // il biglietto è davanti, col dorso: aspetta il tocco
     let inizioGiro = -1;
+    let toccoBiglietto: { x: number; y: number } | null = null;
+    let bam = false;
+    const TREMA = 0.9; // secondi di tremolio prima del giro
+    const GIRA = 0.38; // il giro: veloce, BAM
     let ultimaGrattata = 0;
     let sigilloVia = -1;
     let partenzaBiglietto: { pos: THREE.Vector3; scala: number } | null = null;
@@ -730,10 +734,9 @@ export default function ScenaBusta({
     }
 
     const giu = (e: PointerEvent) => {
+      // il biglietto si gira solo con un tocco vero: dito giù E su sul biglietto, senza trascinare
       if (fase === "biglietto" && aspettoGiro) {
-        aspettoGiro = false;
-        inizioGiro = orologio.getElapsedTime();
-        suoni.carta();
+        if (colpisci(e, [retro, fronte])) toccoBiglietto = { x: e.clientX, y: e.clientY };
         return;
       }
       if (fase === "neve") {
@@ -766,7 +769,17 @@ export default function ScenaBusta({
         obiettivoApertura = apertura = Math.min(1, Math.max(0, trascinoLembo.da + (trascinoLembo.y - e.clientY) / corsa));
       }
     };
-    const su = () => {
+    const su = (e: PointerEvent) => {
+      if (fase === "biglietto" && aspettoGiro && toccoBiglietto) {
+        const fermo = Math.hypot(e.clientX - toccoBiglietto.x, e.clientY - toccoBiglietto.y) < 14;
+        toccoBiglietto = null;
+        if (fermo && e.type === "pointerup" && colpisci(e, [retro, fronte])) {
+          aspettoGiro = false;
+          inizioGiro = orologio.getElapsedTime();
+          suoni.scricchiolio();
+        }
+        return;
+      }
       grattando = false;
       if (fase === "lembo" && trascinoLembo) {
         trascinoLembo = null;
@@ -962,12 +975,27 @@ export default function ScenaBusta({
             aspettoGiro = true;
             callback.current.onFase("girala");
           }
-          const giro = inizioGiro < 0 ? 0 : facile((t - inizioGiro) / 0.85) * Math.PI;
+          // dopo il tocco: trema sempre di più (suspense)… poi BAM, si gira di colpo
+          const tt = inizioGiro < 0 ? -1 : t - inizioGiro;
+          const trema = tt >= 0 && tt < TREMA ? Math.pow(tt / TREMA, 2) : 0;
+          const p = tt < TREMA ? 0 : Math.min(1, (tt - TREMA) / GIRA);
+          const giro = (1 - Math.pow(1 - p, 3)) * Math.PI;
+          if (p > 0 && !bam) {
+            bam = true;
+            suoni.carta();
+            biglietto.getWorldPosition(punto3);
+            scintille.emetti(punto3, 120, 3.2);
+          }
           const invito = aspettoGiro ? Math.sin(t * 2.4) * 0.06 : 0; // ondeggia piano: toccami!
-          biglietto.rotation.set(invito * 0.5, giro + invito, Math.sin(k * Math.PI) * 0.08);
+          const scossa = Math.sin(t * 70) * 0.06 * trema;
+          biglietto.rotation.set(invito * 0.5, giro + invito + scossa * 0.5, Math.sin(k * Math.PI) * 0.08 + scossa);
+          biglietto.position.x += Math.sin(t * 83) * 0.05 * trema;
+          // "pop" di grandezza quando si gira
+          if (p > 0) biglietto.scale.multiplyScalar(1 + Math.sin(Math.PI * p) * 0.12);
+          else biglietto.scale.multiplyScalar(1 + trema * 0.04);
           if (aspettoGiro) biglietto.position.y += Math.sin(t * 1.8) * 0.03;
         }
-        if (inizioGiro >= 0 && t - inizioGiro > 1 && !finita) {
+        if (inizioGiro >= 0 && t - inizioGiro > TREMA + GIRA + 0.12 && !finita) {
           finita = true;
           callback.current.onAperta();
           // la card vera prende il suo posto (identica): tolgo quella 3D un attimo dopo

@@ -8,7 +8,8 @@ import { avviaMusica, eMuto, impostaMuto, seguiMuto, suoni } from "@/lib/suoni";
 export function AscoltaTocchi() {
   useEffect(() => {
     let primo = true;
-    const giu = (e: PointerEvent) => {
+    // il "tump" suona solo al clic vero (dito appoggiato e sollevato sul tasto), non quando il dito ci passa sopra
+    const giu = (e: MouseEvent) => {
       if (primo) {
         primo = false;
         avviaMusica();
@@ -16,8 +17,8 @@ export function AscoltaTocchi() {
       const el = (e.target as HTMLElement).closest?.(".cliccabile, [data-suono='tasto']");
       if (el && !(el as HTMLButtonElement).disabled) suoni.tasto();
     };
-    window.addEventListener("pointerdown", giu, { capture: true });
-    return () => window.removeEventListener("pointerdown", giu, { capture: true });
+    window.addEventListener("click", giu, { capture: true });
+    return () => window.removeEventListener("click", giu, { capture: true });
   }, []);
   // il tasto per togliere musica e suoni: sempre visibile, in ogni schermata, in alto a destra
   return (
