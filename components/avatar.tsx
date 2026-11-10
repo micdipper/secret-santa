@@ -59,7 +59,8 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
     barba: n(x.barba, NOMI_BARBA.length, 0),
     occhiali: n(x.occhiali, NOMI_OCCHIALI.length, 0),
     maglione: n(x.maglione, MAGLIONI.length, base.maglione),
-    accessori: Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string") : [],
+    // un solo premio alla volta, così il personaggio resta pulito
+    accessori: Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string").slice(0, 1) : [],
   };
 }
 
@@ -314,35 +315,22 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       )}
       {ha("gomitolo") && (
         <g transform="translate(5 -5)">
-          {/* ferri da maglia incrociati dietro il gomitolo */}
-          <path d="M24 77l19 15M44 77L25 92" stroke="#8a5a2b" strokeWidth="1.6" strokeLinecap="round" />
-          <circle cx="24" cy="77" r="1.6" fill="#e5481e" />
-          <circle cx="44" cy="77" r="1.6" fill="#e5481e" />
-          <circle cx="34" cy="85" r="7.5" fill="#e9a81c" stroke="#9c6b0a" strokeWidth="1.3" />
-          <path d="M28 82c4 1 9 4 11 9M27.5 86c4 0 9 2 11 6M30 79c4 2 8 6 9 11M33 78c3 3 6 7 7 10" fill="none" stroke="#b37d0e" strokeWidth="1" />
-          {/* filo che scappa */}
-          <path d="M41 86c4 0 4 4 8 3s3-5 7-4" fill="none" stroke="#e9a81c" strokeWidth="1.3" strokeLinecap="round" />
-          <Luccichio x={25} y={70} />
+          <path d="M27 79l14 11M41 79L27 90" stroke="#8a5a2b" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="34" cy="85" r="6" fill="#e9a81c" />
+          <path d="M29.5 83c3 .8 7 3 8.6 6.8M30 87c3 0 6.6 1.5 8 4.4M32 80.2c3 1.8 6 4.6 6.8 8" fill="none" stroke="#b37d0e" strokeWidth="1" />
         </g>
       )}
       {ha("fiocco") && (
-        <g transform="translate(66 25) rotate(14)">
-          {/* nastri */}
-          <path d="M-1 1l-6 12 3-1 2 3 3-12zM1 1l6 12-3-1-2 3-3-12z" fill="#c93b14" stroke="#8f2408" strokeWidth="1" strokeLinejoin="round" />
-          {/* anelli */}
-          <path d="M0 0c-4-6-14-9-15-3s9 7 15 3zM0 0c4-6 14-9 15-3s-9 7-15 3z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.2" strokeLinejoin="round" />
-          <path d="M-3-1c-3-2-7-3-9-2M3-1c3-2 7-3 9-2" fill="none" stroke="#f3e8cf" strokeWidth="1" strokeLinecap="round" opacity=".8" />
-          <circle r="3.2" fill="#f1d27a" stroke="#b8922f" strokeWidth="1" />
-          <Luccichio x={14} y={-9} />
+        <g transform="translate(66 26) rotate(14)">
+          <path d="M-1 1l-4 9 3-.6 2 2.4 2-10zM1 1l4 9-3-.6-2 2.4-2-10z" fill="#c93b14" />
+          <path d="M0 0c-3-5-11-7-12-2s7 5 12 2zM0 0c3-5 11-7 12-2s-7 5-12 2z" fill="#e5481e" />
+          <circle r="2.6" fill="#f1d27a" />
         </g>
       )}
       {ha("stellina") && (
         <g transform="translate(-5 -4)">
-          {/* spilla: stella nordica a 8 punte dorata */}
-          <path d={stellaOttoPunte(66, 84, 8, 3.6)} fill="#f1d27a" stroke="#9c7a22" strokeWidth="1.1" strokeLinejoin="round" />
-          <circle cx="66" cy="84" r="2.2" fill="#e5481e" stroke="#9c7a22" strokeWidth=".8" />
-          <path d="M62 80.5l1.8 1.8" stroke="#fff" strokeWidth="1.1" strokeLinecap="round" opacity=".9" />
-          <Luccichio x={76} y={77} />
+          <path d={stellaOttoPunte(66, 84, 6.5, 3)} fill="#f1d27a" />
+          <circle cx="66" cy="84" r="1.8" fill="#e5481e" />
         </g>
       )}
     </svg>

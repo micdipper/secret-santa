@@ -109,7 +109,7 @@ export function EditorPersonaggio({
       {riquadri && (
         <Feltro>
           <TitoloRiquadro>Accessori</TitoloRiquadro>
-          <p className="mt-2 text-sm text-inchiostro/70">Si sbloccano solo facendo le cose. Tocca quelli sbloccati per indossarli.</p>
+          <p className="mt-2 text-sm text-inchiostro/70">Si sbloccano solo facendo le cose. Se ne indossa uno alla volta: tocca quello che vuoi mettere.</p>
           <ul className="mt-4 flex flex-col gap-3">
             {ACCESSORI.map((a) => {
               const ok = sbloccati.includes(a.id);
@@ -125,7 +125,7 @@ export function EditorPersonaggio({
                     <button
                       type="button"
                       aria-pressed={indossato}
-                      onClick={() => onCambia({ accessori: indossato ? look.accessori.filter((x) => x !== a.id) : [...look.accessori, a.id] })}
+                      onClick={() => onCambia({ accessori: indossato ? [] : [a.id] })}
                       className={`cliccabile stoffa-chiara flex w-full items-center gap-3 rounded-[20px] p-2 pr-4 text-left ${
                         indossato ? "outline-3 outline-offset-2 outline-vermiglio" : ""
                       }`}
