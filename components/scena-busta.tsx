@@ -18,7 +18,7 @@ import { VignetteShader } from "three/examples/jsm/shaders/VignetteShader.js";
 // Effetti di luce: ognuno si può spegnere qui (true → false)
 const EFFETTI = {
   ombre: true, // ombre morbide sulla neve + alone scuro sotto la busta
-  bagliore: true, // le cose luminose (luce della busta, scintille, ceralacca) emanano luce
+  bagliore: false, // (spento: sui telefoni veri sbiancava la neve) le cose luminose (luce della busta, scintille, ceralacca) emanano luce
   contorno: true, // luce fredda da dietro che disegna i bordi
   notte: true, // luce calda davanti, fredda dietro, angoli più scuri
   brillii: true, // puntini che brillano sulla neve
@@ -45,25 +45,24 @@ function texturaCorpo() {
   return tela(1024, 662, (c) => {
     c.fillStyle = "#f7efdd";
     c.fillRect(0, 0, 1024, 662);
-    // fodera vermiglio e crema, visibile solo quando il lembo è aperto
+    // l'apertura a V in alto è trasparente: da lì si vede dentro la busta (e il biglietto)
     c.save();
+    c.globalCompositeOperation = "destination-out";
+    c.beginPath();
+    c.moveTo(-2, -2);
+    c.lineTo(1026, -2);
+    c.lineTo(512, 397);
+    c.closePath();
+    c.fill();
+    c.restore();
+    // bordo della tasca, appena più scuro
+    c.strokeStyle = "rgba(0,0,0,.12)";
+    c.lineWidth = 5;
     c.beginPath();
     c.moveTo(0, 0);
+    c.lineTo(512, 397);
     c.lineTo(1024, 0);
-    c.lineTo(512, 380);
-    c.closePath();
-    c.clip();
-    c.fillStyle = "#e5481e";
-    c.fillRect(0, 0, 1024, 400);
-    c.strokeStyle = "#f3e8cf";
-    c.lineWidth = 14;
-    for (let x = -400; x < 1400; x += 60) {
-      c.beginPath();
-      c.moveTo(x, 0);
-      c.lineTo(x + 380, 400);
-      c.stroke();
-    }
-    c.restore();
+    c.stroke();
     // pieghe laterali e in basso
     c.strokeStyle = "rgba(0,0,0,.08)";
     c.lineWidth = 5;
@@ -408,7 +407,7 @@ export default function ScenaBusta({
     // ---------- busta ----------
     const busta = new THREE.Group();
     scena.add(busta);
-    const matCorpo = new THREE.MeshToonMaterial({ map: texturaCorpo(), gradientMap: toni, transparent: true });
+    const matCorpo = new THREE.MeshToonMaterial({ map: texturaCorpo(), gradientMap: toni, transparent: true, alphaTest: 0.5 });
     const corpo = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA, ALTEZZA), matCorpo);
     corpo.castShadow = EFFETTI.ombre;
     busta.add(corpo);
@@ -417,6 +416,11 @@ export default function ScenaBusta({
     davanti.rotation.y = Math.PI;
     davanti.position.z = -0.005;
     busta.add(davanti);
+    // l'interno della busta, dietro al biglietto: si vede dall'apertura a V
+    const matInterno = new THREE.MeshToonMaterial({ color: 0xd9c49b, gradientMap: toni, transparent: true });
+    const interno = new THREE.Mesh(new THREE.PlaneGeometry(LARGHEZZA * 0.98, ALTEZZA * 0.98), matInterno);
+    interno.position.z = -0.035;
+    busta.add(interno);
 
     // lembo: un foglio a strisce che si curva come carta (cerniera in alto)
     const RIGHE = 28;
@@ -835,6 +839,17 @@ export default function ScenaBusta({
         }
       }
 
+      // mentre apri il lembo il biglietto è già lì dentro, infilato nella busta
+      if (fase === "lembo") {
+        biglietto.visible = true;
+        busta.localToWorld(punto3.set(0, Y_DENTRO, -0.02));
+        biglietto.position.copy(punto3);
+        biglietto.quaternion.copy(busta.quaternion);
+        biglietto.scale.copy(busta.scale);
+        busta.localToWorld(punto3.set(0, -ALTEZZA / 2, 0));
+        taglio.constant = -punto3.y;
+      }
+
       // il biglietto esce, la busta scende via, il biglietto viene avanti e si gira
       if (fase === "biglietto") {
         const a = t - inizioFase;
@@ -856,7 +871,7 @@ export default function ScenaBusta({
           }
           const g = facile((a - 1.3) / 0.9);
           busta.position.y = -g * 5;
-          [matCorpo, matDavanti, matLembo].forEach((m) => (m.opacity = 1 - g));
+          [matCorpo, matDavanti, matLembo, matInterno].forEach((m) => (m.opacity = 1 - g));
           const k = facile((a - 1.3) / 1.1);
           const zFinale = 2.5;
           const hVis = 2 * (9 - zFinale) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
