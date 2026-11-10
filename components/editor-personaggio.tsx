@@ -227,7 +227,7 @@ function Campioni({
     <div className="mt-4 flex flex-wrap gap-3">
       {colori.map((c, i) => {
         const olo = c.startsWith("url(");
-        const fondo = olo ? { backgroundImage: "linear-gradient(135deg,#ff9ad5,#9ee7ff,#c7a6ff,#fff2a0,#8cf0c4)" } : { backgroundColor: c };
+        const fondo = olo ? { backgroundImage: "linear-gradient(135deg,#ff4fae,#2fb8ff,#8a5cff,#ffc92e,#1fd69a)" } : { backgroundColor: c };
         return bloccato(i) ? (
           <span key={c} title="Premio da sbloccare" className="size-12 rounded-full border-2 border-dashed border-abete/30 opacity-40" style={fondo} />
         ) : (

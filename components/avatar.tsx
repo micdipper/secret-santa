@@ -10,9 +10,9 @@ export type Look = {
   accessori: string[];
 };
 
-export const PELLI = ["#f6d7bf", "#efc2a0", "#d9a07a", "#b97a52", "#8d5a3b", "#5e3b28"];
+export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
 // L'ultimo colore (olografico) è un premio da sbloccare
-export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#c9b68c", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
+export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
 export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a"];
 // L'ultimo taglio (Super) è un premio da sbloccare
 export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super"];
@@ -218,40 +218,38 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const filo = look.maglione === 2 || look.maglione === 4 ? "#2c4a32" : "#f3e8cf";
   const ha = (a: string) => look.accessori.includes(a);
   const olografico = look.coloreCapelli === COLORE_OLOGRAFICO;
-  const bordoCapelli = olografico ? "#9a6fc9" : scurisci(capelli, 0.62);
-  const bordoPelle = scurisci(pelle, 0.78);
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
       {olografico && (
         <defs>
           <linearGradient id="avatar-olografico" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#ff9ad5" />
-            <stop offset=".3" stopColor="#9ee7ff" />
-            <stop offset=".55" stopColor="#c7a6ff" />
-            <stop offset=".8" stopColor="#fff2a0" />
-            <stop offset="1" stopColor="#8cf0c4" />
+            <stop offset="0" stopColor="#ff4fae" />
+            <stop offset=".3" stopColor="#2fb8ff" />
+            <stop offset=".55" stopColor="#8a5cff" />
+            <stop offset=".8" stopColor="#ffc92e" />
+            <stop offset="1" stopColor="#1fd69a" />
           </linearGradient>
         </defs>
       )}
       {/* capelli dietro */}
-      <g stroke={bordoCapelli} strokeWidth="1.4" strokeLinejoin="round">
+      <g>
         <Capelli stile={look.capelli} c={capelli} dietro />
       </g>
       {/* spalle e maglione */}
-      <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} stroke={scurisci(maglia, 0.72)} strokeWidth="1.4" />
+      <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
       <path d="M18 92c8-4 20-6 32-6s24 2 32 6" fill="none" stroke={filo} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" opacity=".9" />
       {[26, 38, 50, 62, 74].map((x) => (
         <path key={x} d={`M${x - 3} 96l3-4 3 4-3 4z`} fill={filo} opacity=".9" />
       ))}
       {/* collo */}
-      <rect x="44" y="62" width="12" height="12" rx="5" fill={scurisci(pelle, 0.9)} stroke={bordoPelle} strokeWidth="1.2" />
-      {/* testa (orecchie prima, così il bordo della testa le copre) */}
-      <g fill={pelle} stroke={bordoPelle} strokeWidth="1.2">
+      <rect x="44" y="62" width="12" height="12" rx="5" fill={scurisci(pelle, 0.9)} />
+      {/* testa */}
+      <g fill={pelle}>
         <circle cx="30.5" cy="47" r="3.5" />
         <circle cx="69.5" cy="47" r="3.5" />
         <circle cx="50" cy="45" r="20" />
       </g>
-      <g stroke={bordoCapelli} strokeWidth="1.2" strokeLinejoin="round">
+      <g>
         <Barba tipo={look.barba} c={capelli} />
       </g>
       {/* viso */}
@@ -268,27 +266,50 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       />
       <Occhiali tipo={look.occhiali} />
       {/* capelli davanti */}
-      <g stroke={bordoCapelli} strokeWidth="1.4" strokeLinejoin="round">
+      <g>
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
 
       {/* accessori */}
       {ha("sciarpa") && (
         <g>
-          {/* coda che scende sul petto */}
-          <path d="M55 74l13-2 3 13-13 2z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.3" strokeLinejoin="round" />
-          <path d="M56.6 78.6l12-1.8M57.4 82.6l12-1.8" stroke="#f3e8cf" strokeWidth="2.2" />
-          <path d="M59.5 87.5l-.8 4M62.5 87l-.4 4M65.5 86.6l0 4M68.5 86.2l.4 4" stroke="#e9a81c" strokeWidth="1.6" strokeLinecap="round" />
-          {/* giro alto attorno al collo */}
-          <path d="M27 63c8 8 38 8 46 0l3 13c-10 10-42 10-52 0z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.3" strokeLinejoin="round" />
-          {/* fascia nordica crema con stelline */}
-          <path d="M25.5 69.5c10 9 39 9 49 0" fill="none" stroke="#f3e8cf" strokeWidth="5" />
-          {[31, 40, 50, 60, 69].map((x, i) => {
-            const y = 72.6 + [1.6, 3.2, 3.8, 3.2, 1.6][i];
-            return <path key={x} d={`M${x} ${y - 2.2}l.8 1.4 1.4.8-1.4.8-.8 1.4-.8-1.4-1.4-.8 1.4-.8z`} fill="#2c4a32" />;
-          })}
-          {/* luccichio: è un premio */}
-          <Luccichio x={24} y={63} />
+          <defs>
+            <clipPath id="avatar-sciarpa-giro">
+              <path d="M26 61c8 10 40 10 48 0l3 15c-11 11-43 11-54 0z" />
+            </clipPath>
+            <clipPath id="avatar-sciarpa-coda">
+              <path d="M68 63c8-4 14 1 20-2l5-3 1 11c-4 1-7 3-11 4-7 1-10-1-15 1z" />
+            </clipPath>
+          </defs>
+          {/* coda che sventola al vento */}
+          <g className="sciarpa-vento">
+            <g transform="translate(68 63) scale(.78) translate(-68 -63)">
+            <g clipPath="url(#avatar-sciarpa-coda)">
+              <rect x="66" y="55" width="30" height="22" fill="#e9a81c" />
+              {[70, 78, 86].map((x) => (
+                <rect key={x} x={x} y="55" width="4" height="22" fill="#2c4a32" />
+              ))}
+              {[74, 82, 90].map((x) => (
+                <rect key={x} x={x} y="55" width="4" height="22" fill="#e5481e" />
+              ))}
+            </g>
+            <path d="M93 58.5l4-1.5M93.5 61.5l4.5-.5M94 64.5l4 .5M94 67.5l3.5 1.5" stroke="#e5481e" strokeWidth="1.8" strokeLinecap="round" />
+            </g>
+          </g>
+          {/* giro attorno al collo, a righe come un gomitolo di avanzi */}
+          <g clipPath="url(#avatar-sciarpa-giro)">
+            <rect x="20" y="55" width="60" height="35" fill="#2c4a32" />
+            <path d="M24 64c10 10 42 10 52 0" fill="none" stroke="#e9a81c" strokeWidth="4" />
+            <path d="M23 70c10 10 44 10 54 0" fill="none" stroke="#e5481e" strokeWidth="4" />
+            <path d="M22 76c10 10 46 10 56 0" fill="none" stroke="#f4a9c4" strokeWidth="4" />
+            {/* punti a maglia */}
+            {[30, 38, 46, 54, 62, 70].map((x, i) => {
+              const y = 68 + [2, 4, 5, 5, 4, 2][i];
+              return <path key={x} d={`M${x - 2} ${y - 1.2}l2 2 2-2`} fill="none" stroke="#f3e8cf" strokeWidth="1" strokeLinecap="round" />;
+            })}
+          </g>
+          <Luccichio x={23} y={60} />
+          <Luccichio x={84} y={54} />
         </g>
       )}
       {ha("gomitolo") && (

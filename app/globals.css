@@ -289,6 +289,17 @@ textarea {
   animation: dondola 1.4s ease-out;
 }
 
+/* La coda della sciarpa (premio) sventola piano */
+@keyframes sventola {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(5deg); }
+}
+.sciarpa-vento {
+  transform-box: view-box;
+  transform-origin: 68px 65px;
+  animation: sventola 2.4s ease-in-out infinite;
+}
+
 /* ---------- Toppa rotonda (membri) ---------- */
 .toppa {
   position: relative;
