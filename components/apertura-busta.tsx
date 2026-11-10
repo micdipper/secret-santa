@@ -128,12 +128,14 @@ export function AperturaBusta({
   candidati,
   destinatario,
   giaAperta,
+  prova,
 }: {
   groupId: string;
   nomeGruppo: string;
   candidati: Persona[];
   destinatario: Persona;
   giaAperta: boolean;
+  prova?: { ricomincia: () => void }; // pagina di prova: niente database, "Ricomincia" al posto della bacheca
 }) {
   const supabase = clientSoloBrowser();
   const ridotto = useReducedMotion();
@@ -356,7 +358,7 @@ export function AperturaBusta({
     suoni.fanfara();
     setTimeout(() => cambiaBrano("carillon"), 2500);
     setRivelato(true);
-    segnaAperta();
+    if (!prova) segnaAperta();
     if (!ridotto) {
       confetti({
         particleCount: 120,
@@ -381,7 +383,7 @@ export function AperturaBusta({
   const nomeBreve = destinatario.nome.split(" ")[0];
   const testata = (
     <TestataInterna
-      indietro={`/gruppo/${groupId}`}
+      indietro={prova ? "/" : `/gruppo/${groupId}`}
       etichettaIndietro={`Torna a ${nomeGruppo}`}
       contesto={nomeGruppo}
       titolo="La tua busta"
@@ -817,7 +819,7 @@ export function AperturaBusta({
                   transition={{ type: "spring", stiffness: 260, damping: 18 }}
                 >
                   <Link
-                    href={`/gruppo/${groupId}`}
+                    href={prova ? "/" : `/gruppo/${groupId}`}
                     aria-label="Torna al gruppo"
                     title="Torna al gruppo"
                     className="pointer-events-auto tasto-tondo cucitura cliccabile stoffa-chiara"
@@ -902,12 +904,18 @@ export function AperturaBusta({
                 <p className="text-center text-sm text-crema [text-shadow:0_1px_6px_rgba(0,0,0,.4)]">
                   Inclinalo col dito o muovendo il telefono.
                 </p>
-                <TastoLink
-                  href={`/gruppo/${groupId}/bacheca/${destinatario.id}`}
-                  className="mt-4"
-                >
-                  Guarda la bacheca di {nomeBreve}
-                </TastoLink>
+                {prova ? (
+                  <Tasto className="mt-4" onClick={prova.ricomincia}>
+                    Ricomincia la prova
+                  </Tasto>
+                ) : (
+                  <TastoLink
+                    href={`/gruppo/${groupId}/bacheca/${destinatario.id}`}
+                    className="mt-4"
+                  >
+                    Guarda la bacheca di {nomeBreve}
+                  </TastoLink>
+                )}
               </motion.div>
             )}
             {!busta3d && bustaPronta && !rivelato && (
