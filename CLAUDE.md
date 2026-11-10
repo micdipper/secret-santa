@@ -86,7 +86,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - Riferimenti: cartoline natalizie anni '50-'60, carta da regalo stampata, francobolli, etichette per pacchi, texture di carta leggera.
 - Palette di partenza (da affinare con le reference): rosso ciliegia, verde abete scuro, crema/carta, oro tenue.
 - Tipografia: titoli in stile Mishca, ma Mishca è a pagamento → font principale gratuito **Basteleur Bold** (Velvetyne, SIL OFL; scelto da Marzia, si può cambiare se non funziona sull'intero sito; alternativa: Sinistre Bold di Collletttivo) + **Bricolage Grotesque** per il testo (Google Fonts, un solo file variabile). Massimo due font. Stelline a 4 punte disegnate come SVG.
-- Micro-animazioni morbide; niente di pesante che rallenti il telefono.
+- Micro-animazioni morbide; niente di pesante che rallenti il telefono. **Tutto sempre fluido**: movimenti con curve di Bézier ben calibrate (ease-in/out morbidi, rimbalzi con molle), mai scatti o tagli netti.
 - Reference di Marzia: cartella `/reference` (da usare come moodboard, non da copiare).
   - **Font e colori** → immagini 01-02 (display serif vintage con stelline a 4 punte stile "Mishca"; rosso-arancio acceso su verde abete scuro e beige carta). Mishca è probabilmente a pagamento: verificare la licenza o scegliere un'alternativa gratuita simile.
   - **Layout e vibe** → immagini 03-09: collage/scrapbook, elementi sparsi e ruotati (polaroid, post-it, buste, biglietti, fogli sovrapposti), scritte a mano, colori pieni da rivista.
