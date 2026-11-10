@@ -296,14 +296,15 @@ export default function ScenaBusta({ aperta, onPronta, onAperta }: { aperta: boo
       if (inizioApertura >= 0) {
         const a = t - inizioApertura;
         cerniera.rotation.x = facile(a / 0.8) * Math.PI * 0.92;
-        matLuce.opacity = 0.85 * Math.min(1, a / 0.5) * (a < 1.4 ? 1 : Math.max(0, 1 - (a - 1.4) / 0.6));
+        // la luce si accende, resta un attimo e si spegne piano (prima che la scena sparisca)
+        matLuce.opacity = 0.85 * Math.min(1, a / 0.4) * (a < 0.9 ? 1 : Math.max(0, 1 - (a - 0.9) / 0.6));
         luce.scale.set(3 + a * 1.5, 2 + a, 1);
         if (a > 1.0) {
           const g = facile((a - 1.0) / 0.9);
           busta.position.y -= g * 4;
           [matCorpo, matDavanti, matLembo, matCera].forEach((m) => (m.opacity = 1 - g));
         }
-        if (a > 1.05 && !finita) {
+        if (a > 1.5 && !finita) {
           finita = true;
           callback.current.onAperta();
         }

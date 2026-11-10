@@ -12,6 +12,7 @@ import { clientSoloBrowser } from "@/lib/supabase/client";
 // three.js si scarica solo quando serve (durante il giro della slot machine)
 const caricaScena = () => import("@/components/scena-busta");
 const ScenaBusta = dynamic(caricaScena, { ssr: false });
+const Leva3D = dynamic(() => import("@/components/leva-3d"), { ssr: false });
 
 export type Persona = { id: string; nome: string; look: Look | null };
 
@@ -173,8 +174,13 @@ export function AperturaBusta({
                 <Lampadine fase={fase} />
               </div>
 
-              {/* Leva: si tira giù col dito (o si tocca) */}
-              <div className="absolute top-[78px] -right-[34px] h-[150px] w-[34px]">
+              {/* Leva 3D attaccata al fianco (se il 3D non c'è, quella semplice) */}
+              <div className="absolute top-[40px] -right-[60px] h-[230px] w-[76px]">
+                <Leva3D
+                  attiva={fase === "leva" && candidati.length > 0}
+                  onTira={tiraLaLeva}
+                  riserva={
+                    <div className="absolute top-[38px] left-0 h-[150px] w-[34px]">
                 {/* attacco dorato sul fianco */}
                 <span className="absolute bottom-0 left-0 h-9 w-6 rounded-r-xl bg-[linear-gradient(90deg,#9c7a22,#f1d27a_45%,#b8922f)] shadow-[0_2px_4px_rgba(0,0,0,.35)]" />
                 {/* asta cromata */}
@@ -198,10 +204,13 @@ export function AperturaBusta({
                 >
                   <span className="absolute top-2 left-3 h-3 w-4 rounded-full bg-white/50 blur-[1px]" />
                 </motion.button>
+                    </div>
+                  }
+                />
                 {fase === "leva" && !ridotto && (
                   <motion.span
                     aria-hidden
-                    className="absolute top-14 -right-5 font-titolo text-2xl text-senape"
+                    className="pointer-events-none absolute top-24 -right-3 font-titolo text-2xl text-senape"
                     animate={{ y: [0, 16, 0], opacity: [1, 0.4, 1] }}
                     transition={{ repeat: Infinity, duration: 1.3 }}
                   >
@@ -224,7 +233,7 @@ export function AperturaBusta({
             className="fixed inset-0 z-50 flex flex-col bg-[radial-gradient(120%_80%_at_50%_40%,#2f5a39,#10251a)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.6 } }}
+            exit={{ opacity: 0, transition: { duration: 0.9, ease: "easeInOut" } }}
           >
             {lampo && (
               <motion.div

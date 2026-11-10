@@ -64,3 +64,4 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - "Scegli una foto" non chiede il permesso della galleria: è normale, iPhone e Android aprono il selettore e danno al sito solo la foto scelta.
 - Regola nuova (CLAUDE.md): ogni schermata che crea/modifica ha un tasto finale chiaro + indicazione "Salvo…/Tutto salvato". Bacheca: "Ho finito" (aspetta i salvataggi e torna al gruppo). Organizza: "Salvato ✓" sotto data/budget.
 - Home: niente personaggio cliccabile (il personaggio si crea in "Crea un gruppo" o entrando dall'invito; poi si cambia dalla pagina del gruppo).
+- Leva della slot in 3D vero (components/leva-3d.tsx: pomello laccato, asta cromata con riflessi, attacco dorato; si tira ruotando verso chi guarda, torna su a molla; senza WebGL resta la leva semplice). Luce della busta: si spegne prima che la scena sparisca (prima veniva tagliata).
