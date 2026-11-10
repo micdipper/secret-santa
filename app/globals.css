@@ -308,6 +308,15 @@ textarea {
   animation: cartellino 2.6s ease-in-out infinite;
 }
 
+/* Lampadine della slot machine */
+@keyframes lampeggia {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px 2px rgb(255 214 107 / 0.9); }
+  50% { opacity: 0.35; box-shadow: none; }
+}
+.lampadina {
+  animation: lampeggia 1.2s ease-in-out infinite;
+}
+
 /* ---------- Toppa rotonda (membri) ---------- */
 .toppa {
   position: relative;
