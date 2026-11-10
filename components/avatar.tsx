@@ -12,8 +12,8 @@ export type Look = {
 
 export const PELLI = ["#f6d7bf", "#efc2a0", "#d9a07a", "#b97a52", "#8d5a3b", "#5e3b28"];
 // L'ultimo colore (olografico) è un premio da sbloccare
-export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e9d9b5", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
-export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#f3e8cf"];
+export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#c9b68c", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
+export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a"];
 // L'ultimo taglio (Super) è un premio da sbloccare
 export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super"];
 export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
@@ -39,11 +39,11 @@ export function lookIniziale(seme: string): Look {
   for (const ch of seme) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return {
     pelle: h % PELLI.length,
-    capelli: (h >> 3) % CAPELLI_SUPER,
-    coloreCapelli: (h >> 7) % COLORE_OLOGRAFICO,
+    capelli: (h >>> 3) % CAPELLI_SUPER,
+    coloreCapelli: (h >>> 7) % COLORE_OLOGRAFICO,
     barba: 0,
     occhiali: 0,
-    maglione: (h >> 11) % MAGLIONI.length,
+    maglione: (h >>> 11) % MAGLIONI.length,
     accessori: [],
   };
 }
@@ -201,11 +201,14 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const pelle = PELLI[look.pelle];
   const capelli = COLORI_CAPELLI[look.coloreCapelli];
   const maglia = MAGLIONI[look.maglione];
-  const filo = look.maglione === 5 ? "#e5481e" : "#f3e8cf";
+  const filo = look.maglione === 2 || look.maglione === 4 ? "#2c4a32" : "#f3e8cf";
   const ha = (a: string) => look.accessori.includes(a);
+  const olografico = look.coloreCapelli === COLORE_OLOGRAFICO;
+  const bordoCapelli = olografico ? "#9a6fc9" : scurisci(capelli, 0.62);
+  const bordoPelle = scurisci(pelle, 0.78);
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
-      {look.coloreCapelli === COLORE_OLOGRAFICO && (
+      {olografico && (
         <defs>
           <linearGradient id="avatar-olografico" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="#ff9ad5" />
@@ -217,20 +220,26 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
         </defs>
       )}
       {/* capelli dietro */}
-      <Capelli stile={look.capelli} c={capelli} dietro />
+      <g stroke={bordoCapelli} strokeWidth="1.4" strokeLinejoin="round">
+        <Capelli stile={look.capelli} c={capelli} dietro />
+      </g>
       {/* spalle e maglione */}
-      <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
+      <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} stroke={scurisci(maglia, 0.72)} strokeWidth="1.4" />
       <path d="M18 92c8-4 20-6 32-6s24 2 32 6" fill="none" stroke={filo} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" opacity=".9" />
       {[26, 38, 50, 62, 74].map((x) => (
         <path key={x} d={`M${x - 3} 96l3-4 3 4-3 4z`} fill={filo} opacity=".9" />
       ))}
       {/* collo */}
-      <rect x="44" y="62" width="12" height="12" rx="5" fill={scurisci(pelle, 0.9)} />
-      {/* testa */}
-      <circle cx="50" cy="45" r="20" fill={pelle} />
-      <circle cx="30.5" cy="47" r="3.5" fill={pelle} />
-      <circle cx="69.5" cy="47" r="3.5" fill={pelle} />
-      <Barba tipo={look.barba} c={capelli} />
+      <rect x="44" y="62" width="12" height="12" rx="5" fill={scurisci(pelle, 0.9)} stroke={bordoPelle} strokeWidth="1.2" />
+      {/* testa (orecchie prima, così il bordo della testa le copre) */}
+      <g fill={pelle} stroke={bordoPelle} strokeWidth="1.2">
+        <circle cx="30.5" cy="47" r="3.5" />
+        <circle cx="69.5" cy="47" r="3.5" />
+        <circle cx="50" cy="45" r="20" />
+      </g>
+      <g stroke={bordoCapelli} strokeWidth="1.2" strokeLinejoin="round">
+        <Barba tipo={look.barba} c={capelli} />
+      </g>
       {/* viso */}
       <circle cx="43" cy="47" r="2.2" fill="#1c241d" />
       <circle cx="57" cy="47" r="2.2" fill="#1c241d" />
@@ -245,17 +254,27 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       />
       <Occhiali tipo={look.occhiali} />
       {/* capelli davanti */}
-      <Capelli stile={look.capelli} c={capelli} dietro={false} />
+      <g stroke={bordoCapelli} strokeWidth="1.4" strokeLinejoin="round">
+        <Capelli stile={look.capelli} c={capelli} dietro={false} />
+      </g>
 
       {/* accessori */}
       {ha("sciarpa") && (
         <g>
-          <path d="M33 70c10 6 24 6 34 0l3 7c-12 7-28 7-40 0z" fill="#2c4a32" />
-          <path d="M60 74l4 18-7 1-3-17z" fill="#2c4a32" />
-          {[37, 44, 51, 58, 65].map((x) => (
-            <path key={x} d={`M${x - 2} 73l2 3 2-3`} fill="none" stroke="#f3e8cf" strokeWidth="1.4" />
-          ))}
-          <path d="M56 92l2 4M59 92l1 4M62 92l0 4" stroke="#f3e8cf" strokeWidth="1.4" />
+          {/* coda che scende sul petto */}
+          <path d="M55 74l13-2 3 13-13 2z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.3" strokeLinejoin="round" />
+          <path d="M56.6 78.6l12-1.8M57.4 82.6l12-1.8" stroke="#f3e8cf" strokeWidth="2.2" />
+          <path d="M59.5 87.5l-.8 4M62.5 87l-.4 4M65.5 86.6l0 4M68.5 86.2l.4 4" stroke="#e9a81c" strokeWidth="1.6" strokeLinecap="round" />
+          {/* giro alto attorno al collo */}
+          <path d="M27 63c8 8 38 8 46 0l3 13c-10 10-42 10-52 0z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.3" strokeLinejoin="round" />
+          {/* fascia nordica crema con stelline */}
+          <path d="M25.5 69.5c10 9 39 9 49 0" fill="none" stroke="#f3e8cf" strokeWidth="5" />
+          {[31, 40, 50, 60, 69].map((x, i) => {
+            const y = 72.6 + [1.6, 3.2, 3.8, 3.2, 1.6][i];
+            return <path key={x} d={`M${x} ${y - 2.2}l.8 1.4 1.4.8-1.4.8-.8 1.4-.8-1.4-1.4-.8 1.4-.8z`} fill="#2c4a32" />;
+          })}
+          {/* luccichio: è un premio */}
+          <path d="M24 60l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#f1d27a" stroke="#b8922f" strokeWidth=".5" />
         </g>
       )}
       {ha("gomitolo") && (
