@@ -41,6 +41,7 @@ function Separatore({ titolo }: { titolo: string }) {
 export default function Stile() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-5 pb-16">
+      <TestataInterna indietro="/prove" etichettaIndietro="Torna alla sala prove" contesto="Sala prove" titolo="Galleria dello stile" />
       {/* Galleria dei personaggi: tutti i tagli, le barbe e i premi */}
       <section id="personaggi" className="grid grid-cols-3 gap-3 pt-6">
         {NOMI_CAPELLI.map((n, i) => (

@@ -383,7 +383,7 @@ export function AperturaBusta({
   const nomeBreve = destinatario.nome.split(" ")[0];
   const testata = (
     <TestataInterna
-      indietro={prova ? "/" : `/gruppo/${groupId}`}
+      indietro={prova ? "/prove" : `/gruppo/${groupId}`}
       etichettaIndietro={`Torna a ${nomeGruppo}`}
       contesto={nomeGruppo}
       titolo="La tua busta"
@@ -819,7 +819,7 @@ export function AperturaBusta({
                   transition={{ type: "spring", stiffness: 260, damping: 18 }}
                 >
                   <Link
-                    href={prova ? "/" : `/gruppo/${groupId}`}
+                    href={prova ? "/prove" : `/gruppo/${groupId}`}
                     aria-label="Torna al gruppo"
                     title="Torna al gruppo"
                     className="pointer-events-auto tasto-tondo cucitura cliccabile stoffa-chiara"

@@ -72,11 +72,13 @@ export function Bacheca({
   memberId,
   modificabile,
   iniziali,
+  prova = false,
 }: {
   groupId: string;
   memberId: string;
   modificabile: boolean;
   iniziali: Elemento[];
+  prova?: boolean; // sala prove: tutto funziona ma non si salva niente
 }) {
   const supabase = clientSoloBrowser();
   const router = useRouter();
@@ -110,7 +112,7 @@ export function Bacheca({
   async function hoFinito() {
     setEsco(true);
     await Promise.allSettled([...inCorso.current]);
-    router.push(`/gruppo/${groupId}`);
+    router.push(prova ? "/prove" : `/gruppo/${groupId}`);
     router.refresh();
   }
 
@@ -141,6 +143,7 @@ export function Bacheca({
   // ---------- salvataggio ----------
   const salvaPosizione = useCallback(
     async (e: Elemento) => {
+      if (prova) return;
       const { error } = await traccia(
         supabase
           .from("moodboard_items")
@@ -149,13 +152,15 @@ export function Bacheca({
       );
       if (error) setErrore("Non sono riuscito a salvare l'ultima modifica.");
     },
-    [supabase, traccia],
+    [supabase, traccia, prova],
   );
 
   async function aggiungi(kind: Elemento["kind"], content: Elemento["content"], width: number) {
     const z = Math.max(0, ...elementi.map((e) => e.z)) + 1;
     const nuovo = { member_id: memberId, kind, content, x: 50 + spostamentoCasuale(18), y: ALTEZZA / 2 + spostamentoCasuale(24), width, height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1), rotation: inclinazioneCasuale(), z };
-    const { data, error } = await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
+    const { data, error } = prova
+      ? { data: { id: crypto.randomUUID(), kind, content, x: nuovo.x, y: nuovo.y, width, rotation: nuovo.rotation, z }, error: null }
+      : await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
     if (error || !data) return setErrore("Non sono riuscito ad attaccarlo. Riprova.");
     setErrore("");
     setElementi((l) => [...l, data as Elemento]);
@@ -166,6 +171,7 @@ export function Bacheca({
     const e = elementi.find((x) => x.id === id);
     setElementi((l) => l.filter((x) => x.id !== id));
     setSelezionato(null);
+    if (prova) return;
     await traccia(supabase.from("moodboard_items").delete().eq("id", id));
     if (e?.kind === "foto" && e.content.path) await traccia(supabase.storage.from("moodboard").remove([e.content.path]));
   }
@@ -181,6 +187,13 @@ export function Bacheca({
     setCaricamento(true);
     try {
       const { blob, rapporto } = await riduciFoto(file);
+      if (prova) {
+        // nella sala prove la foto resta solo nel telefono
+        await aggiungi("immagine_link", { url: URL.createObjectURL(blob), rapporto }, 36);
+        setCassetto(null);
+        setCaricamento(false);
+        return;
+      }
       const path = `${groupId}/${memberId}/${crypto.randomUUID()}.jpg`;
       const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
       if (error) throw error;
@@ -296,6 +309,7 @@ export function Bacheca({
             onFine={() => setModoRicamo(false)}
             traccia={traccia}
             supabase={supabase}
+            prova={prova}
           />
         )}
 
@@ -454,6 +468,7 @@ function StratoRicamo({
   attivo,
   memberId,
   onSalvato,
+  prova,
   onErrore,
   onFine,
   traccia,
@@ -464,6 +479,7 @@ function StratoRicamo({
   attivo: boolean;
   memberId: string;
   onSalvato: (e: Elemento) => void;
+  prova?: boolean;
   onErrore: (m: string) => void;
   onFine: () => void;
   traccia: <T>(lavoro: PromiseLike<T>) => Promise<T>;
@@ -522,6 +538,7 @@ function StratoRicamo({
   // Salvo poco dopo l'ultimo punto; intanto il salvataggio risulta "in corso"
   const fineAttesa = useRef<(() => void) | null>(null);
   function salvaPresto() {
+    if (prova) return;
     if (timerSalva.current) clearTimeout(timerSalva.current);
     if (!fineAttesa.current) traccia(new Promise<void>((ok) => (fineAttesa.current = ok)));
     timerSalva.current = setTimeout(salvaOra, 600);
