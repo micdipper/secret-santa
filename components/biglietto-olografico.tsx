@@ -1,7 +1,7 @@
 "use client";
 
 // Il biglietto col nome, stile carta collezionabile olografica (tipo carte dei Pokémon):
-// bande arcobaleno che scorrono quando si inclina, brillantini e un riflesso di luce.
+// bande arcobaleno tenui che scorrono quando si inclina e un riflesso di luce.
 // L'olografia sta SOTTO scritte e personaggio, che restano nitidi.
 // La disposizione è identica al biglietto 3D (components/scena-busta.tsx → disegnaFronte):
 // tutte le misure sono in percentuali / cqw della larghezza, proporzioni 4:5.
@@ -34,8 +34,8 @@ export function BigliettoOlografico({
   const luceX = useTransform(sy, [-18, 18], [85, 15]);
   const luceY = useTransform(sx, [-18, 18], [85, 15]);
   const riflesso = useMotionTemplate`radial-gradient(circle at ${luceX}% ${luceY}%, rgba(255,255,255,.75), rgba(255,255,255,0) 42%)`;
-  // più si inclina, più l'olografia si accende
-  const forza = useTransform([sx, sy], ([a, b]: number[]) => 0.55 + Math.min(0.45, (Math.abs(a) + Math.abs(b)) / 30));
+  // olografia delicata: più si inclina, più si accende (ma resta tenue)
+  const forza = useTransform([sx, sy], ([a, b]: number[]) => 0.32 + Math.min(0.22, (Math.abs(a) + Math.abs(b)) / 50));
 
   useEffect(() => {
     if (ridotto) return;
@@ -83,19 +83,8 @@ export function BigliettoOlografico({
             style={{
               opacity: forza,
               backgroundImage:
-                "repeating-linear-gradient(115deg, #ff7ac4 0%, #ffd86b 7%, #8ff0c8 14%, #7cc8ff 21%, #b693ff 28%, #ff7ac4 35%)",
+                "repeating-linear-gradient(115deg, #ffb3dc 0%, #ffe6a3 8%, #c2f5dd 16%, #b5ddff 24%, #d9c6ff 32%, #ffb3dc 40%)",
               backgroundSize: "300% 300%",
-              backgroundPosition: posBande,
-            }}
-          />
-          {/* brillantini */}
-          <motion.div
-            className="absolute inset-0 mix-blend-screen"
-            style={{
-              opacity: forza,
-              backgroundImage:
-                "radial-gradient(circle, rgba(255,255,255,.95) 0 1px, transparent 1.6px), radial-gradient(circle, rgba(255,255,255,.7) 0 0.8px, transparent 1.3px)",
-              backgroundSize: "23px 23px, 37px 37px",
               backgroundPosition: posBande,
             }}
           />

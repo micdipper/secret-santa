@@ -14,7 +14,6 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { VignetteShader } from "three/examples/jsm/shaders/VignetteShader.js";
 
 // Effetti di luce: ognuno si può spegnere qui (true → false)
 const EFFETTI = {
@@ -302,6 +301,7 @@ export default function ScenaBusta({
   avatarSvg,
   onFase,
   onPrimoTocco,
+  onPronta,
   onAperta,
   parti,
   sigilloSulloSchermo,
@@ -311,13 +311,14 @@ export default function ScenaBusta({
   avatarSvg: () => string | null;
   onFase: (f: FaseBusta, tocchi?: number) => void;
   onPrimoTocco: () => void;
+  onPronta?: () => void; // la scena è pronta (si può mostrare la pagina senza scatti)
   parti: boolean; // la slot si è rotta: la busta comincia a cadere
   sigilloSulloSchermo: () => DOMRect | null; // dov'era il sigillo nella slot (la busta parte da lì)
   postoCard: () => DOMRect | null; // dove sta la card finale (il biglietto 3D ci vola esattamente sopra)
   onAperta: () => void;
 }) {
   const contenitore = useRef<HTMLDivElement>(null);
-  const callback = useRef({ onFase, onPrimoTocco, onAperta });
+  const callback = useRef({ onFase, onPrimoTocco, onAperta, onPronta });
   const dati = useRef({ nome, avatarSvg, sigilloSulloSchermo, postoCard }); // letti dalla scena quando servono
   const partiRef = useRef(parti);
   useEffect(() => {
@@ -325,44 +326,22 @@ export default function ScenaBusta({
   }, [parti]);
 
   useEffect(() => {
-    callback.current = { onFase, onPrimoTocco, onAperta };
-  }, [onFase, onPrimoTocco, onAperta]);
+    callback.current = { onFase, onPrimoTocco, onAperta, onPronta };
+  }, [onFase, onPrimoTocco, onAperta, onPronta]);
 
   useEffect(() => {
     const box = contenitore.current!;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // trasparente: il cielo è lo sfondo della pagina (così il colore non cambia mai)
+    const renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 2, alpha: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // un po' meno pixel: molto più leggero, a occhio uguale
+    renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.localClippingEnabled = true; // per nascondere il biglietto finché è dentro la busta
     renderer.domElement.style.touchAction = "none";
     box.appendChild(renderer.domElement);
 
     const scena = new THREE.Scene();
-    const cielo = document.createElement("canvas");
-    function disegnaCielo() {
-      const w = 128;
-      const h = Math.round((128 * box.clientHeight) / Math.max(1, box.clientWidth));
-      cielo.width = w;
-      cielo.height = h;
-      const c = cielo.getContext("2d")!;
-      // come lo sfondo del sito: radial-gradient(120% 60% at 30% 0%, #355a3c, #284530 55%, #1e3826)
-      c.fillStyle = "#1e3826";
-      c.fillRect(0, 0, w, h);
-      c.save();
-      c.translate(w * 0.3, 0);
-      c.scale(1.2 * w, 0.6 * h);
-      const g = c.createRadialGradient(0, 0, 0, 0, 0, 1);
-      g.addColorStop(0, "#355a3c");
-      g.addColorStop(0.55, "#284530");
-      g.addColorStop(1, "#1e3826");
-      c.fillStyle = g;
-      c.fillRect(-1, -1, 2, 2);
-      c.restore();
-      texCielo.needsUpdate = true;
-    }
-    const texCielo = new THREE.CanvasTexture(cielo);
-    texCielo.colorSpace = THREE.SRGBColorSpace;
-    scena.background = texCielo;
+
     scena.fog = new THREE.Fog(0x163a25, 14, 38);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
     scena.add(new THREE.HemisphereLight(0xfff8ea, 0xbfb08f, EFFETTI.notte ? 1.3 : 2.2));
@@ -463,7 +442,7 @@ export default function ScenaBusta({
     geoLembo.translate(0, -ALTO_LEMBO / 2, 0);
     const matLembo = new THREE.MeshToonMaterial({ map: texturaLembo(), gradientMap: toni, side: THREE.DoubleSide, transparent: true, alphaTest: 0.5 });
     const lembo = new THREE.Mesh(geoLembo, matLembo);
-    lembo.position.set(0, ALTEZZA / 2, 0.012);
+    lembo.position.set(0, ALTEZZA / 2, 0.004);
     lembo.castShadow = EFFETTI.ombre;
     busta.add(lembo);
     const posLembo = geoLembo.attributes.position;
@@ -624,11 +603,7 @@ export default function ScenaBusta({
     const bagliore = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.55, 0.6, 0.82);
     bagliore.enabled = EFFETTI.bagliore;
     composer.addPass(bagliore);
-    const vignetta = new ShaderPass(VignetteShader);
-    vignetta.uniforms.offset.value = 0.75; // quanto si allarga lo scuro
-    vignetta.uniforms.darkness.value = 1.0; // 1 = verso il nero (sotto 1 diventa grigio)
-    vignetta.enabled = EFFETTI.notte;
-    composer.addPass(vignetta);
+    // (niente angoli scuri: scurirebbero la scena ma non lo sfondo della pagina)
     composer.addPass(new OutputPass());
     // più contrasto e colori più pieni (niente aspetto sbiadito)
     const vivido = new ShaderPass({
@@ -655,7 +630,6 @@ export default function ScenaBusta({
       const w = box.clientWidth;
       const h = box.clientHeight;
       renderer.setSize(w, h);
-      disegnaCielo();
       composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(w, h);
       bagliore.resolution.set(w / 2, h / 2);
@@ -683,6 +657,7 @@ export default function ScenaBusta({
     // ---------- stato della storia ----------
     let fase: FaseBusta = "attesa";
     let partenzaBusta: { pos: THREE.Vector3; quat: THREE.Quaternion; scala: number } | null = null;
+    let scalaVicina = 1;
     let inizioFase = 0;
     let tocchi = 0;
     let salto = 0; // altezza del sobbalzo
@@ -701,7 +676,6 @@ export default function ScenaBusta({
       inizioFase = orologio.getElapsedTime();
       callback.current.onFase(f, tocchi);
     };
-    busta.visible = false;
     callback.current.onFase("attesa");
 
     // ---------- tocchi e dita ----------
@@ -793,6 +767,8 @@ export default function ScenaBusta({
     // ---------- animazione ----------
     let frame = 0;
     let ultimo = 0;
+    let fotogrammiTotali = 0;
+    renderer.compile(scena, camera); // preparo subito tutti i materiali: niente scatti dopo
     const ciclo = () => {
       frame = requestAnimationFrame(ciclo);
       const t = orologio.getElapsedTime();
@@ -803,8 +779,9 @@ export default function ScenaBusta({
 
       if (fase === "attesa") {
         inquadra(CAM_CIELO, CAM_NEVE, 0);
-        if (partiRef.current) {
-          // metto la busta esattamente dove c'era il sigillo nella slot, girata verso di te
+        camera.updateMatrixWorld();
+        {
+          // la busta sta dietro la finestrella della slot (la segue anche se la pagina scorre), girata verso di te
           const r = dati.current.sigilloSulloSchermo();
           const w = box.clientWidth;
           const h = box.clientHeight;
@@ -814,14 +791,15 @@ export default function ScenaBusta({
           const punto = new THREE.Vector3((cx / w) * 2 - 1, -(cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
           const pos = camera.position.clone().add(punto.multiplyScalar(distanza));
           const perPixel = (2 * distanza * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
-          // grande quanto basta perché il suo sigillo sia dov'era quello della slot, ma mai più larga dell'85% dello schermo
-          const scala = Math.min(((r ? r.width : 92) * perPixel) / (2 * R_CERA), (w * 0.85 * perPixel) / LARGHEZZA);
-          // il centro della busta sta un po' sotto il sigillo
+          // dentro la slot: larga quanto la finestrella (meno un margine)
+          const scala = (((r ? r.width : 170) - 8) * perPixel) / LARGHEZZA;
+          scalaVicina = (w * 0.85 * perPixel) / LARGHEZZA; // quando la slot si rompe si avvicina allo schermo
           const quat = camera.quaternion.clone();
-          pos.add(new THREE.Vector3(0, -cera.position.y * scala, 0).applyQuaternion(quat));
           partenzaBusta = { pos, quat, scala };
-          busta.visible = true;
-          vaiA("cade");
+          busta.position.copy(pos);
+          busta.quaternion.copy(quat);
+          busta.scale.setScalar(scala);
+          if (partiRef.current) vaiA("cade");
         }
       } else if (fase === "cade" && partenzaBusta) {
         // dal posto del sigillo la busta cade nella neve girando; l'inquadratura scende con lei
@@ -839,7 +817,10 @@ export default function ScenaBusta({
         if (f < SOSPESA) busta.rotateZ(Math.sin(f * 18) * 0.05 * (1 - f / SOSPESA));
         busta.position.lerpVectors(partenzaBusta.pos, POSA_NEVE.pos, caduta);
         busta.position.x += Math.sin(Math.max(0, f - SOSPESA) * 3) * 0.4 * (1 - k);
-        busta.scale.setScalar(partenzaBusta.scala + (sNeve - partenzaBusta.scala) * morbido(k));
+        // prima si avvicina (si ingrandisce, in prospettiva), poi cade e torna alla misura della neve
+        const avvicina = morbido(Math.min(1, f / SOSPESA));
+        const grande = partenzaBusta.scala + (scalaVicina - partenzaBusta.scala) * avvicina;
+        busta.scale.setScalar(grande + (sNeve - grande) * morbido(k));
         inquadra(CAM_CIELO, CAM_NEVE, morbido((f - SOSPESA - 0.1) / 2));
         if (k >= 1) {
           sbuffi.emetti(new THREE.Vector3(0, SUOLO + 0.1, POSA_NEVE.pos.z), 70, 2.4, 1);
@@ -908,6 +889,7 @@ export default function ScenaBusta({
           scintille.emetti(punto3.add(new THREE.Vector3(0, ALTEZZA / 2 * scalaBase, 0)), 90, 2.5);
           vaiA("biglietto");
           obiettivoApertura = 1.36; // il lembo si ripiega dietro la busta: non copre più il biglietto
+          lembo.position.z = -0.03; // e passa dietro al biglietto che esce (niente righe sovrapposte)
         }
       }
 
@@ -995,6 +977,7 @@ export default function ScenaBusta({
       }
 
       composer.render();
+      if (++fotogrammiTotali === 3) callback.current.onPronta?.();
     };
     ciclo();
 

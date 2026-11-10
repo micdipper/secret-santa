@@ -78,3 +78,10 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - card olografica stile Pokémon: bande arcobaleno + brillantini + riflesso SOTTO scritte e personaggio; si accende 0,3 s dopo il cambio.
 - Pulizia: cancellati i gruppi "Test E2E Natale". I gruppi A, D, F, H, J sono di Marzia (non toccati).
 - Tremore prima della rottura: 2 s di vibrazione che cresce, a metà si crepa il vetro, poi si rompe. Cancellati anche i gruppi di Marzia (A, D, F, H, J); rimasto solo un gruppo "A" creato alle 17:00 (forse nuovo, chiedere).
+- Busta, giro del 10/11 sera:
+  - la scena 3D si prepara all'apertura della pagina ("Preparo la tua busta…"), poi la pagina compare con la neve già in corso; la scena è TRASPARENTE (lo sfondo è sempre quello della pagina, niente stacco di colore); risoluzione 3D max 1.5x;
+  - la busta 3D vera sta dietro la finestrella fin dall'inizio (larga quanto la finestrella; il riquadro e il telaio hanno un buco); quando la slot si rompe la busta si avvicina (si ingrandisce) e poi cade;
+  - rottura: tremore 2 s, ragnatela di crepe sul vetro, schegge = celle della ragnatela che cadono; il telaio di feltro cade tutto insieme come stoffa; l'insegna "Babbo-matic" si stacca da un chiodo, dondola e cade; il riquadro "Chi ti è uscito?" cade DIETRO la busta (zIndex -20 sulla pagina; il 3D NON cambia livello, altrimenti la tela sparisce);
+  - BUG risolto: i pezzi che uscivano dallo schermo allargavano la pagina e il telefono rimpiccioliva tutto (la busta spariva): ora tagliati (overflow hidden + body/html overflow clip durante la scena);
+  - lembo attaccato alla busta (niente fessura), passa dietro al biglietto quando esce;
+  - olografia più tenue, senza puntini.
