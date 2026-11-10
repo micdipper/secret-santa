@@ -152,13 +152,13 @@ export function AperturaBusta({
       setTimeout(() => setFase("scena"), 600);
       return;
     }
-    // si incrina: trema sempre più forte…
-    setFase("crepa");
-    await animaMacchina(
-      macchina.current,
-      { x: [0, -3, 4, -6, 7, -9, 10, -8, 0], rotate: [0, -0.6, 0.8, -1.2, 1.4, -1.8, 2, -1.5, 0] },
-      { duration: 0.9, ease: "easeIn" },
-    );
+    // trema, sempre più forte, finché il vetro si crepa e si rompe
+    const N = 36;
+    const tremoreX = Array.from({ length: N + 1 }, (_, i) => (i === N ? 0 : (i % 2 ? 1 : -1) * (0.6 + 10 * (i / N) ** 2)));
+    const tremoreY = Array.from({ length: N + 1 }, (_, i) => (i === N ? 0 : (i % 3 === 0 ? -1 : 1) * (0.3 + 3 * (i / N) ** 2)));
+    const tremoreR = tremoreX.map((x) => x * 0.22);
+    setTimeout(() => setFase("crepa"), 1100); // a metà del tremore il vetro comincia a creparsi
+    await animaMacchina(macchina.current, { x: tremoreX, y: tremoreY, rotate: tremoreR }, { duration: 2, ease: "linear" });
     // …e si rompe: la busta, che stava dietro al sigillo, comincia a cadere
     // la busta 3D parte dal posto del sigillo, con il sigillo grande come SIGILLO_BUSTA
     const r = sigilloFinale.current?.getBoundingClientRect();

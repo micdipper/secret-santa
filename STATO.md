@@ -77,3 +77,4 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - il biglietto 3D vola esattamente al posto della card finale (stesso disegno 4:5, misure in frazioni della larghezza: disegnaFronte in scena-busta.tsx = BigliettoOlografico); cambio invisibile, la neve resta dietro;
   - card olografica stile Pokémon: bande arcobaleno + brillantini + riflesso SOTTO scritte e personaggio; si accende 0,3 s dopo il cambio.
 - Pulizia: cancellati i gruppi "Test E2E Natale". I gruppi A, D, F, H, J sono di Marzia (non toccati).
+- Tremore prima della rottura: 2 s di vibrazione che cresce, a metà si crepa il vetro, poi si rompe. Cancellati anche i gruppi di Marzia (A, D, F, H, J); rimasto solo un gruppo "A" creato alle 17:00 (forse nuovo, chiedere).
