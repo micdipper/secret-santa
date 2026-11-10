@@ -56,9 +56,9 @@ export default function Stile() {
       <section id="premi" className="mt-6 grid grid-cols-3 gap-x-3 gap-y-4">
         {[
           ...ACCESSORI.map((a, i) => ({ nome: a.nome, look: { pelle: [1, 3, 0, 4][i], capelli: [0, 2, 7, 9][i], coloreCapelli: [1, 3, 0, 5][i], barba: 0, occhiali: 0, maglione: [3, 1, 4, 0][i], accessori: [a.id] } })),
-          { nome: "Taglio Super", look: { pelle: 2, capelli: 12, coloreCapelli: 3, barba: 0, occhiali: 0, maglione: 3, accessori: [] } },
+          { nome: "Taglio Super", look: { pelle: 2, capelli: 12, coloreCapelli: 0, barba: 0, occhiali: 0, maglione: 3, accessori: [] } },
           { nome: "Capelli olografici", look: { pelle: 5, capelli: 4, coloreCapelli: 7, barba: 0, occhiali: 0, maglione: 1, accessori: [] } },
-          { nome: "Super, olografico e sciarpa", look: { pelle: 1, capelli: 12, coloreCapelli: 7, barba: 0, occhiali: 1, maglione: 3, accessori: ["sciarpa"] } },
+          { nome: "Super, olografico e lupetto", look: { pelle: 1, capelli: 12, coloreCapelli: 7, barba: 0, occhiali: 1, maglione: 3, accessori: ["sciarpa"] } },
         ].map((p) => (
           <figure key={p.nome} className="flex flex-col items-center gap-2">
             <span className="toppa aspect-square w-full overflow-hidden">

@@ -23,10 +23,10 @@ export const CAPELLI_SUPER = 12;
 export const COLORE_OLOGRAFICO = 7;
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
-  { id: "sciarpa", nome: "Sciarpa a maglia", comeSbloccarlo: "Attacca alla tua bacheca almeno una toppa di ogni tipo (simbolo, parola, palette)." },
+  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Attacca alla tua bacheca almeno una toppa di ogni tipo (simbolo, parola, palette)." },
   { id: "gomitolo", nome: "Spilla gomitolo", comeSbloccarlo: "Ricama qualcosa a punto croce sulla tua bacheca." },
-  { id: "fiocco", nome: "Fiocco", comeSbloccarlo: "Attacca alla tua bacheca almeno una foto o un'immagine." },
-  { id: "stellina", nome: "Spilla stellina", comeSbloccarlo: "Apri la tua busta." },
+  { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Attacca alla tua bacheca almeno una foto o un'immagine." },
+  { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Apri la tua busta." },
 ];
 export const COME_SBLOCCARE_SUPER = "Metti almeno 10 cose sulla tua bacheca.";
 export const COME_SBLOCCARE_OLOGRAFICO = "Sblocca tutti e 4 gli accessori.";
@@ -149,11 +149,18 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
       return dietro ? null : (
         <path d="M30 42l-3-12 8 2-1-11 8 5 4-10 5 9 6-8 2 10 8-5-2 10 8-1-3 11c-5-8-12-11-20-11s-15 3-20 11z" fill={c} />
       );
-    default: // super (premio)
+    default: // super (premio): punte enormi a ventaglio
       return dietro ? (
-        <path d="M26 48L12 32l15 1-9-21 18 10 2-20 11 17 9-19 5 20 16-13-5 22 16-2-15 21z" fill={c} />
+        <g>
+          <path d="M31 52L6 48l20-8L3 28l25 1-12-19 22 11 3-19 12 16 12-15 2 19 20-10-10 18 24 2-21 11 18 9-24 4z" fill={c} />
+          {/* riflessi grigi su un lato delle punte */}
+          <path d="M32 26L18 13l17 9zM42 21l-1-14 5 13zM8 30l20 1-17 2zM65 25l8-9-4 11z" fill="#fff" opacity=".22" />
+        </g>
       ) : (
-        <path d="M30 42l3-12 6 7 4-12 7 10 6-10 4 12 6-7 4 12c-6-8-13-11-20-11s-14 3-20 11z" fill={c} />
+        <g>
+          <path d="M29 44c-1-13 8-22 21-22s22 9 21 22l-6-6 1 9-7-9-2 7-5-9-3 8-4-9-3 8-3-7-3 8-1-8z" fill={c} />
+          <path d="M36 35l-2 8 3-6zM48 31l-2 8 3-6z" fill="#fff" opacity=".22" />
+        </g>
       );
   }
 }
@@ -198,18 +205,21 @@ function Occhiali({ tipo }: { tipo: number }) {
   return null;
 }
 
-// Piccolo luccichio dorato: segnala che un oggetto è un premio sbloccato.
-function Luccichio({ x, y }: { x: number; y: number }) {
-  return <path d={`M${x} ${y - 4}l1 3 3 1-3 1-1 3-1-3-3-1 3-1z`} fill="#f1d27a" stroke="#9c7a22" strokeWidth=".6" strokeLinejoin="round" />;
-}
-
-function stellaOttoPunte(cx: number, cy: number, r: number, ri: number) {
-  const punti = Array.from({ length: 16 }, (_, i) => {
-    const a = (Math.PI / 8) * i - Math.PI / 2;
-    const d = i % 2 ? ri : r;
-    return `${(cx + d * Math.cos(a)).toFixed(2)} ${(cy + d * Math.sin(a)).toFixed(2)}`;
-  });
-  return `M${punti.join("L")}z`;
+// Calendario appeso dietro il personaggio (premio "Così ti ricordi i compleanni").
+function Calendario() {
+  return (
+    <g transform="rotate(-7 19 32)">
+      <rect x="7" y="20" width="24" height="25" rx="2.5" fill="#fffaf0" />
+      <rect x="7" y="20" width="24" height="7" rx="2.5" fill="#e5481e" />
+      <rect x="7" y="24" width="24" height="3" fill="#e5481e" />
+      <rect x="12" y="17.5" width="2" height="5" rx="1" fill="#1c241d" />
+      <rect x="24" y="17.5" width="2" height="5" rx="1" fill="#1c241d" />
+      {[0, 1, 2, 3].map((r) =>
+        [0, 1, 2, 3].map((c) => <rect key={`${r}-${c}`} x={9.5 + c * 5} y={29.5 + r * 3.8} width="3.4" height="2.4" rx=".5" fill="#2c4a32" opacity=".35" />),
+      )}
+      <circle cx="21.2" cy="34.5" r="2.8" fill="none" stroke="#e5481e" strokeWidth="1.1" />
+    </g>
+  );
 }
 
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
@@ -232,25 +242,44 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
           </linearGradient>
         </defs>
       )}
+      {ha("stellina") && <Calendario />}
       {/* capelli dietro */}
-      <g>
+      <g className={olografico ? "capelli-olografici" : undefined}>
         <Capelli stile={look.capelli} c={capelli} dietro />
       </g>
-      {/* spalle e maglione */}
-      <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
+      {/* spalle e maglione (o il lupetto grigio, se indossato) */}
+      {ha("sciarpa") ? (
+        <g>
+          <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill="#8e9298" />
+          {[24, 32, 40, 48, 56, 64, 72].map((x) => (
+            <path key={x} d={`M${x} ${84 - Math.abs(x - 48) * 0.18}v16`} stroke="#7a7e84" strokeWidth="1.4" />
+          ))}
+        </g>
+      ) : (
+        <>
+          <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
       <path d="M18 92c8-4 20-6 32-6s24 2 32 6" fill="none" stroke={filo} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" opacity=".9" />
       {[26, 38, 50, 62, 74].map((x) => (
         <path key={x} d={`M${x - 3} 96l3-4 3 4-3 4z`} fill={filo} opacity=".9" />
       ))}
+        </>
+      )}
       {/* collo */}
       <rect x="44" y="62" width="12" height="12" rx="5" fill={scurisci(pelle, 0.9)} />
+      {ha("sciarpa") && (
+        // collo alto arrotolato del lupetto
+        <g>
+          <rect x="37" y="61" width="26" height="14" rx="6" fill="#8e9298" />
+          <path d="M39 65.5h22M39 69.5h22" stroke="#7a7e84" strokeWidth="1.3" />
+        </g>
+      )}
       {/* testa */}
       <g fill={pelle}>
         <circle cx="30.5" cy="47" r="3.5" />
         <circle cx="69.5" cy="47" r="3.5" />
         <circle cx="50" cy="45" r="20" />
       </g>
-      <g>
+      <g className={olografico ? "capelli-olografici" : undefined}>
         <Barba tipo={look.barba} c={capelli} />
       </g>
       {/* viso */}
@@ -267,50 +296,18 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       />
       <Occhiali tipo={look.occhiali} />
       {/* capelli davanti */}
-      <g>
+      <g className={olografico ? "capelli-olografici" : undefined}>
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
 
       {/* accessori */}
       {ha("sciarpa") && (
-        <g>
-          <defs>
-            <clipPath id="avatar-sciarpa-giro">
-              <path d="M26 61c8 10 40 10 48 0l3 15c-11 11-43 11-54 0z" />
-            </clipPath>
-            <clipPath id="avatar-sciarpa-coda">
-              <path d="M68 63c8-4 14 1 20-2l5-3 1 11c-4 1-7 3-11 4-7 1-10-1-15 1z" />
-            </clipPath>
-          </defs>
-          {/* coda che sventola al vento */}
-          <g className="sciarpa-vento">
-            <g transform="translate(68 63) scale(.78) translate(-68 -63)">
-            <g clipPath="url(#avatar-sciarpa-coda)">
-              <rect x="66" y="55" width="30" height="22" fill="#e9a81c" />
-              {[70, 78, 86].map((x) => (
-                <rect key={x} x={x} y="55" width="4" height="22" fill="#2c4a32" />
-              ))}
-              {[74, 82, 90].map((x) => (
-                <rect key={x} x={x} y="55" width="4" height="22" fill="#e5481e" />
-              ))}
-            </g>
-            <path d="M93 58.5l4-1.5M93.5 61.5l4.5-.5M94 64.5l4 .5M94 67.5l3.5 1.5" stroke="#e5481e" strokeWidth="1.8" strokeLinecap="round" />
-            </g>
-          </g>
-          {/* giro attorno al collo, a righe come un gomitolo di avanzi */}
-          <g clipPath="url(#avatar-sciarpa-giro)">
-            <rect x="20" y="55" width="60" height="35" fill="#2c4a32" />
-            <path d="M24 64c10 10 42 10 52 0" fill="none" stroke="#e9a81c" strokeWidth="4" />
-            <path d="M23 70c10 10 44 10 54 0" fill="none" stroke="#e5481e" strokeWidth="4" />
-            <path d="M22 76c10 10 46 10 56 0" fill="none" stroke="#f4a9c4" strokeWidth="4" />
-            {/* punti a maglia */}
-            {[30, 38, 46, 54, 62, 70].map((x, i) => {
-              const y = 68 + [2, 4, 5, 5, 4, 2][i];
-              return <path key={x} d={`M${x - 2} ${y - 1.2}l2 2 2-2`} fill="none" stroke="#f3e8cf" strokeWidth="1" strokeLinecap="round" />;
-            })}
-          </g>
-          <Luccichio x={23} y={60} />
-          <Luccichio x={84} y={54} />
+        // cartellino del reso che dondola
+        <g className="cartellino">
+          <path d="M60 68c3 3 4 7 4 11" fill="none" stroke="#1c241d" strokeWidth=".8" />
+          <path d="M61 79l6-1 1.5 9-6 1z" fill="#cdb48a" />
+          <circle cx="64.3" cy="80.6" r=".9" fill="#8e9298" />
+          <path d="M62.6 84.4l3.8-.6" stroke="#e5481e" strokeWidth="1.2" strokeLinecap="round" />
         </g>
       )}
       {ha("gomitolo") && (
@@ -321,16 +318,13 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
         </g>
       )}
       {ha("fiocco") && (
-        <g transform="translate(66 26) rotate(14)">
-          <path d="M-1 1l-4 9 3-.6 2 2.4 2-10zM1 1l4 9-3-.6-2 2.4-2-10z" fill="#c93b14" />
-          <path d="M0 0c-3-5-11-7-12-2s7 5 12 2zM0 0c3-5 11-7 12-2s-7 5-12 2z" fill="#e5481e" />
-          <circle r="2.6" fill="#f1d27a" />
-        </g>
-      )}
-      {ha("stellina") && (
-        <g transform="translate(-5 -4)">
-          <path d={stellaOttoPunte(66, 84, 6.5, 3)} fill="#f1d27a" />
-          <circle cx="66" cy="84" r="1.8" fill="#e5481e" />
+        // perline grosse, strette al collo: bracciale o collana?
+        <g>
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+            const t = Math.PI * (0.08 + (0.84 * i) / 6);
+            const colori = ["#e5481e", "#e9a81c", "#f4a9c4", "#2c4a32", "#e5481e", "#e9a81c", "#f4a9c4"];
+            return <circle key={i} cx={50 - 11 * Math.cos(t)} cy={68 + 4.5 * Math.sin(t)} r="2.8" fill={colori[i]} />;
+          })}
         </g>
       )}
     </svg>

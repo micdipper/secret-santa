@@ -237,7 +237,7 @@ function Campioni({
             aria-label={olo ? `${nome} olografico` : `${nome} ${i + 1}`}
             aria-pressed={scelto === i}
             onClick={() => onScegli(i)}
-            className={`cliccabile size-12 rounded-full ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
+            className={`cliccabile size-12 rounded-full ${olo ? "capelli-olografici" : ""} ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
             style={{ ...fondo, ["--spessore" as string]: "rgb(0 0 0 / 0.3)" }}
           />
         );

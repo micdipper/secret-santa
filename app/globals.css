@@ -289,15 +289,23 @@ textarea {
   animation: dondola 1.4s ease-out;
 }
 
-/* La coda della sciarpa (premio) sventola piano */
-@keyframes sventola {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(5deg); }
+/* Premi del personaggio */
+/* capelli olografici: i colori scorrono piano */
+@keyframes olografico {
+  to { filter: hue-rotate(360deg); }
 }
-.sciarpa-vento {
+.capelli-olografici {
+  animation: olografico 6s linear infinite;
+}
+/* cartellino del lupetto "da portare indietro" che dondola */
+@keyframes cartellino {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+.cartellino {
   transform-box: view-box;
-  transform-origin: 68px 65px;
-  animation: sventola 2.4s ease-in-out infinite;
+  transform-origin: 60px 68px;
+  animation: cartellino 2.6s ease-in-out infinite;
 }
 
 /* ---------- Toppa rotonda (membri) ---------- */

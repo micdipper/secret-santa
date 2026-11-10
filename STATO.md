@@ -51,3 +51,5 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
 
 - 10/11: su richiesta di Marzia cancellati tutti i suoi gruppi di prova (Cja, Ciao, df) e i loro accessi. Resta solo una vecchia foto di prova nello Storage `moodboard` (si toglie dalla dashboard).
 - Galleria di tutti i personaggi in `/stile` (in cima) per controllare i disegni.
+
+- Premi del personaggio (nomi decisi da Marzia; gli id nel database restano sciarpa/gomitolo/fiocco/stellina): "Lupetto grigio da portare indietro" (id sciarpa, cartellino del reso che dondola), "Spilla gomitolo", "È un bracciale o una collana?" (id fiocco, perline al collo), "Così ti ricordi i compleanni" (id stellina, calendario dietro il personaggio). Un solo premio alla volta (solo lato pagina: Marzia ha rifiutato il controllo nel database). Taglio Super = punte a ventaglio con ciocche sulla fronte, disegnato da noi ispirandosi alla reference di Marzia (non ricalcato). Capelli olografici animati (hue-rotate, fermi con riduci movimento).
