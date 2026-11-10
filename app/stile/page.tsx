@@ -3,6 +3,8 @@ import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, U
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { BigliettoOlografico } from "@/components/biglietto-olografico";
+import { OLOGRAFIE, type Olografia } from "@/lib/olografie";
 import { ACCESSORI, Avatar, NOMI_BARBA, NOMI_CAPELLI, ToppaAvatar, lookIniziale } from "@/components/avatar";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
@@ -49,6 +51,15 @@ export default function Stile() {
         {NOMI_BARBA.slice(1).map((n, i) => (
           <figure key={n} className="toppa aspect-square w-full overflow-hidden">
             <Avatar look={{ pelle: (i + 2) % 6, capelli: [0, 8, 5, 11][i], coloreCapelli: [0, 2, 3, 5][i], barba: i + 1, occhiali: i % 3, maglione: i, accessori: [] }} className="relative top-[8%] h-full w-full" titolo={n} />
+          </figure>
+        ))}
+      </section>
+      {/* Prove di olografia natalizia per il biglietto (inclinale col dito) */}
+      <section id="olografie" className="mt-8 flex flex-col gap-6">
+        {(Object.keys(OLOGRAFIE) as Olografia[]).map((o) => (
+          <figure key={o}>
+            <figcaption className="mb-2 font-titolo text-lg">{o}</figcaption>
+            <BigliettoOlografico nome="Giulia Rossi" look={lookIniziale("Giulia")} olografia={o} />
           </figure>
         ))}
       </section>

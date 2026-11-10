@@ -248,7 +248,7 @@ const morbido = (t: number) => {
   return x * x * (3 - 2 * x);
 };
 
-export type FaseBusta = "attesa" | "cade" | "neve" | "vola" | "sigillo" | "lembo" | "biglietto";
+export type FaseBusta = "attesa" | "cade" | "neve" | "vola" | "sigillo" | "lembo" | "biglietto" | "girala";
 
 // Piccolo sistema di particelle (neve che sbuffa, briciole di ceralacca, scintille)
 function particelle(scena: THREE.Scene, punto: THREE.Texture, n: number, colore: number, dimensione: number, additivo: boolean, gravita: number) {
@@ -668,6 +668,8 @@ export default function ScenaBusta({
     let obiettivoApertura = 0;
     let trascinoLembo: { y: number; da: number } | null = null;
     let grattando = false;
+    let aspettoGiro = false; // il biglietto è davanti, col dorso: aspetta il tocco
+    let inizioGiro = -1;
     let ultimaGrattata = 0;
     let sigilloVia = -1;
     let partenzaBiglietto: { pos: THREE.Vector3; scala: number } | null = null;
@@ -728,6 +730,12 @@ export default function ScenaBusta({
     }
 
     const giu = (e: PointerEvent) => {
+      if (fase === "biglietto" && aspettoGiro) {
+        aspettoGiro = false;
+        inizioGiro = orologio.getElapsedTime();
+        suoni.carta();
+        return;
+      }
       if (fase === "neve") {
         if (!colpisci(e, [corpo, davanti, lembo, cera])) return;
         if (tocchi === 0) callback.current.onPrimoTocco();
@@ -949,9 +957,17 @@ export default function ScenaBusta({
           const p0 = partenzaBiglietto.pos;
           biglietto.position.set(p0.x + (xFinale - p0.x) * k, p0.y + (yFinale - p0.y) * k, p0.z + (zFinale - p0.z) * k);
           biglietto.scale.setScalar(partenzaBiglietto.scala + (scalaFinale - partenzaBiglietto.scala) * k);
-          biglietto.rotation.set(0, facile((a - 1.6) / 0.8) * Math.PI, Math.sin(k * Math.PI) * 0.08);
+          // arriva col dorso verso di te e aspetta il tocco; poi si gira
+          if (k >= 1 && inizioGiro < 0 && !aspettoGiro) {
+            aspettoGiro = true;
+            callback.current.onFase("girala");
+          }
+          const giro = inizioGiro < 0 ? 0 : facile((t - inizioGiro) / 0.85) * Math.PI;
+          const invito = aspettoGiro ? Math.sin(t * 2.4) * 0.06 : 0; // ondeggia piano: toccami!
+          biglietto.rotation.set(invito * 0.5, giro + invito, Math.sin(k * Math.PI) * 0.08);
+          if (aspettoGiro) biglietto.position.y += Math.sin(t * 1.8) * 0.03;
         }
-        if (a > 2.55 && !finita) {
+        if (inizioGiro >= 0 && t - inizioGiro > 1 && !finita) {
           finita = true;
           callback.current.onAperta();
           // la card vera prende il suo posto (identica): tolgo quella 3D un attimo dopo

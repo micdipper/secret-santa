@@ -8,6 +8,7 @@
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { useEffect } from "react";
 import { Avatar, type Look } from "@/components/avatar";
+import { OLOGRAFIA_SCELTA, OLOGRAFIE, type Olografia } from "@/lib/olografie";
 
 export function fontNome(nome: string) {
   return Math.min(0.1, 0.86 / Math.max(1, nome.length * 0.56)); // frazione della larghezza (uguale al 3D)
@@ -17,10 +18,12 @@ export function BigliettoOlografico({
   nome,
   look,
   olografiaDopo = 0,
+  olografia = OLOGRAFIA_SCELTA,
 }: {
   nome: string;
   look: Look | null;
   olografiaDopo?: number; // secondi prima che l'effetto olografico si accenda
+  olografia?: Olografia;
 }) {
   const ridotto = useReducedMotion();
   const rx = useMotionValue(0);
@@ -82,8 +85,7 @@ export function BigliettoOlografico({
             className="absolute inset-0 mix-blend-multiply"
             style={{
               opacity: forza,
-              backgroundImage:
-                "repeating-linear-gradient(115deg, #ffb3dc 0%, #ffe6a3 8%, #c2f5dd 16%, #b5ddff 24%, #d9c6ff 32%, #ffb3dc 40%)",
+              backgroundImage: OLOGRAFIE[olografia],
               backgroundSize: "300% 300%",
               backgroundPosition: posBande,
             }}

@@ -54,7 +54,8 @@ const ISTRUZIONI: Record<FaseBusta, (tocchi: number) => string> = {
   vola: () => "Eccola!",
   sigillo: () => "Gratta via il sigillo col dito",
   lembo: () => "Ora apri la busta: trascina il lembo in su",
-  biglietto: () => "Ecco a chi!",
+  biglietto: () => "Eccolo…",
+  girala: () => "Tocca il biglietto per girarlo",
 };
 
 const COLORI = ["#e5481e", "#e9a81c", "#f3e8cf", "#2c4a32", "#f4a9c4"];
@@ -807,7 +808,7 @@ export function AperturaBusta({
       {/* ---------- sopra la scena: le istruzioni, poi la card finale (tutto senza sfondo: dietro c'è la neve) ---------- */}
       {fase === "scena" && (
         <div className="pointer-events-none fixed inset-0 z-50 flex flex-col">
-          <div className="flex min-h-[88px] items-center gap-4 px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
+          <div className="flex items-start gap-4 px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
             <AnimatePresence>
               {rivelato && (
                 <motion.div
@@ -836,7 +837,7 @@ export function AperturaBusta({
                       ? `${faseScena}-${tocchi}`
                       : "semplice"
                 }
-                className="flex-1 text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
+                className="flex min-h-14 flex-1 items-center justify-center text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
@@ -857,7 +858,7 @@ export function AperturaBusta({
           <div className="flex flex-1 items-center justify-center px-5">
             <div
               ref={postoCard}
-              className="w-full max-w-[340px]"
+              className={`w-full max-w-[340px] ${busta3d ? "aspect-[4/5]" : ""}`} // ha sempre le misure della card: il biglietto 3D ci arriva sopra
               style={{ visibility: rivelato ? "visible" : "hidden" }}
             >
               {!busta3d && !rivelato && (
