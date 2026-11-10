@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
-import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Campo, Errore, EtichettaStoffa, Feltro, Icone, Tasto, TastoLink, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Gruppo = { id: string; name: string; budget_eur: number | null; exchange_date: string | null; theme: string | null; status: string; invite_code: string; organizer_id: string };
@@ -456,6 +456,11 @@ function Organizza() {
           <Errore>{errore}</Errore>
         </div>
       )}
+
+      {/* Per andare alla pagina del gruppo (la tua bacheca, il tuo personaggio…) anche prima dell'estrazione */}
+      <TastoLink href={`/gruppo/${id}`} tipo="secondario" className="mt-8">
+        Vai alla pagina del gruppo
+      </TastoLink>
     </main>
   );
 }

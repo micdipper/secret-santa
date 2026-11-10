@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Avatar, CAPELLI_SUPER, COLORE_OLOGRAFICO, normalizzaLook, type Look } from "@/components/avatar";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
-import { Errore, TestataInterna } from "@/components/ui";
+import { Errore, Tasto, TestataInterna } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 export default function PaginaProfilo() {
@@ -22,9 +22,8 @@ function Profilo() {
 
   const [look, setLook] = useState<Look | null>(null);
   const [sbloccati, setSbloccati] = useState<string[]>([]);
-  const [stato, setStato] = useState<"" | "salvo" | "salvato">("");
+  const [salvo, setSalvo] = useState(false);
   const [errore, setErrore] = useState("");
-  const attesa = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -47,29 +46,31 @@ function Profilo() {
     })();
   }, [supabase, router]);
 
-  // Salvataggio automatico, poco dopo l'ultima modifica
   function cambia(campi: Partial<Look>) {
-    if (!look) return;
-    const nuovo = { ...look, ...campi };
-    setLook(nuovo);
-    setStato("salvo");
-    if (attesa.current) clearTimeout(attesa.current);
-    attesa.current = setTimeout(async () => {
-      const { error } = await supabase.rpc("save_avatar", { p_look: nuovo });
-      setErrore(error ? "Non sono riuscito a salvare. Riprova." : "");
-      setStato(error ? "" : "salvato");
-    }, 500);
+    if (look) setLook({ ...look, ...campi });
   }
 
   const indietro = gruppo ? `/gruppo/${gruppo}` : "/";
 
+  // Si salva col tasto in fondo, poi si torna da dove si era venuti
+  async function salva() {
+    setSalvo(true);
+    const { error } = await supabase.rpc("save_avatar", { p_look: look });
+    if (error) {
+      setSalvo(false);
+      return setErrore("Non sono riuscito a salvare. Riprova.");
+    }
+    router.push(indietro);
+    router.refresh();
+  }
+
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5">
       <TestataInterna
         indietro={indietro}
         etichettaIndietro={gruppo ? "Torna al gruppo" : "Torna alla home"}
         titolo="Il tuo personaggio"
-        sottotitolo="Lo vedranno gli amici in tutti i tuoi gruppi. Gli accessori si guadagnano."
+        sottotitolo="Lo vedranno gli amici in tutti i tuoi gruppi. Usando il sito sbloccherai dei premi a sorpresa."
       />
 
       {!look ? (
@@ -80,14 +81,17 @@ function Profilo() {
             <span className="toppa size-32 overflow-hidden shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
               <Avatar look={look} className="relative top-[8%] h-full w-full" titolo="Il tuo personaggio" />
             </span>
-            <p className="mt-2 h-5 rounded-full bg-abete-scuro/80 px-3 text-sm text-crema/90 empty:invisible" aria-live="polite">
-              {stato === "salvo" ? "Salvo…" : stato === "salvato" ? "Salvato" : ""}
-            </p>
           </div>
-          <Errore>{errore}</Errore>
-
-          <div className="mt-4">
+          <div className="mt-6">
             <EditorPersonaggio look={look} sbloccati={sbloccati} onCambia={cambia} riquadri />
+          </div>
+
+          {/* Tasto Salva sempre a portata di pollice */}
+          <div className="sticky bottom-0 z-10 -mx-5 mt-6 flex flex-col gap-3 bg-gradient-to-t from-abete-scuro via-abete-scuro/90 to-transparent px-5 pt-8 pb-[max(16px,env(safe-area-inset-bottom))]">
+            <Errore>{errore}</Errore>
+            <Tasto onClick={salva} disabled={salvo}>
+              {salvo ? "Salvo…" : gruppo ? "Salva e vai al gruppo" : "Salva"}
+            </Tasto>
           </div>
         </>
       )}

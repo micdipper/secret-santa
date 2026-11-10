@@ -20,6 +20,18 @@ function Rotonda({ fondo, filo, children }: { fondo: string; filo: string; child
   );
 }
 
+// Tiene una trama dentro il cerchio della toppa (dentro la cucitura).
+function Ritaglio({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <>
+      <clipPath id={`trama-${id}`}>
+        <circle cx="50" cy="50" r="39" />
+      </clipPath>
+      <g clipPath={`url(#trama-${id})`}>{children}</g>
+    </>
+  );
+}
+
 function Pillola({ fondo, filo, testo, colore }: { fondo: string; filo: string; testo: string; colore: string }) {
   const lungo = testo.length > 10;
   return (
@@ -177,26 +189,46 @@ export const CATALOGO: (Toppa & { disegno: () => ReactNode })[] = [
     disegno: () => <Pillola fondo={fondo} filo={filo} testo={testo} colore={colore} />,
   })),
 
-  // Palette e texture
-  ...(
-    [
-      ["palette-bosco", "Palette bosco", [C.abete, "#4f7a55", C.kraft, C.verm]],
-      ["palette-caramella", "Palette caramella", [C.rosa, C.verm, C.crema, C.senape]],
-      ["palette-notte", "Palette notte", [C.notte, "#4a5a86", C.senape, C.crema]],
-    ] as const
-  ).map(([id, nome, colori]) => ({
-    id,
-    tipo: "palette" as const,
-    nome,
-    rapporto: 1,
+  // Texture (al posto delle vecchie palette a pallini)
+  {
+    id: "pois", tipo: "palette", nome: "Pois", rapporto: 1,
     disegno: () => (
-      <Rotonda fondo={C.feltro} filo={C.abete}>
-        {colori.map((c, i) => (
-          <circle key={c} cx={34 + (i % 2) * 32} cy={34 + Math.floor(i / 2) * 32} r="13" fill={c} stroke="#000" strokeOpacity=".1" />
-        ))}
+      <Rotonda fondo={C.verm} filo={C.crema}>
+        <Ritaglio id="pois">
+          {[18, 32, 46, 60, 74, 88].map((y, r) =>
+            [10, 24, 38, 52, 66, 80, 94].map((x) => <circle key={`${x}-${y}`} cx={x + (r % 2) * 7} cy={y} r="3.6" fill={C.crema} />),
+          )}
+        </Ritaglio>
       </Rotonda>
     ),
-  })),
+  },
+  {
+    id: "zucchero", tipo: "palette", nome: "Bastoncino di zucchero", rapporto: 1,
+    disegno: () => (
+      <Rotonda fondo={C.rosa} filo={C.abete}>
+        <Ritaglio id="zucchero">
+          {[0, 18, 36, 54, 72, 90, 108, 126, 144].map((x) => (
+            <path key={x} d={`M${x} 0l-60 100`} stroke={C.verm} strokeWidth="7" />
+          ))}
+        </Ritaglio>
+      </Rotonda>
+    ),
+  },
+  {
+    id: "vichy", tipo: "palette", nome: "Quadretti vichy", rapporto: 1,
+    disegno: () => (
+      <Rotonda fondo={C.senape} filo={C.abete}>
+        <Ritaglio id="vichy">
+          {[12, 28, 44, 60, 76].map((p) => (
+            <g key={p} fill={C.abete} opacity=".45">
+              <rect x={p} y="0" width="8" height="100" />
+              <rect x="0" y={p} width="100" height="8" />
+            </g>
+          ))}
+        </Ritaglio>
+      </Rotonda>
+    ),
+  },
   {
     id: "tartan", tipo: "palette", nome: "Tartan", rapporto: 1,
     disegno: () => (
@@ -248,4 +280,4 @@ export function trovaToppa(id: string) {
   return CATALOGO.find((t) => t.id === id);
 }
 
-export const NOMI_TIPI: Record<TipoToppa, string> = { simbolo: "Simboli", parola: "Parole", palette: "Palette e texture" };
+export const NOMI_TIPI: Record<TipoToppa, string> = { simbolo: "Simboli", parola: "Parole", palette: "Texture" };

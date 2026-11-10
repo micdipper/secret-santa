@@ -53,3 +53,12 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
 - Galleria di tutti i personaggi in `/stile` (in cima) per controllare i disegni.
 
 - Premi del personaggio (nomi decisi da Marzia; gli id nel database restano sciarpa/gomitolo/fiocco/stellina): "Lupetto grigio da portare indietro" (id sciarpa, cartellino del reso che dondola), "Spilla gomitolo", "È un bracciale o una collana?" (id fiocco, perline al collo), "Così ti ricordi i compleanni" (id stellina, calendario dietro il personaggio). Un solo premio alla volta (solo lato pagina: Marzia ha rifiutato il controllo nel database). Taglio Super = punte a ventaglio con ciocche sulla fronte, disegnato da noi ispirandosi alla reference di Marzia (non ricalcato). Capelli olografici animati (hue-rotate, fermi con riduci movimento).
+- 10/11 (giro di feedback di Marzia):
+  - Spilla gomitolo TOLTA. Il database calcola ancora "gomitolo" (primo ricamo): serve solo come condizione per i capelli olografici (lupetto + ricamo + collana + calendario).
+  - Collana tutta bianca. Lupetto, collana e calendario si escludono a vicenda; il resto (capelli premio, futuro cappello) si somma.
+  - Premi (taglio Super, colore olografico, accessori) compaiono nel profilo SOLO quando sbloccati: niente anteprime grigie né "come sbloccarlo".
+  - Profilo: niente salvataggio automatico, tasto "Salva" (o "Salva e vai al gruppo") fisso in basso; la freccia indietro esce senza salvare.
+  - Organizza: tasto secondario "Vai alla pagina del gruppo" in fondo.
+  - Bacheca: 8 fili (via il crema, aggiunti rosa, bordeaux, marrone, nero); le palette a pallini sono state sostituite da texture (pois, bastoncino di zucchero, vichy); la scheda si chiama "Texture".
+  - DA FARE: Marzia manderà immagini/descrizioni per sostituire i SIMBOLI delle toppe con soggetti del suo gruppo di amici (stesso stile).
+  - "Scegli una foto" non chiede il permesso della galleria: è normale, iPhone e Android aprono il selettore e danno al sito solo la foto scelta.

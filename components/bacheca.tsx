@@ -25,8 +25,9 @@ export type Elemento = {
 const ALTEZZA = (100 * 4) / 3;
 const COLONNE = 60;
 const RIGHE = 80;
-const FILI = ["#e5481e", "#2c4a32", "#f3e8cf", "#e9a81c", "#24304a"];
-const NOMI_FILI = ["vermiglio", "verde", "crema", "senape", "blu notte"];
+// Fili ben visibili sulla tela crema (gli stessi colori dei personaggi)
+const FILI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#5a3520", "#1c241d"];
+const NOMI_FILI = ["vermiglio", "verde", "senape", "blu notte", "rosa", "bordeaux", "marrone", "nero"];
 const VUOTO = ".";
 
 function rapportoDi(e: Elemento) {
@@ -552,7 +553,7 @@ function StratoRicamo({
       {attivo && (
         <div className="fixed inset-x-0 bottom-0 z-[100001] px-4 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="feltro mx-auto flex max-w-md flex-col items-center gap-3 p-4">
-            <div role="radiogroup" aria-label="Colore del filo" className="relative flex gap-3">
+            <div role="radiogroup" aria-label="Colore del filo" className="relative grid grid-cols-4 gap-3">
               {FILI.map((f, i) => (
                 <button
                   key={f}

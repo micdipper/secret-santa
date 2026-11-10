@@ -24,12 +24,11 @@ export const COLORE_OLOGRAFICO = 7;
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
   { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Attacca alla tua bacheca almeno una toppa di ogni tipo (simbolo, parola, palette)." },
-  { id: "gomitolo", nome: "Spilla gomitolo", comeSbloccarlo: "Ricama qualcosa a punto croce sulla tua bacheca." },
   { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Attacca alla tua bacheca almeno una foto o un'immagine." },
   { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Apri la tua busta." },
 ];
-export const COME_SBLOCCARE_SUPER = "Metti almeno 10 cose sulla tua bacheca.";
-export const COME_SBLOCCARE_OLOGRAFICO = "Sblocca tutti e 4 gli accessori.";
+// Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
+export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 
 export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
@@ -59,9 +58,14 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
     barba: n(x.barba, NOMI_BARBA.length, 0),
     occhiali: n(x.occhiali, NOMI_OCCHIALI.length, 0),
     maglione: n(x.maglione, MAGLIONI.length, base.maglione),
-    // un solo premio alla volta, così il personaggio resta pulito
-    accessori: Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string").slice(0, 1) : [],
+    accessori: soloUnoEsclusivo(Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string") : []),
   };
+}
+
+// Tiene al massimo uno tra lupetto, collana e calendario
+function soloUnoEsclusivo(lista: string[]) {
+  const primo = lista.find((a) => ESCLUSIVI.includes(a));
+  return lista.filter((a) => !ESCLUSIVI.includes(a) || a === primo);
 }
 
 function scurisci(hex: string, f = 0.78) {
@@ -310,20 +314,12 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
           <path d="M62.6 84.4l3.8-.6" stroke="#e5481e" strokeWidth="1.2" strokeLinecap="round" />
         </g>
       )}
-      {ha("gomitolo") && (
-        <g transform="translate(5 -5)">
-          <path d="M27 79l14 11M41 79L27 90" stroke="#8a5a2b" strokeWidth="1.4" strokeLinecap="round" />
-          <circle cx="34" cy="85" r="6" fill="#e9a81c" />
-          <path d="M29.5 83c3 .8 7 3 8.6 6.8M30 87c3 0 6.6 1.5 8 4.4M32 80.2c3 1.8 6 4.6 6.8 8" fill="none" stroke="#b37d0e" strokeWidth="1" />
-        </g>
-      )}
       {ha("fiocco") && (
         // perline grosse, strette al collo: bracciale o collana?
         <g>
           {[0, 1, 2, 3, 4, 5, 6].map((i) => {
             const t = Math.PI * (0.08 + (0.84 * i) / 6);
-            const colori = ["#e5481e", "#e9a81c", "#f4a9c4", "#2c4a32", "#e5481e", "#e9a81c", "#f4a9c4"];
-            return <circle key={i} cx={50 - 11 * Math.cos(t)} cy={68 + 4.5 * Math.sin(t)} r="2.8" fill={colori[i]} />;
+            return <circle key={i} cx={50 - 11 * Math.cos(t)} cy={68 + 4.5 * Math.sin(t)} r="2.8" fill="#ffffff" />;
           })}
         </g>
       )}
