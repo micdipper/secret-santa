@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Stellina } from "@/components/ornamenti";
-import { ToppaAvatar, lookDi, type Look } from "@/components/avatar";
 import { Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 
@@ -12,26 +11,15 @@ export default async function Home() {
   const { supabase, userId } = await utenteCollegato();
 
   let gruppi: Riga[] = [];
-  let mioLook: Look | null = null;
   if (userId) {
-    const [{ data }, { data: profilo }] = await Promise.all([
-      supabase.from("group_members").select("id, groups(id, name, status)").eq("user_id", userId).order("joined_at", { ascending: false }),
-      supabase.from("profiles").select("user_id, look").eq("user_id", userId),
-    ]);
+    const { data } = await supabase.from("group_members").select("id, groups(id, name, status)").eq("user_id", userId).order("joined_at", { ascending: false });
     gruppi = (data as unknown as Riga[]) ?? [];
-    mioLook = lookDi(profilo, userId);
   }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-10 pb-16">
       <header className="relative">
-        {mioLook ? (
-          <Link href="/profilo" aria-label="Il tuo personaggio" title="Il tuo personaggio" className="absolute -top-2 right-0 rounded-full">
-            <ToppaAvatar look={mioLook} cliccabile />
-          </Link>
-        ) : (
-          <Stellina className="absolute -top-2 right-2 size-8 text-senape" />
-        )}
+        <Stellina className="absolute -top-2 right-2 size-8 text-senape" />
         <h1 className="pr-16 font-titolo text-[32px] leading-none">Secret Santa</h1>
         <p className="mt-2 pr-16 text-crema/80">Il Babbo Natale segreto tra amici, con la bacheca di ognuno.</p>
       </header>
