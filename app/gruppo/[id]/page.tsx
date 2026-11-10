@@ -4,6 +4,7 @@ import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
+import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giorniMancanti } from "@/lib/date";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -30,6 +31,16 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
     .select("user_id, look")
     .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
   const look = (m: Membro) => lookDi(profili, m.user_id);
+  // i totem di chi ha fatto il sondaggio (badge accanto al personaggio)
+  const [{ data: risultati }, { data: nomiTotem }] = await Promise.all([
+    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome").eq("group_id", id),
+  ]);
+  const totemDi = (m: Membro) => {
+    const r = risultati?.find((x) => x.user_id === m.user_id);
+    if (!r) return null;
+    return { profilo: r.profilo as Profilo, nome: nomiTotem?.find((t) => t.profilo === r.profilo)?.nome ?? "" };
+  };
   const io = membri.find((m) => m.user_id === userId);
   const organizzatore = gruppo.organizer_id === userId;
   const entrati = membri.filter((m) => m.user_id).length;
@@ -108,7 +119,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
       {io && (
         <Link href={`/profilo?gruppo=${id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-          <ToppaAvatar look={look(io)} dimensione={44} />
+          <ToppaAvatar look={look(io)} dimensione={44} totem={totemDi(io)} />
           <span className="relative min-w-0 flex-1">
             <span className="block font-titolo text-lg leading-tight text-abete">Il tuo personaggio</span>
             <span className="block text-sm text-inchiostro/70">Vestilo e sblocca gli accessori</span>
@@ -127,7 +138,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             m.user_id ? (
               <li key={m.id} className="flex-none">
                 <Link href={`/gruppo/${id}/bacheca/${m.id}`} className="flex w-16 flex-col items-center gap-2 text-center text-sm" aria-label={`Bacheca di ${m.display_name}`}>
-                  <ToppaAvatar look={look(m)} cliccabile />
+                  <ToppaAvatar look={look(m)} cliccabile totem={totemDi(m)} />
                   <span className="w-full truncate">{m.display_name.split(" ")[0]}</span>
                 </Link>
               </li>

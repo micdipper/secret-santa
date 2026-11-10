@@ -8,11 +8,12 @@ export const metadata: Metadata = { title: "Sala prove · Secret Santa", robots:
 const PROVE = [
   { titolo: "Apertura della busta", testo: "Slot machine, neve, sigillo, lembo e biglietto, con amici inventati.", href: "/prova-busta" },
   { titolo: "Estrazione", testo: "Scrivi i nomi, aggiungi coppie e “anno scorso”, ed estrai quante volte vuoi. Stessa regola dell'estrazione vera.", href: "/prove/estrazione" },
+  { titolo: "Sondaggio totem", testo: "Rispondi alle domande predefinite e scopri il tuo totem. Si rifà quante volte vuoi.", href: "/prove/sondaggio" },
   { titolo: "Bacheca", testo: "Toppe, ricamo e foto su una tela libera. Non si salva niente.", href: "/prove/bacheca" },
   { titolo: "Personaggio", testo: "L'editor completo con tutti i premi già sbloccati.", href: "/prove/personaggio" },
   { titolo: "Galleria dello stile", testo: "Personaggi, premi, olografie, tasti e colori del sito.", href: "/stile" },
 ];
-const IN_ARRIVO = ["Quiz “Questo o quello”", "Chat anonima col tuo Babbo Natale", "Rivelazione finale"];
+const IN_ARRIVO = ["Chat anonima col tuo Babbo Natale", "Rivelazione finale"];
 
 export default function SalaProve() {
   return (

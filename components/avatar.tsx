@@ -1,4 +1,6 @@
 // Avatar originale a mezzobusto, stile feltro, disegnato da noi in SVG.
+import { BadgeTotem } from "@/components/totem";
+import type { Profilo } from "@/lib/totem";
 
 export type Look = {
   pelle: number;
@@ -23,9 +25,9 @@ export const CAPELLI_SUPER = 12;
 export const COLORE_OLOGRAFICO = 7;
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
-  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Attacca alla tua bacheca almeno una toppa di ogni tipo (simbolo, parola, palette)." },
-  { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Attacca alla tua bacheca almeno una foto o un'immagine." },
-  { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Apri la tua busta." },
+  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Metti almeno 10 cose sulla bacheca, tra cui una foto, un ricamo, un simbolo, una parola e una texture." },
+  { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Apri la tua busta." },
+  { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Completa il sondaggio totem." },
 ];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
@@ -334,14 +336,16 @@ export function ToppaAvatar({
   cliccabile = false,
   novita = false,
   nome,
+  totem,
 }: {
   look: Look | null;
   dimensione?: number;
   cliccabile?: boolean;
   novita?: boolean;
   nome?: string;
+  totem?: { profilo: Profilo; nome: string } | null; // il badge del totem accanto al personaggio
 }) {
-  return (
+  const toppa = (
     <span className={`toppa overflow-hidden ${cliccabile ? "cliccabile stoffa-chiara" : ""}`} style={{ width: dimensione, height: dimensione }}>
       {look ? (
         <Avatar look={look} titolo={nome} className="relative top-[8%] h-full w-full" />
@@ -351,6 +355,13 @@ export function ToppaAvatar({
         </span>
       )}
       {novita && <span className="absolute top-0.5 right-0 size-3.5 rounded-full bg-senape shadow-[0_0_0_2px_var(--color-abete)]" />}
+    </span>
+  );
+  if (!totem) return toppa;
+  return (
+    <span className="relative inline-flex flex-none">
+      {toppa}
+      <BadgeTotem profilo={totem.profilo} nome={totem.nome} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -right-1 -bottom-1" />
     </span>
   );
 }

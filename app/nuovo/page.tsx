@@ -90,7 +90,8 @@ export default function NuovoGruppo() {
       );
     }
     await supabase.rpc("save_avatar", { p_look: look });
-    router.push(`/gruppo/${risultato[0].group_id}/organizza?nuovo=1`);
+    // prima il sondaggio, poi il link d'invito
+    router.push(`/gruppo/${risultato[0].group_id}/sondaggio?nuovo=1`);
   }
 
   return (
