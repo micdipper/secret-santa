@@ -3,7 +3,7 @@ import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, U
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { Campo, EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { Avatar, NOMI_BARBA, NOMI_CAPELLI, ToppaAvatar, lookIniziale } from "@/components/avatar";
+import { ACCESSORI, Avatar, NOMI_BARBA, NOMI_CAPELLI, ToppaAvatar, lookIniziale } from "@/components/avatar";
 
 // Pagina di prova della base grafica (non collegata al resto del sito).
 export const metadata = { title: "Base grafica – Secret Santa" };
@@ -48,7 +48,23 @@ export default function Stile() {
         ))}
         {NOMI_BARBA.slice(1).map((n, i) => (
           <figure key={n} className="toppa aspect-square w-full overflow-hidden">
-            <Avatar look={{ pelle: (i + 2) % 6, capelli: [0, 8, 5, 11][i], coloreCapelli: [0, 2, 3, 5][i], barba: i + 1, occhiali: i % 3, maglione: i, accessori: ["sciarpa", "stellina"] }} className="relative top-[8%] h-full w-full" titolo={n} />
+            <Avatar look={{ pelle: (i + 2) % 6, capelli: [0, 8, 5, 11][i], coloreCapelli: [0, 2, 3, 5][i], barba: i + 1, occhiali: i % 3, maglione: i, accessori: [] }} className="relative top-[8%] h-full w-full" titolo={n} />
+          </figure>
+        ))}
+      </section>
+      {/* I premi, uno per volta, e infine tutti insieme */}
+      <section id="premi" className="mt-6 grid grid-cols-3 gap-x-3 gap-y-4">
+        {[
+          ...ACCESSORI.map((a, i) => ({ nome: a.nome, look: { pelle: [1, 3, 0, 4][i], capelli: [0, 2, 7, 9][i], coloreCapelli: [1, 3, 0, 5][i], barba: 0, occhiali: 0, maglione: [3, 1, 4, 0][i], accessori: [a.id] } })),
+          { nome: "Taglio Super", look: { pelle: 2, capelli: 12, coloreCapelli: 3, barba: 0, occhiali: 0, maglione: 3, accessori: [] } },
+          { nome: "Capelli olografici", look: { pelle: 5, capelli: 4, coloreCapelli: 7, barba: 0, occhiali: 0, maglione: 1, accessori: [] } },
+          { nome: "Tutti i premi", look: { pelle: 1, capelli: 12, coloreCapelli: 7, barba: 0, occhiali: 1, maglione: 3, accessori: ACCESSORI.map((a) => a.id) } },
+        ].map((p) => (
+          <figure key={p.nome} className="flex flex-col items-center gap-2">
+            <span className="toppa aspect-square w-full overflow-hidden">
+              <Avatar look={p.look} className="relative top-[8%] h-full w-full" titolo={p.nome} />
+            </span>
+            <figcaption className="text-center text-sm leading-tight">{p.nome}</figcaption>
           </figure>
         ))}
       </section>

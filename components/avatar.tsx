@@ -197,6 +197,20 @@ function Occhiali({ tipo }: { tipo: number }) {
   return null;
 }
 
+// Piccolo luccichio dorato: segnala che un oggetto è un premio sbloccato.
+function Luccichio({ x, y }: { x: number; y: number }) {
+  return <path d={`M${x} ${y - 4}l1 3 3 1-3 1-1 3-1-3-3-1 3-1z`} fill="#f1d27a" stroke="#9c7a22" strokeWidth=".6" strokeLinejoin="round" />;
+}
+
+function stellaOttoPunte(cx: number, cy: number, r: number, ri: number) {
+  const punti = Array.from({ length: 16 }, (_, i) => {
+    const a = (Math.PI / 8) * i - Math.PI / 2;
+    const d = i % 2 ? ri : r;
+    return `${(cx + d * Math.cos(a)).toFixed(2)} ${(cy + d * Math.sin(a)).toFixed(2)}`;
+  });
+  return `M${punti.join("L")}z`;
+}
+
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
   const pelle = PELLI[look.pelle];
   const capelli = COLORI_CAPELLI[look.coloreCapelli];
@@ -274,22 +288,42 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
             return <path key={x} d={`M${x} ${y - 2.2}l.8 1.4 1.4.8-1.4.8-.8 1.4-.8-1.4-1.4-.8 1.4-.8z`} fill="#2c4a32" />;
           })}
           {/* luccichio: è un premio */}
-          <path d="M24 60l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#f1d27a" stroke="#b8922f" strokeWidth=".5" />
+          <Luccichio x={24} y={63} />
         </g>
       )}
       {ha("gomitolo") && (
-        <g>
-          <circle cx="34" cy="88" r="5" fill="#e9a81c" />
-          <path d="M30 86c3 2 6 2 9 0M30 90c3 2 6 2 9 0" stroke="#b37d0e" strokeWidth="1" fill="none" />
+        <g transform="translate(5 -5)">
+          {/* ferri da maglia incrociati dietro il gomitolo */}
+          <path d="M24 77l19 15M44 77L25 92" stroke="#8a5a2b" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="24" cy="77" r="1.6" fill="#e5481e" />
+          <circle cx="44" cy="77" r="1.6" fill="#e5481e" />
+          <circle cx="34" cy="85" r="7.5" fill="#e9a81c" stroke="#9c6b0a" strokeWidth="1.3" />
+          <path d="M28 82c4 1 9 4 11 9M27.5 86c4 0 9 2 11 6M30 79c4 2 8 6 9 11M33 78c3 3 6 7 7 10" fill="none" stroke="#b37d0e" strokeWidth="1" />
+          {/* filo che scappa */}
+          <path d="M41 86c4 0 4 4 8 3s3-5 7-4" fill="none" stroke="#e9a81c" strokeWidth="1.3" strokeLinecap="round" />
+          <Luccichio x={25} y={70} />
         </g>
       )}
       {ha("fiocco") && (
-        <g transform="translate(64 28) rotate(15)">
-          <path d="M0 0l-9-6v12zM0 0l9-6v12z" fill="#e5481e" />
-          <circle r="2.6" fill="#c93b14" />
+        <g transform="translate(66 25) rotate(14)">
+          {/* nastri */}
+          <path d="M-1 1l-6 12 3-1 2 3 3-12zM1 1l6 12-3-1-2 3-3-12z" fill="#c93b14" stroke="#8f2408" strokeWidth="1" strokeLinejoin="round" />
+          {/* anelli */}
+          <path d="M0 0c-4-6-14-9-15-3s9 7 15 3zM0 0c4-6 14-9 15-3s-9 7-15 3z" fill="#e5481e" stroke="#8f2408" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M-3-1c-3-2-7-3-9-2M3-1c3-2 7-3 9-2" fill="none" stroke="#f3e8cf" strokeWidth="1" strokeLinecap="round" opacity=".8" />
+          <circle r="3.2" fill="#f1d27a" stroke="#b8922f" strokeWidth="1" />
+          <Luccichio x={14} y={-9} />
         </g>
       )}
-      {ha("stellina") && <path d="M68 85l1.8 4.2 4.2 1.8-4.2 1.8-1.8 4.2-1.8-4.2-4.2-1.8 4.2-1.8z" fill="#f1d27a" stroke="#b8922f" strokeWidth=".6" />}
+      {ha("stellina") && (
+        <g transform="translate(-5 -4)">
+          {/* spilla: stella nordica a 8 punte dorata */}
+          <path d={stellaOttoPunte(66, 84, 8, 3.6)} fill="#f1d27a" stroke="#9c7a22" strokeWidth="1.1" strokeLinejoin="round" />
+          <circle cx="66" cy="84" r="2.2" fill="#e5481e" stroke="#9c7a22" strokeWidth=".8" />
+          <path d="M62 80.5l1.8 1.8" stroke="#fff" strokeWidth="1.1" strokeLinecap="round" opacity=".9" />
+          <Luccichio x={76} y={77} />
+        </g>
+      )}
     </svg>
   );
 }
