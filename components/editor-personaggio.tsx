@@ -8,6 +8,7 @@ import {
   COLORE_OLOGRAFICO,
   COLORI_CAPELLI,
   ESCLUSIVI,
+  OCCHIALI_VELOCI,
   MAGLIONI,
   NOMI_BARBA,
   NOMI_CAPELLI,
@@ -54,7 +55,8 @@ export function EditorPersonaggio({
   // Lupetto, collana e calendario si escludono a vicenda; il resto si somma.
   function indossa(id: string) {
     if (look.accessori.includes(id)) return onCambia({ accessori: look.accessori.filter((a) => a !== id) });
-    const altri = ESCLUSIVI.includes(id) ? look.accessori.filter((a) => !ESCLUSIVI.includes(a)) : look.accessori;
+    const gruppo = [ESCLUSIVI, OCCHIALI_VELOCI].find((g) => g.includes(id));
+    const altri = gruppo ? look.accessori.filter((a) => !gruppo.includes(a)) : look.accessori;
     onCambia({ accessori: [...altri, id] });
   }
 

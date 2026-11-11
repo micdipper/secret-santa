@@ -32,6 +32,7 @@ const RIGHE = 80;
 const FILI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#5a3520", "#1c241d"];
 const NOMI_FILI = ["vermiglio", "verde", "senape", "blu notte", "rosa", "bordeaux", "marrone", "nero"];
 const VUOTO = ".";
+const MAX_COPIE = 5; // copie della stessa toppa sulla bacheca
 
 function rapportoDi(e: Elemento) {
   if (e.kind === "toppa") return trovaToppa(e.content.toppa ?? "")?.rapporto ?? 1;
@@ -197,6 +198,9 @@ export function Bacheca({
 
   // Duplica: una copia identica, appena spostata, che passa davanti
   function duplica(e: Elemento) {
+    if (e.kind === "toppa" && elementi.filter((x) => x.content.toppa === e.content.toppa).length >= MAX_COPIE) {
+      return setErrore(`Di questa toppa ne puoi attaccare al massimo ${MAX_COPIE}.`);
+    }
     suoni.toppa();
     aggiungi(e.kind, e.content, e.width, { x: Math.min(95, e.x + 6), y: Math.min(ALTEZZA - 5, e.y + 6), rotation: e.rotation + 4 });
   }
@@ -251,9 +255,16 @@ export function Bacheca({
   const tocchi = useRef(new Map<number, { x: number; y: number }>());
   const partenza = useRef<{ e: Elemento; punti: { x: number; y: number }[] } | null>(null);
 
+  // Un gesto alla volta, su UN solo elemento: prima il ricordo del movimento era condiviso
+  // e un secondo dito (o un tocco rimasto appeso) su un'altra toppa la faceva saltare sopra la prima.
   function inizioGesto(ev: React.PointerEvent, el: Elemento) {
     if (!modificabile || modoRicamo) return;
     ev.stopPropagation();
+    if (partenza.current && partenza.current.e.id !== el.id) {
+      // c'è già un gesto su un'altra toppa: se quei tocchi sono "appesi" li dimentico, altrimenti ignoro questo dito
+      if (tocchi.current.size > 0) return;
+      partenza.current = null;
+    }
     (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
     tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     setSelezionato(el.id);
@@ -264,7 +275,7 @@ export function Bacheca({
   }
 
   function muoviGesto(ev: React.PointerEvent, id: string) {
-    if (!tocchi.current.has(ev.pointerId) || !partenza.current || !px) return;
+    if (!tocchi.current.has(ev.pointerId) || !partenza.current || partenza.current.e.id !== id || !px) return;
     tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     const ora = [...tocchi.current.values()];
     const { e, punti } = partenza.current;
@@ -291,7 +302,9 @@ export function Bacheca({
   }
 
   function fineGesto(ev: React.PointerEvent, id: string) {
+    if (!tocchi.current.has(ev.pointerId)) return;
     tocchi.current.delete(ev.pointerId);
+    if (partenza.current && partenza.current.e.id !== id) return;
     const corrente = elementi.find((x) => x.id === id);
     if (tocchi.current.size === 0) {
       partenza.current = null;
@@ -357,6 +370,7 @@ export function Bacheca({
                 onPointerMove={(ev) => muoviGesto(ev, e.id)}
                 onPointerUp={(ev) => fineGesto(ev, e.id)}
                 onPointerCancel={(ev) => fineGesto(ev, e.id)}
+                onLostPointerCapture={(ev) => fineGesto(ev, e.id)}
                 className={`absolute select-none ${modificabile && !modoRicamo ? "cursor-grab touch-none" : "pointer-events-none"} ${
                   modoRicamo ? "opacity-40" : ""
                 }`}
@@ -377,7 +391,7 @@ export function Bacheca({
             );
           })}
 
-        {elementi.length === 0 && !ricamo && !modoRicamo && (
+        {elementi.length === 0 && !/[0-9]/.test(ricamo?.content.celle ?? "") && !modoRicamo && (
           <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-inchiostro/60">
             {modificabile ? "La tela è vuota. Attacca una toppa o ricama qualcosa qui sotto." : "Questa bacheca è ancora vuota."}
           </p>
@@ -454,21 +468,32 @@ export function Bacheca({
                 </div>
               ) : (
                 <ul className="mt-5 grid grid-cols-3 gap-3">
-                  {CATALOGO.filter((t) => t.tipo === cassetto).map((t) => (
-                    <li key={t.id} className={t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}>
-                      <button
-                        aria-label={`Attacca: ${t.nome}`}
-                        onClick={() => {
-                          suoni.toppa();
-                          aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26);
-                        }}
-                        className="block w-full transition-transform active:scale-95"
-                        style={{ aspectRatio: String(t.rapporto) }}
-                      >
-                        {t.disegno()}
-                      </button>
-                    </li>
-                  ))}
+                  {CATALOGO.filter((t) => t.tipo === cassetto).map((t) => {
+                    // massimo 5 copie per toppa
+                    const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length;
+                    const finite = usate >= MAX_COPIE;
+                    return (
+                      <li key={t.id} className={`relative ${t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}`}>
+                        <button
+                          aria-label={`Attacca: ${t.nome}`}
+                          disabled={finite}
+                          onClick={() => {
+                            suoni.toppa();
+                            aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26);
+                          }}
+                          className="block w-full transition-transform active:scale-95 disabled:opacity-40"
+                          style={{ aspectRatio: String(t.rapporto) }}
+                        >
+                          {t.disegno()}
+                        </button>
+                        {usate > 0 && (
+                          <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
+                            {usate}/{MAX_COPIE}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Feltro>
@@ -569,6 +594,9 @@ function StratoRicamo({
   // Salvo poco dopo l'ultimo punto; intanto il salvataggio risulta "in corso"
   const fineAttesa = useRef<(() => void) | null>(null);
   function salvaPresto() {
+    // la bacheca deve sapere sempre se c'è almeno un punto (per la scritta "la tela è vuota")
+    const ricamoOra = { id: idRicamo.current ?? "ricamo", kind: "ricamo", content: { celle: celle.current.join("") }, x: 50, y: ALTEZZA / 2, width: 100, rotation: 0, z: 0 } as Elemento;
+    onSalvato(ricamoOra);
     if (prova) return;
     if (timerSalva.current) clearTimeout(timerSalva.current);
     if (!fineAttesa.current) traccia(new Promise<void>((ok) => (fineAttesa.current = ok)));

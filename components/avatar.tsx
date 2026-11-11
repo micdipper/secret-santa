@@ -25,12 +25,16 @@ export const CAPELLI_SUPER = 12;
 export const COLORE_OLOGRAFICO = 7;
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
-  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Metti almeno 10 cose sulla bacheca, tra cui una foto, un ricamo, un simbolo, una parola e una texture." },
-  { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Apri la tua busta." },
   { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Completa il sondaggio totem." },
+  { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Almeno 10 cose sulla bacheca, tra cui una foto, un ricamo, un simbolo, una parola e una texture." },
+  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Almeno una copia di ogni toppa del cassetto, più una foto e un ricamo." },
+  { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
+  { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri premi." },
 ];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
+// I due paia di occhiali veloci: o uno o l'altro.
+export const OCCHIALI_VELOCI = ["occhiali", "occhiali_olo"];
 
 export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
@@ -66,8 +70,52 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
 
 // Tiene al massimo uno tra lupetto, collana e calendario
 function soloUnoEsclusivo(lista: string[]) {
-  const primo = lista.find((a) => ESCLUSIVI.includes(a));
-  return lista.filter((a) => !ESCLUSIVI.includes(a) || a === primo);
+  let tieni = lista;
+  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI]) {
+    const primo = tieni.find((a) => gruppo.includes(a));
+    tieni = tieni.filter((a) => !gruppo.includes(a) || a === primo);
+  }
+  return tieni;
+}
+
+// Occhiali veloci (stile sportivo avvolgente): montatura argentata, lenti nere oppure a specchio azzurre
+function OcchialiVeloci({ olografici }: { olografici: boolean }) {
+  const id = olografici ? "lenti-olo" : "lenti-nere";
+  return (
+    <g>
+      <defs>
+        <linearGradient id="montatura-argento" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f4f6f8" />
+          <stop offset=".55" stopColor="#c3c8ce" />
+          <stop offset="1" stopColor="#8e949b" />
+        </linearGradient>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          {olografici ? (
+            <>
+              <stop offset="0" stopColor="#1fa3ff" />
+              <stop offset=".45" stopColor="#7fe3ff" />
+              <stop offset=".7" stopColor="#2f6bff" />
+              <stop offset="1" stopColor="#9b7bff" />
+            </>
+          ) : (
+            <>
+              <stop offset="0" stopColor="#3a3f44" />
+              <stop offset="1" stopColor="#111417" />
+            </>
+          )}
+        </linearGradient>
+      </defs>
+      {/* aste che avvolgono la testa */}
+      <path d="M29.5 45c1-3 3-4 5-4M70.5 45c-1-3-3-4-5-4" stroke="#aeb3b9" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      {/* montatura a mascherina */}
+      <path d="M33 42c5-3 12-3.5 17-2 5-1.5 12-1 17 2 1 3 0 7-3 9-4 2-9 1.5-12-1-1-1-3-1-4 0-3 2.5-8 3-12 1-3-2-4-6-3-9z" fill="url(#montatura-argento)" />
+      {/* lenti a goccia */}
+      <path d="M36 43.5c3-1.5 8-1.6 11.5-.4.5 2.5-.5 5-3 6-3 1-6.5.5-8-1.6-.8-1.2-.9-2.8-.5-4z" fill={`url(#${id})`} />
+      <path d="M64 43.5c-3-1.5-8-1.6-11.5-.4-.5 2.5.5 5 3 6 3 1 6.5.5 8-1.6.8-1.2.9-2.8.5-4z" fill={`url(#${id})`} />
+      {/* riflesso */}
+      <path d="M38 44.5l4-.6M55 44l4 .3" stroke="#fff" strokeOpacity={olografici ? 0.9 : 0.5} strokeWidth="1" strokeLinecap="round" />
+    </g>
+  );
 }
 
 function scurisci(hex: string, f = 0.78) {
@@ -297,7 +345,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       {look.barba !== 1 && look.barba !== 2 && (
         <path d="M46 55c2 2.4 6 2.4 8 0" fill="none" stroke="#1c241d" strokeWidth="1.8" strokeLinecap="round" />
       )}
-      <Occhiali tipo={look.occhiali} />
+      {ha("occhiali") || ha("occhiali_olo") ? <OcchialiVeloci olografici={ha("occhiali_olo")} /> : <Occhiali tipo={look.occhiali} />}
       {/* capelli davanti */}
       <g className={olografico ? "capelli-olografici" : undefined}>
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
