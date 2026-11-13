@@ -274,33 +274,48 @@ export const CATALOGO: Toppa[] = [
   },
 
   {
+    // dalla foto di Marzia: ricci, occhiali tondi, barbone, occhi sbarrati verso chi guarda, tubo di biscotti in bocca
     id: "oreo", tipo: "simbolo", nome: "Christmas oreo", rapporto: 1,
     disegno: () => (
-      <Rotonda fondo={C.bordeaux} filo={C.rosa}>
-        <path d="M29 58c-3-17 6-28 21-28s24 11 21 28c-2-5-4-9-6-11H35c-2 2-4 6-6 11z" fill={C.capelli} />
-        <circle cx="30.5" cy="54" r="3.6" fill={C.pelle} />
-        <circle cx="69.5" cy="54" r="3.6" fill={C.pelle} />
-        <circle cx="50" cy="52" r="19" fill={C.pelle} />
-        {/* cappello di Natale */}
-        <path d="M31 36Q35 13 55 13Q70 14 75 31L70 33Q66 22 59 22Q65 27 67 36Z" fill={C.verm} />
-        <rect x="28" y="32" width="44" height="9" rx="4.5" fill={C.bianco} />
-        <circle cx="74" cy="32" r="5" fill={C.bianco} />
-        {/* occhi verso chi guarda */}
-        <ellipse cx="43" cy="49" rx="3.4" ry="3.1" fill={C.bianco} />
-        <ellipse cx="57" cy="49" rx="3.4" ry="3.1" fill={C.bianco} />
-        <circle cx="43" cy="49.4" r="1.9" fill={C.ink} />
-        <circle cx="57" cy="49.4" r="1.9" fill={C.ink} />
-        <path d="M39 44.5q4-2 7 0M54 44.5q4-2 7 0" stroke={C.capelli} strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        <circle cx="37" cy="57" r="3.4" fill={C.verm} opacity=".3" />
-        <circle cx="63" cy="57" r="3.4" fill={C.verm} opacity=".3" />
-        {/* il tubo di biscotti in bocca */}
-        <path d="M44 61.5q6-2.5 12 0" stroke="#b5604a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-        <rect x="23" y="61" width="54" height="11" rx="5.5" fill="#2f5fb3" />
-        <rect x="27" y="63" width="46" height="2" rx="1" fill="#6f95dc" />
-        <path d="M34 67.5h6M60 67.5h6" stroke={C.bianco} strokeWidth="1.4" strokeLinecap="round" opacity=".8" />
-        <ellipse cx="24.5" cy="66.5" rx="3.2" ry="5.5" fill="#2a1d18" />
-        <ellipse cx="25" cy="66.5" rx="3" ry="1.2" fill={C.bianco} />
-        <path d="M44 72q6 2.5 12 0" stroke="#b5604a" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+      <Rotonda fondo={C.senape} filo={C.abete}>
+        {/* ricci */}
+        {[[30, 44, 8], [33, 34, 8], [40, 28, 8], [50, 26, 8.5], [60, 28, 8], [67, 34, 8], [70, 44, 8], [72, 54, 7], [28, 54, 7], [36, 40, 7], [64, 40, 7]].map(([x, y, r]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill={C.capelli} />
+        ))}
+        <ellipse cx="50" cy="51" rx="15" ry="17" fill={C.pelle} />
+        <circle cx="34.6" cy="53" r="3.2" fill={C.pelle} />
+        <circle cx="65.4" cy="53" r="3.2" fill={C.pelle} />
+        {/* barbone */}
+        <path d="M34 52c0 15 5 29 16 36 11-7 16-21 16-36-3 6-8 9-12 10l-4-1-4 1c-4-1-9-4-12-10z" fill="#6b3a22" />
+        <path d="M41 66c1 6 3 11 5 15M50 70v14M59 66c-1 6-3 11-5 15" stroke="#4e2a17" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        {/* bocca aperta col biscotto */}
+        <ellipse cx="50" cy="61" rx="5" ry="4.2" fill="#2a1410" />
+        {/* occhi sbarrati, verso chi guarda */}
+        <circle cx="44" cy="48" r="3.3" fill={C.bianco} />
+        <circle cx="56" cy="48" r="3.3" fill={C.bianco} />
+        <circle cx="44" cy="48.3" r="1.7" fill={C.ink} />
+        <circle cx="56" cy="48.3" r="1.7" fill={C.ink} />
+        <path d="M39.5 41.5q4.5-2.4 9 0M51.5 41.5q4.5-2.4 9 0" stroke={C.capelli} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+        {/* occhiali tondi */}
+        <g fill="none" stroke="#b9a27a" strokeWidth="1.3">
+          <circle cx="44" cy="48" r="5.4" />
+          <circle cx="56" cy="48" r="5.4" />
+          <path d="M49.4 47.6q.6-1 1.2 0M38.6 47l-3.4-1.2M61.4 47l3.4-1.2" />
+        </g>
+        {/* cappello di Natale sui ricci */}
+        <path d="M30 31Q33 11 52 9Q68 9 76 24L71 27Q67 18 60 17Q66 22 69 30Z" fill={C.verm} />
+        <rect x="27" y="27" width="45" height="8.6" rx="4.3" transform="rotate(-4 50 31)" fill={C.bianco} />
+        <circle cx="75" cy="26" r="4.8" fill={C.bianco} />
+        {/* il tubo di biscotti, tenuto con la mano, che entra in bocca */}
+        <g transform="rotate(-32 36 72)">
+          <rect x="17" y="66" width="36" height="12" rx="6" fill="#2f5fb3" />
+          <rect x="20" y="68" width="30" height="2.2" rx="1.1" fill="#6f95dc" />
+          <path d="M24 74h5M33 74h3" stroke={C.bianco} strokeWidth="1.5" strokeLinecap="round" opacity=".85" />
+          <ellipse cx="53" cy="72" rx="3" ry="6" fill="#2a1d18" />
+          <ellipse cx="53.4" cy="72" rx="2.6" ry="1.1" fill={C.bianco} />
+        </g>
+        <path d="M22 80c-2-4 0-8 4-9l8-2c3 0 4 3 2 5l-6 3c3 1 4 4 1 6-3 1-7 0-9-3z" fill={C.pelle} />
+        <path d="M27 76l6-2.4M28 79.6l5-1.6" stroke={C.pelleScura} strokeWidth="1.1" strokeLinecap="round" />
       </Rotonda>
     ),
   },
@@ -865,7 +880,9 @@ export type RigaPersonalizzata = { id: string; tipo: "simbolo" | "parola"; ordin
 const PASSO = 78 / LATO; // la griglia sta dentro il cerchio della cucitura
 export const dentroCerchio = (c: number, r: number) => Math.hypot(11 + (c + 0.5) * PASSO - 50, 11 + (r + 0.5) * PASSO - 50) <= 38.5;
 
-export function SimboloRicamato({ celle, griglia = false }: { celle: string; griglia?: boolean }) {
+// la toppa è di stoffa in tinta unita (stoffa); sopra si ricama a punto croce
+export function SimboloRicamato({ celle, griglia = false, stoffa }: { celle: string; griglia?: boolean; stoffa?: Stoffa }) {
+  const s = stoffa ? STOFFE[stoffa] : { fondo: C.tela, filo: C.abete };
   // un tracciato per colore: ogni crocetta sono due diagonali
   const tracciati: string[] = FILI.map(() => "");
   const m = PASSO * 0.2;
@@ -878,11 +895,11 @@ export function SimboloRicamato({ celle, griglia = false }: { celle: string; gri
       tracciati[Number(v)] += `M${(x + m).toFixed(2)} ${(y + m).toFixed(2)}L${(x + PASSO - m).toFixed(2)} ${(y + PASSO - m).toFixed(2)}M${(x + PASSO - m).toFixed(2)} ${(y + m).toFixed(2)}L${(x + m).toFixed(2)} ${(y + PASSO - m).toFixed(2)}`;
     }
   return (
-    <Rotonda fondo={C.tela} filo={C.abete}>
+    <Rotonda fondo={s.fondo} filo={s.filo}>
       {griglia && (
         <Ritaglio id="griglia-ricamo">
           {Array.from({ length: LATO + 1 }, (_, i) => (
-            <g key={i} stroke={C.abete} strokeOpacity=".12" strokeWidth=".4">
+            <g key={i} stroke={s.filo} strokeOpacity=".25" strokeWidth=".4">
               <path d={`M${11 + i * PASSO} 0v100`} />
               <path d={`M0 ${11 + i * PASSO}h100`} />
             </g>
@@ -919,7 +936,7 @@ export function toppaPersonalizzata(riga: RigaPersonalizzata): Toppa {
     nome: "Simbolo del gruppo",
     rapporto: 1,
     personalizzata: true,
-    disegno: () => (k.foto ? <SimboloFoto foto={k.foto} id={riga.id} /> : <SimboloRicamato celle={k.celle ?? ""} />),
+    disegno: () => (k.foto ? <SimboloFoto foto={k.foto} id={riga.id} /> : <SimboloRicamato celle={k.celle ?? ""} stoffa={k.stoffa} />),
   };
 }
 

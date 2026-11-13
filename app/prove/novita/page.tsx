@@ -59,7 +59,7 @@ export default function ProvaNovita() {
         etichettaIndietro="Torna alla sala prove"
         contesto="Sala prove · niente viene salvato"
         titolo="Novità"
-        sottotitolo={`Prova a nominare gli amici inventati (${NOMI_PROVA.map((n) => n.split(" ")[0]).join(", ")}), anche con trucchi: diventano asterischi.`}
+        sottotitolo={`Prova a nominare gli amici inventati (${NOMI_PROVA.map((n) => n.split(" ")[0]).join(", ")}), anche con trucchi: diventano asterischi. Tieni premuto un post per reagire.`}
       />
       <div className="mt-6 flex flex-col gap-4">
         <ComponiPost onPubblica={pubblica} />

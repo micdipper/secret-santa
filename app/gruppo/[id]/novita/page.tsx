@@ -27,7 +27,7 @@ export default async function PaginaNovita({ params }: { params: Promise<{ id: s
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro="Torna al gruppo" contesto={gruppo.name} titolo="Novità" sottotitolo="Cosa succede nel gruppo. Ai post si può solo reagire." />
+      <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro="Torna al gruppo" contesto={gruppo.name} titolo="Novità" sottotitolo="Cosa succede nel gruppo. Tieni premuto un post per reagire." />
       <div className="mt-6">
         <FeedGruppo
           groupId={id}

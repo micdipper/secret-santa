@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CATALOGO, NOMI_TIPI, toppaPersonalizzata, trovaToppa, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
 import { FrancobolloTotem } from "@/components/totem";
-import { FILI, NOMI_FILI, VUOTO, riempi } from "@/lib/ricamo";
+import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
+import { STOFFE, STOFFE_PERSONALIZZABILI, type Stoffa } from "@/lib/parole";
 import type { Profilo } from "@/lib/totem";
 import { useRouter } from "next/navigation";
 import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
@@ -21,7 +22,7 @@ import { riduciFoto } from "@/lib/foto";
 export type Elemento = {
   id: string;
   kind: "toppa" | "ricamo" | "foto" | "immagine_link";
-  content: { toppa?: string; tipo?: string; path?: string; url?: string; rapporto?: number; celle?: string };
+  content: { toppa?: string; tipo?: string; path?: string; url?: string; rapporto?: number; celle?: string; fondo?: Stoffa };
   x: number;
   y: number;
   width: number;
@@ -368,7 +369,13 @@ export function Bacheca({
       <div
         ref={telaRef}
         className="tela-aida relative w-full overflow-hidden rounded-[28px] shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)]"
-        style={{ aspectRatio: "3 / 4", ["--cella" as string]: `${larghezza / COLONNE}px` }}
+        style={{
+          aspectRatio: "3 / 4",
+          ["--cella" as string]: `${larghezza / COLONNE}px`,
+          // la tela colorata col secchiello: tinta unita
+          backgroundColor: ricamo?.content.fondo ? STOFFE[ricamo.content.fondo].fondo : undefined,
+          transition: "background-color 400ms cubic-bezier(.4,0,.2,1)",
+        }}
         onPointerDown={() => !modoRicamo && setSelezionato(null)}
       >
         {larghezza > 0 && (
@@ -421,7 +428,10 @@ export function Bacheca({
           })}
 
         {elementi.length === 0 && !/[0-9]/.test(ricamo?.content.celle ?? "") && !modoRicamo && (
-          <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-inchiostro/60">
+          <p
+            className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center opacity-70"
+            style={{ color: ricamo?.content.fondo ? STOFFE[ricamo.content.fondo].testo : "#1c241d" }}
+          >
             {modificabile ? "La tela è vuota. Attacca una toppa o ricama qualcosa qui sotto." : "Questa bacheca è ancora vuota."}
           </p>
         )}
@@ -568,6 +578,9 @@ function StratoRicamo({
   const ultima = useRef<{ c: number; r: number } | null>(null);
   const [filo, setFilo] = useState(0);
   const [strumento, setStrumento] = useState<"ago" | "gomma" | "secchiello">("ago");
+  // colore della tela (tinta unita, scelto col secchiello); null = crema della tela
+  const [fondo, setFondoStato] = useState<Stoffa | null>(iniziale?.content.fondo ?? null);
+  const fondoRef = useRef<Stoffa | null>(fondo);
   const gomma = strumento === "gomma";
   const [puoAnnullare, setPuoAnnullare] = useState(false);
   const idRicamo = useRef<string | null>(iniziale?.id ?? null);
@@ -613,11 +626,19 @@ function StratoRicamo({
     ridisegna();
   }, [ridisegna]);
 
+  const contenutoRicamo = () => (fondoRef.current ? { celle: celle.current.join(""), fondo: fondoRef.current } : { celle: celle.current.join("") });
+  function coloraTela(s: Stoffa | null) {
+    fondoRef.current = s;
+    setFondoStato(s);
+    suoni.toppa();
+    salvaPresto();
+  }
+
   // Salvo poco dopo l'ultimo punto; intanto il salvataggio risulta "in corso"
   const fineAttesa = useRef<(() => void) | null>(null);
   function salvaPresto() {
     // la bacheca deve sapere sempre se c'è almeno un punto (per la scritta "la tela è vuota")
-    const ricamoOra = { id: idRicamo.current ?? "ricamo", kind: "ricamo", content: { celle: celle.current.join("") }, x: 50, y: ALTEZZA / 2, width: 100, rotation: 0, z: 0 } as Elemento;
+    const ricamoOra = { id: idRicamo.current ?? "ricamo", kind: "ricamo", content: contenutoRicamo(), x: 50, y: ALTEZZA / 2, width: 100, rotation: 0, z: 0 } as Elemento;
     onSalvato(ricamoOra);
     if (prova) return;
     if (timerSalva.current) clearTimeout(timerSalva.current);
@@ -628,7 +649,7 @@ function StratoRicamo({
   async function salvaOra() {
     timerSalva.current = null;
     try {
-      const content = { celle: celle.current.join("") };
+      const content = contenutoRicamo();
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
         if (error) onErrore("Non sono riuscito a salvare il ricamo.");
@@ -698,14 +719,7 @@ function StratoRicamo({
           if (storia.current.length > 30) storia.current.shift();
           setPuoAnnullare(true);
           const p = puntoDa(ev);
-          if (strumento === "secchiello") {
-            // riempie tutta l'area dello stesso colore (sulla tela vuota: tutta la bacheca)
-            riempi(celle.current, COLONNE, RIGHE, p.c, p.r, String(filo));
-            ridisegna();
-            suoni.toppa();
-            salvaPresto();
-            return;
-          }
+          if (strumento === "secchiello") return; // col secchiello si sceglie il colore qui sotto
           ultima.current = p;
           cuci(p.c, p.r);
           suoni.punto();
@@ -727,6 +741,27 @@ function StratoRicamo({
       {attivo && (
         <div className="fixed inset-x-0 bottom-0 z-[100001] px-4 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="feltro mx-auto flex max-w-md flex-col items-center gap-3 p-4">
+            {strumento === "secchiello" ? (
+              <div className="relative flex flex-col items-center gap-2">
+                <p className="text-sm font-medium">Colore della tela</p>
+                <div role="radiogroup" aria-label="Colore della tela" className="grid grid-cols-5 gap-3">
+                  {(["crema", ...STOFFE_PERSONALIZZABILI.filter((x) => x !== "crema")] as Stoffa[]).map((x) => {
+                    const scelto = (fondo ?? "crema") === x;
+                    return (
+                      <button
+                        key={x}
+                        role="radio"
+                        aria-checked={scelto}
+                        aria-label={`Tela ${STOFFE[x].nome}`}
+                        onClick={() => coloraTela(x === "crema" ? null : x)}
+                        className={`size-11 rounded-full border-[3px] border-white shadow ${scelto ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
+                        style={{ background: x === "crema" ? "#f6eedb" : STOFFE[x].fondo }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
             <div role="radiogroup" aria-label="Colore del filo" className="relative grid grid-cols-4 gap-3">
               {FILI.map((f, i) => (
                 <button
@@ -743,10 +778,11 @@ function StratoRicamo({
                 />
               ))}
             </div>
+            )}
             <div className="relative flex gap-3">
               <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={gomma} className={gomma ? "!bg-senape" : ""} onClick={() => setStrumento(gomma ? "ago" : "gomma")} />
               <TastoTondo
-                etichetta="Secchiello: colora tutta l'area"
+                etichetta="Secchiello: colora tutta la tela"
                 icona={Icone.secchiello}
                 aria-pressed={strumento === "secchiello"}
                 className={strumento === "secchiello" ? "!bg-senape" : ""}
@@ -776,7 +812,7 @@ function StratoRicamo({
 }
 
 // icone dei quattro cassetti
-const ICONE_CASSETTO = {
+export const ICONE_CASSETTO = {
   simbolo: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z" />

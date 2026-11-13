@@ -10,6 +10,7 @@ const PROVE = [
   { titolo: "Estrazione", testo: "Scrivi i nomi, aggiungi coppie e “anno scorso”, ed estrai quante volte vuoi. Stessa regola dell'estrazione vera.", href: "/prove/estrazione" },
   { titolo: "Sondaggio totem", testo: "Rispondi alle domande predefinite e scopri il tuo totem. Si rifà quante volte vuoi.", href: "/prove/sondaggio" },
   { titolo: "Bacheca", testo: "Toppe, ricamo e foto su una tela libera. Scegli un totem per vedere le sue toppe nel cassetto. Non si salva niente.", href: "/prove/bacheca" },
+  { titolo: "Il cassetto (prova)", testo: "Come potrebbe essere il cassetto delle toppe disegnato come un cassetto di legno vero.", href: "/prove/cassetto" },
   { titolo: "Toppe del gruppo", testo: "Crea simboli (ricamo o foto) e parole come l'organizzatore: poi li trovi nel cassetto della bacheca di prova.", href: "/prove/toppe" },
   { titolo: "Santa Chat", testo: "Scrivi come Babbo Natale o come chi riceve: dall'altra parte risponde un amico inventato.", href: "/prove/chat" },
   { titolo: "Novità", testo: "Il feed del gruppo con post, foto e reazioni. Prova a scrivere i nomi degli amici inventati: diventano asterischi.", href: "/prove/novita" },

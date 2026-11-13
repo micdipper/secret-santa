@@ -158,3 +158,10 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - Premio lupetto: ogni toppa "per tutti" (24) + le 8 del proprio totem + foto + ricamo (elenco nella funzione SQL: aggiornarlo se cambiano le toppe!).
   - Sala prove: /prove/toppe (editor, salva solo nel telefono) e /prove/bacheca con scelta del totem.
   - Da chiedere a Marzia: "chronically online" scritto all'inglese (lei aveva scritto "cronically"); "iPhone duo" disegnato come due iPhone; scelte libere: bradipo e cartello "NO!" (hater), uovo sodo con gli occhi a spirale (so cooked).
+- 13/11 notte (giro di feedback di Marzia, dopo l'unione col ramo di Santa Chat e Novità):
+  - ⚠ La migrazione toppe_gruppo (applicata dopo santa_chat) aveva rimesso il Taglio Super come "mai": corretto con `20261113190000_premi_toppe_e_chat` (lupetto nuovo + Taglio Super). Se si cambia `private.unlocked_accessories`, partire SEMPRE dall'ultima versione.
+  - Novità: le reazioni si aprono solo TENENDO PREMUTO il post (o tasto destro / Invio); sotto il post resta solo un riassunto piccolo e piatto delle emoji (la mia con l'anello). Voci colorate con le stoffe di lib/parole.ts: tipo fisso per le voci automatiche (estrazione vermiglio, busta blu notte, bacheca ghiaccio, totem rosa, ingressi senape), colore "a sorte" fisso per ogni post. Il feltro accetta le variabili --fondo-feltro, --testo-feltro, --cucitura-feltro.
+  - Simboli del gruppo: niente più secchiello a punto croce; si sceglie la STOFFA (tinta unita, cucitura abbinata) e sopra si ricama (contenuto.stoffa).
+  - Bacheca: il secchiello ora sceglie il colore della TELA in tinta unita (moodboard_items ricamo: content.fondo), non più crocette.
+  - Christmas oreo ridisegnato dalla foto di Marzia (ricci, occhiali tondi, barbone, occhi sbarrati, tubo in bocca tenuto con la mano, cappello di Natale).
+  - PROVA del cassetto illustrato (cassetto di legno tirato fuori, fondo di feltro, toppe in file a scaglie, portaetichette d'ottone e pomello): solo in /prove/cassetto (components/cassetto.tsx). Da decidere con Marzia se portarlo nella bacheca vera.

@@ -8,6 +8,7 @@ import { BustaSigillata } from "@/components/ornamenti";
 import { FrancobolloTotem } from "@/components/totem";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
 import { suoni } from "@/lib/suoni";
+import { STOFFE, type Stoffa } from "@/lib/parole";
 import type { Profilo } from "@/lib/totem";
 
 /*
@@ -57,6 +58,26 @@ function frase(v: Voce, totem: TotemNomi) {
 }
 
 
+// Colori delle voci: le stoffe del sito (fondo + cucitura + testo già abbinati).
+// Le voci automatiche hanno un colore per tipo, i post uno "a sorte" (sempre lo stesso per lo stesso post).
+const STOFFA_TIPO: Record<Voce["tipo"], Stoffa | null> = {
+  creato: "senape",
+  entrato: "senape",
+  estrazione: "vermiglio",
+  busta: "notte",
+  bacheca: "ghiaccio",
+  totem: "rosa",
+  post: null,
+};
+const STOFFE_POST: Stoffa[] = ["crema", "vermiglio", "rosa", "senape", "ghiaccio", "bordeaux", "verde"];
+function stoffaDi(v: Voce): Stoffa {
+  const fissa = STOFFA_TIPO[v.tipo];
+  if (fissa) return fissa;
+  let h = 0;
+  for (const c of v.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return STOFFE_POST[h % STOFFE_POST.length];
+}
+
 export function VoceFeed({
   voce,
   persone,
@@ -83,6 +104,19 @@ export function VoceFeed({
   const p = voce.member_id ? persone[voce.member_id] : null;
   const mia = reazioni.find((r) => r.member_id === io)?.emoji;
   const conteggi = EMOJI.map((e) => ({ e, n: reazioni.filter((r) => r.emoji === e).length })).filter((x) => x.n > 0);
+  const stoffa = STOFFE[stoffaDi(voce)];
+
+  // Le reazioni compaiono solo tenendo premuto (o col tasto destro / da tastiera)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const partenza = useRef<{ x: number; y: number } | null>(null);
+  function apri() {
+    setScegli(true);
+    navigator.vibrate?.(12);
+  }
+  function smetti() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  }
 
   function reagisci(e: string) {
     suoni.reazione();
@@ -91,8 +125,33 @@ export function VoceFeed({
   }
 
   return (
-    <Feltro className="!p-5">
-      <div className="flex items-start gap-3">
+    <div
+      className="feltro relative p-5 select-none [-webkit-touch-callout:none]"
+      style={{ ["--fondo-feltro" as string]: stoffa.fondo, ["--testo-feltro" as string]: stoffa.testo, ["--cucitura-feltro" as string]: stoffa.filo }}
+      tabIndex={0}
+      aria-label="Tieni premuto per reagire"
+      onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest("a,button")) return;
+        partenza.current = { x: e.clientX, y: e.clientY };
+        timer.current = setTimeout(apri, 420);
+      }}
+      onPointerMove={(e) => {
+        // se il dito scorre la pagina, non è una pressione
+        if (partenza.current && Math.hypot(e.clientX - partenza.current.x, e.clientY - partenza.current.y) > 10) smetti();
+      }}
+      onPointerUp={smetti}
+      onPointerCancel={smetti}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        smetti();
+        apri();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target === e.currentTarget) apri();
+        if (e.key === "Escape") setScegli(false);
+      }}
+    >
+      <div className="relative flex items-start gap-3">
         {voce.tipo === "estrazione" ? (
           <span className="toppa size-11 flex-none">
             <BustaSigillata className="relative w-8" />
@@ -111,7 +170,7 @@ export function VoceFeed({
               </>
             )}
           </p>
-          <p className="text-sm text-inchiostro/65">{quandoBreve(voce.quando)}</p>
+          <p className="text-sm opacity-70">{quandoBreve(voce.quando)}</p>
         </div>
         {voce.tipo === "totem" && voce.dati.profilo && (
           <FrancobolloTotem profilo={voce.dati.profilo} immagine={totem[voce.dati.profilo]?.immagine} className="relative w-12 flex-none rotate-[4deg]" />
@@ -121,16 +180,17 @@ export function VoceFeed({
             {Icone.avanti}
           </Link>
         )}
+        {onElimina && <TastoTondo type="button" etichetta="Cancella il post" icona={Icone.cestino} onClick={onElimina} className="!size-11 flex-none" />}
       </div>
 
       {voce.tipo === "post" && (
-        <div className="mt-3 flex flex-col gap-3">
-          {voce.dati.testo && <p className="text-lg leading-snug break-words whitespace-pre-wrap">{voce.dati.testo}</p>}
+        <div className="relative mt-3 flex flex-col gap-3">
+          {voce.dati.testo && <p className="font-titolo text-xl leading-snug break-words whitespace-pre-wrap">{voce.dati.testo}</p>}
           {voce.dati.foto && (
-            <div className="relative overflow-hidden rounded-2xl bg-kraft/30 shadow-[0_1px_0_rgba(0,0,0,.2)]">
+            <div className="relative overflow-hidden rounded-2xl bg-black/10 shadow-[0_1px_0_rgba(0,0,0,.2)]">
               {fotoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- foto privata con link firmato a tempo
-                <img src={fotoUrl} alt={`Foto di ${p?.nome ?? ""}`} className="block max-h-[420px] w-full object-cover" loading="lazy" />
+                <img src={fotoUrl} alt={`Foto di ${p?.nome ?? ""}`} className="block max-h-[420px] w-full object-cover" loading="lazy" draggable={false} />
               ) : (
                 <div className="aspect-[4/3]" />
               )}
@@ -139,59 +199,56 @@ export function VoceFeed({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {conteggi.map(({ e, n }) => (
-          <button
-            key={e}
-            type="button"
-            onClick={() => reagisci(e)}
-            aria-pressed={mia === e}
-            aria-label={`${e} ${n}${mia === e ? ", c'è anche la tua: tocca per toglierla" : ""}`}
-            className={`cliccabile flex h-11 items-center gap-1.5 rounded-full px-3.5 ${mia === e ? "stoffa-vermiglio" : "stoffa-chiara text-abete"}`}
-          >
-            <span className="text-xl leading-none">{e}</span>
-            <span className="text-base font-semibold tabular-nums">{n}</span>
-          </button>
-        ))}
-        <TastoTondo
-          type="button"
-          etichetta={scegli ? "Chiudi le reazioni" : "Reagisci"}
-          icona={Icone.reazione}
-          aria-expanded={scegli}
-          onClick={() => setScegli(!scegli)}
-          className="!size-11"
-        />
-        {onElimina && <TastoTondo type="button" etichetta="Cancella il post" icona={Icone.cestino} onClick={onElimina} className="ml-auto !size-11" />}
-      </div>
-      <AnimatePresence initial={false}>
+      {/* reazioni: solo un riassunto piccolo e piatto (si reagisce tenendo premuto) */}
+      {conteggi.length > 0 && (
+        <p className="relative mt-3 flex flex-wrap gap-1.5" aria-label="Reazioni">
+          {conteggi.map(({ e, n }) => (
+            <span
+              key={e}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm tabular-nums ${mia === e ? "bg-black/15 font-semibold ring-2 ring-current" : "bg-black/10"}`}
+              title={mia === e ? "C'è anche la tua" : undefined}
+            >
+              <span className="leading-none">{e}</span>
+              {n}
+            </span>
+          ))}
+        </p>
+      )}
+
+      <AnimatePresence>
         {scegli && (
-          <motion.div
-            initial={riduci ? false : { opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="overflow-hidden"
-          >
-            <div className="flex flex-wrap gap-2 pt-3 pb-3">
+          <>
+            {/* tocco fuori = chiudi */}
+            <div className="fixed inset-0 z-40" onPointerDown={() => setScegli(false)} />
+            <motion.div
+              role="menu"
+              aria-label="Scegli una reazione"
+              initial={riduci ? false : { opacity: 0, scale: 0.7, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 6 }}
+              transition={{ type: "spring", stiffness: 520, damping: 30 }}
+              className="absolute -top-7 left-1/2 z-50 flex -translate-x-1/2 gap-1 rounded-full bg-[#fbf6ea] p-1.5 shadow-[0_10px_24px_-8px_rgba(0,0,0,.55),0_2px_0_#c9b48a]"
+            >
               {EMOJI.map((e, i) => (
                 <motion.button
                   key={e}
                   type="button"
-                  initial={riduci ? false : { scale: 0.6, opacity: 0 }}
+                  role="menuitem"
+                  initial={riduci ? false : { scale: 0.4, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 22, delay: i * 0.03 }}
+                  transition={{ type: "spring", stiffness: 600, damping: 20, delay: i * 0.025 }}
                   onClick={() => reagisci(e)}
-                  aria-label={`Reagisci con ${e}`}
-                  className={`cliccabile flex size-11 items-center justify-center rounded-full text-xl ${mia === e ? "stoffa-vermiglio" : "stoffa-chiara"}`}
+                  aria-label={mia === e ? `Togli ${e}` : `Reagisci con ${e}`}
+                  className={`flex size-11 items-center justify-center rounded-full text-2xl transition-transform active:scale-125 ${mia === e ? "bg-vermiglio/20 ring-2 ring-vermiglio" : ""}`}
                 >
                   {e}
                 </motion.button>
               ))}
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </Feltro>
+    </div>
   );
 }
 

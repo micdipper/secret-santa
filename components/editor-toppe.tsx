@@ -1,7 +1,7 @@
 "use client";
 
 // Editor delle toppe del gruppo (solo l'organizzatore): fino a 4 simboli e 4 parole in più
-// che compaiono nel cassetto di tutti. Simbolo = foto oppure ricamo a punto croce (col secchiello);
+// che compaiono nel cassetto di tutti. Simbolo = foto oppure stoffa in tinta unita + ricamo a punto croce;
 // parola = si scrive direttamente sulla toppa, che cresce con il testo, e si sceglie la stoffa.
 
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { LATO, MAX_PERSONALIZZATE, SimboloFoto, SimboloRicamato, ToppaParola, dentroCerchio, type ContenutoPersonalizzato, type RigaPersonalizzata } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
 import { STOFFE, STOFFE_PERSONALIZZABILI, impagina, righeDa, type Stoffa } from "@/lib/parole";
-import { FILI, NOMI_FILI, VUOTO, riempi } from "@/lib/ricamo";
+import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 
@@ -46,13 +46,14 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
   const lavoro = useRef<string[] | null>(null); // le celle mentre il dito ricama
   const ultima = useRef<{ c: number; r: number } | null>(null);
   const [filo, setFilo] = useState(0);
-  const [strumento, setStrumento] = useState<"ago" | "gomma" | "secchiello">("ago");
+  const [strumento, setStrumento] = useState<"ago" | "gomma">("ago");
   const [errore, setErrore] = useState("");
+  const stoffa: Stoffa = valore.stoffa ?? "crema";
 
   function cambia(nuove: string, ricorda = true) {
     if (ricorda) setStoria((s) => [...s.slice(-29), celle]);
     setCelle(nuove);
-    onCambia({ celle: nuove });
+    onCambia({ celle: nuove, stoffa });
   }
 
   function cellaDa(ev: React.PointerEvent) {
@@ -74,7 +75,7 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
         <div className="mx-auto w-full max-w-[220px]">
           <SimboloFoto foto={valore.foto} id={id} />
         </div>
-        <Tasto tipo="secondario" onClick={() => onCambia({ celle })}>
+        <Tasto tipo="secondario" onClick={() => onCambia({ celle, stoffa })}>
           Ricamalo invece
         </Tasto>
       </div>
@@ -90,11 +91,6 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
           (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
           const a = celle.split("");
           const p = cellaDa(ev);
-          if (strumento === "secchiello") {
-            riempi(a, LATO, LATO, p.c, p.r, String(filo), dentroCerchio);
-            suoni.toppa();
-            return cambia(a.join(""));
-          }
           setStoria((s) => [...s.slice(-29), celle]);
           lavoro.current = a;
           ultima.current = p;
@@ -123,8 +119,12 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
           cambia(fatto, false);
         }}
       >
-        <SimboloRicamato celle={celle} griglia />
+        <SimboloRicamato celle={celle} griglia stoffa={stoffa} />
       </div>
+
+      <p className="-mb-1 text-sm font-medium">Stoffa della toppa</p>
+      <SceltaStoffa valore={stoffa} onScegli={(s) => onCambia({ celle, stoffa: s })} />
+      <p className="-mb-1 text-sm font-medium">Filo per ricamare</p>
 
       <div role="radiogroup" aria-label="Colore del filo" className="grid grid-cols-4 justify-items-center gap-3">
         {FILI.map((f, i) => (
@@ -145,13 +145,6 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
       </div>
       <div className="flex justify-between">
         <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={strumento === "gomma"} className={strumento === "gomma" ? "!bg-senape" : ""} onClick={() => setStrumento(strumento === "gomma" ? "ago" : "gomma")} />
-        <TastoTondo
-          etichetta="Secchiello: colora tutta l'area"
-          icona={Icone.secchiello}
-          aria-pressed={strumento === "secchiello"}
-          className={strumento === "secchiello" ? "!bg-senape" : ""}
-          onClick={() => setStrumento(strumento === "secchiello" ? "ago" : "secchiello")}
-        />
         <TastoTondo
           etichetta="Annulla l'ultimo tratto"
           icona={Icone.annulla}
@@ -181,7 +174,7 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
             if (!f) return;
             try {
               setErrore("");
-              onCambia({ foto: await fotoPerToppa(f), celle });
+              onCambia({ foto: await fotoPerToppa(f), celle, stoffa });
             } catch {
               setErrore("Non riesco a leggere questa foto. Prova con un'altra.");
             }
@@ -189,6 +182,28 @@ function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizza
         />
       </label>
       <Errore>{errore}</Errore>
+    </div>
+  );
+}
+
+// scelta della stoffa (tinta unita): la cucitura cambia da sola col colore giusto
+function SceltaStoffa({ valore, onScegli }: { valore: Stoffa; onScegli: (s: Stoffa) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Stoffa della toppa" className="grid grid-cols-5 justify-items-center gap-3">
+      {STOFFE_PERSONALIZZABILI.map((s) => (
+        <button
+          key={s}
+          type="button"
+          role="radio"
+          aria-checked={valore === s}
+          aria-label={`Stoffa ${STOFFE[s].nome}`}
+          onClick={() => onScegli(s)}
+          className={`relative size-11 rounded-full shadow ${valore === s ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
+          style={{ background: STOFFE[s].fondo }}
+        >
+          <span className="absolute inset-[5px] rounded-full border-2 border-dashed" style={{ borderColor: STOFFE[s].filo }} />
+        </button>
+      ))}
     </div>
   );
 }
@@ -233,22 +248,7 @@ function EditorParola({ valore, onCambia, n }: { valore: ContenutoPersonalizzato
         />
       </div>
       <p className="-mt-2 text-center text-sm text-inchiostro/70">Tocca la toppa per scrivere. Vai a capo per una seconda riga (massimo {MAX_RIGHE}).</p>
-      <div role="radiogroup" aria-label="Stoffa della toppa" className="grid grid-cols-5 justify-items-center gap-3">
-        {STOFFE_PERSONALIZZABILI.map((s) => (
-          <button
-            key={s}
-            type="button"
-            role="radio"
-            aria-checked={stoffa === s}
-            aria-label={`Stoffa ${STOFFE[s].nome}`}
-            onClick={() => onCambia({ testo, stoffa: s })}
-            className={`relative size-11 rounded-full shadow ${stoffa === s ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
-            style={{ background: STOFFE[s].fondo }}
-          >
-            <span className="absolute inset-[5px] rounded-full border-2 border-dashed" style={{ borderColor: STOFFE[s].filo }} />
-          </button>
-        ))}
-      </div>
+      <SceltaStoffa valore={stoffa} onScegli={(s) => onCambia({ testo, stoffa: s })} />
     </div>
   );
 }
@@ -286,13 +286,14 @@ export function EditorToppeGruppo({ groupId, prova = false, dopo }: { groupId: s
     const parole = toppe!.filter((t) => t.tipo === "parola");
     const simboli = toppe!.filter((t) => t.tipo === "simbolo");
     if (parole.some((t) => !t.contenuto.testo?.trim())) return setErrore("C'è una parola vuota: scrivila o toglila.");
-    if (simboli.some((t) => !t.contenuto.foto && !/[0-9]/.test(t.contenuto.celle ?? ""))) return setErrore("C'è un simbolo vuoto: ricamalo, metti una foto o toglilo.");
+    if (simboli.some((t) => !t.contenuto.foto && !/[0-9]/.test(t.contenuto.celle ?? "") && !t.contenuto.stoffa))
+      return setErrore("C'è un simbolo vuoto: scegli una stoffa, ricamalo, metti una foto o toglilo.");
     const righe = toppe!.map((t, i) => ({
       id: t.id,
       group_id: groupId,
       tipo: t.tipo,
       ordine: i,
-      contenuto: t.tipo === "parola" ? { testo: t.contenuto.testo!.trim(), stoffa: t.contenuto.stoffa } : t.contenuto.foto ? { foto: t.contenuto.foto } : { celle: t.contenuto.celle },
+      contenuto: t.tipo === "parola" ? { testo: t.contenuto.testo!.trim(), stoffa: t.contenuto.stoffa } : t.contenuto.foto ? { foto: t.contenuto.foto } : { celle: t.contenuto.celle, stoffa: t.contenuto.stoffa ?? "crema" },
     }));
     setSalvo(true);
     if (prova) {
