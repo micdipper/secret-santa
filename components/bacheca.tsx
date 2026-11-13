@@ -10,6 +10,7 @@ import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
+import { riduciFoto } from "@/lib/foto";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -33,18 +34,6 @@ const COLONNE = 60;
 const RIGHE = 80;
 const MAX_COPIE = 5; // copie della stessa toppa sulla bacheca
 
-
-// Riduce una foto del telefono (che può pesare molti MB) a max 1200px in JPEG.
-async function riduciFoto(file: File): Promise<{ blob: Blob; rapporto: number }> {
-  const img = await createImageBitmap(file);
-  const scala = Math.min(1, 1200 / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * scala);
-  c.height = Math.round(img.height * scala);
-  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-  const blob = await new Promise<Blob>((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.82));
-  return { blob, rapporto: img.width / img.height };
-}
 
 // Ogni toppa nuova arriva un po' storta e un po' spostata dal centro, come attaccata a mano
 // (così le nuove non si nascondono una sotto l'altra).
