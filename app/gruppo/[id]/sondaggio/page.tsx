@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { FrancobolloTotem } from "@/components/totem";
+import { VibeTotem } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import {
@@ -252,6 +253,11 @@ function Sondaggio() {
                 <div className="flex items-center gap-3">
                   <FrancobolloTotem profilo={p} immagine={totem[p].immagine} className="w-16 flex-none" />
                   <p className="text-sm text-inchiostro/70">{SPIEGA_PROFILO[p]}</p>
+                </div>
+                {/* la vibe del totem: le sue toppe (le vedrà nel cassetto solo chi riceve questo totem) */}
+                <div className="rounded-[20px] bg-crema/70 p-3">
+                  <p className="mb-3 text-sm text-inchiostro/70">Le sue toppe: le troverà nel cassetto solo chi riceve questo totem.</p>
+                  <VibeTotem profilo={p} />
                 </div>
                 {/* foto dalla galleria al posto del disegno (ritagliata a francobollo) */}
                 <label className="tasto cucitura cliccabile stoffa-chiara cursor-pointer">

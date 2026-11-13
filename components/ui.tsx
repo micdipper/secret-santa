@@ -221,6 +221,13 @@ export const Icone = {
       <path d="M5 12l5 5 9-10" />
     </svg>
   ),
+  secchiello: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M5 10l7-7 8 8-7 7z" />
+      <path d="M5 10h15" />
+      <path d="M20 15c0 0 2 2.6 2 4a2 2 0 0 1-4 0c0-1.4 2-4 2-4z" />
+    </svg>
+  ),
   ago: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 19L18 6" />

@@ -4,7 +4,7 @@ Aggiornato al 13 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole
 
 
 ## ➡ PROSSIMO BLOCCO: SANTA CHAT (chat anonima col proprio Babbo Natale) — CLAUDE.md, Fase 2, punto 9
-Stato al 13/11: **tutta la Fase 1 è fatta e collaudata** (gruppi, inviti, esclusioni, estrazione, busta 3D con slot machine, bacheca, personaggio e premi, sondaggio totem, suoni, sala prove `/prove`). Mancano: **Santa Chat**, toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale, **pubblicazione** (unire il ramo in `main` → Production su Vercel).
+Stato al 13/11: **tutta la Fase 1 è fatta e collaudata** (gruppi, inviti, esclusioni, estrazione, busta 3D con slot machine, bacheca, personaggio e premi, sondaggio totem, suoni, sala prove `/prove`). Mancano: **Santa Chat**, feed del gruppo, rivelazione finale, **pubblicazione** (unire il ramo in `main` → Production su Vercel).
 Decisioni già prese da Marzia sulla Santa Chat:
 - Si chiama **Santa Chat**. Chi regala scrive alla persona pescata **senza rivelarsi**; il destinatario può rispondere (a chi scrive, senza sapere chi è).
 - RLS: ogni conversazione leggibile solo dai due partecipanti; **al destinatario non si espone MAI l'identità/id di chi scrive**. Realtime di Supabase.
@@ -123,3 +123,13 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - "La tela è vuota" non compare più se c'è un ricamo con almeno un punto (lo stato del ricamo si aggiorna a ogni punto, anche nella sala prove).
   - PREMI (migrazione premi_occhiali): calendario (stellina) = sondaggio · collana (fiocco) = ≥10 cose con foto, ricamo, simbolo, parola, texture · lupetto (sciarpa) = almeno una copia di OGNI toppa del cassetto (22, elenco scritto nella funzione SQL: aggiornarlo se si aggiungono toppe!) + foto + ricamo · OCCHIALI VELOCI (occhiali) = busta aperta · Taglio Super = chat · capelli olografici + OCCHIALI VELOCI OLOGRAFICI (occhiali_olo) = tutti e 5 i premi sopra. Occhiali veloci: montatura argentata avvolgente, lenti nere / a specchio azzurre; si escludono a vicenda e sostituiscono gli occhiali normali quando indossati.
   - Consiglio a Marzia sui token: sessioni nuove per ogni blocco (STATO.md permette di ripartire), più richieste in un messaggio, meno prove visive.
+- 13/11 TOPPE DEI TOTEM E DEL GRUPPO:
+  - Ogni totem (per PROFILO, non per nome) ha 4 simboli + 4 parole (components/toppe.tsx, campo `totem`); nel cassetto compaiono SOLO quelle del proprio totem, in un riquadro dorato "Dal tuo totem · nome" in cima; poi "Del gruppo", poi "Per tutti". Nell'editor del sondaggio, sotto ogni totem, si vede la sua "vibe" (VibeTotem).
+  - Per tutti: simboli cioccolata calda (ex tazza), fuoco, luna, stella, neve, gomitolo, pacchetto, christmas oreo, cappello di Natale; parole fatto a mano, sorprendimi, chronically online, crazy, no way, nerdy stuffs, bello, brutto, perché no. Ulivo, cuore, uccellino, comodo, brilla, bosco, caos sono "ritirate": fuori dal cassetto ma ancora visibili dove già attaccate.
+  - Parole: la toppa cresce con il testo e con le righe e il testo si rimpicciolisce da solo se troppo lungo (lib/parole.ts, larghezze di Basteleur misurate). Stoffe abbinate (fondo + cucitura + testo) in STOFFE.
+  - Toppe del gruppo: l'organizzatore (Organizza → "Crea le toppe del gruppo", /gruppo/[id]/toppe) aggiunge fino a 4 simboli (ricamo 28×28 con fili, gomma, secchiello, annulla, oppure foto ritagliata tonda) e 4 parole (si scrive sulla toppa, 9 stoffe). Tabella group_toppe (migrazione toppe_gruppo: RLS membri leggono, organizzatore scrive, max 4 per tipo). Nella bacheca hanno id "g:<uuid>".
+  - Secchiello anche nel ricamo della bacheca (riempie l'area dello stesso colore; su tela vuota colora tutta la bacheca).
+  - Tasti del cassetto (Simboli/Parole/Texture/Foto) ora toppe tonde in rilievo col nome sotto, giustificate ai bordi.
+  - Premio lupetto: ogni toppa "per tutti" (24) + le 8 del proprio totem + foto + ricamo (elenco nella funzione SQL: aggiornarlo se cambiano le toppe!).
+  - Sala prove: /prove/toppe (editor, salva solo nel telefono) e /prove/bacheca con scelta del totem.
+  - Da chiedere a Marzia: "chronically online" scritto all'inglese (lei aveva scritto "cronically"); "iPhone duo" disegnato come due iPhone; scelte libere: bradipo e cartello "NO!" (hater), uovo sodo con gli occhi a spirale (so cooked).

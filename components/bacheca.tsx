@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CATALOGO, NOMI_TIPI, trovaToppa, type TipoToppa } from "@/components/toppe";
+import { CATALOGO, NOMI_TIPI, toppaPersonalizzata, trovaToppa, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
+import { FrancobolloTotem } from "@/components/totem";
+import { FILI, NOMI_FILI, VUOTO, riempi } from "@/lib/ricamo";
+import type { Profilo } from "@/lib/totem";
 import { useRouter } from "next/navigation";
 import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -28,16 +31,8 @@ export type Elemento = {
 const ALTEZZA = (100 * 4) / 3;
 const COLONNE = 60;
 const RIGHE = 80;
-// Fili ben visibili sulla tela crema (gli stessi colori dei personaggi)
-const FILI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#5a3520", "#1c241d"];
-const NOMI_FILI = ["vermiglio", "verde", "senape", "blu notte", "rosa", "bordeaux", "marrone", "nero"];
-const VUOTO = ".";
 const MAX_COPIE = 5; // copie della stessa toppa sulla bacheca
 
-function rapportoDi(e: Elemento) {
-  if (e.kind === "toppa") return trovaToppa(e.content.toppa ?? "")?.rapporto ?? 1;
-  return e.content.rapporto ?? 1;
-}
 
 // Riduce una foto del telefono (che può pesare molti MB) a max 1200px in JPEG.
 async function riduciFoto(file: File): Promise<{ blob: Blob; rapporto: number }> {
@@ -75,13 +70,22 @@ export function Bacheca({
   modificabile,
   iniziali,
   prova = false,
+  totem = null,
+  personalizzate = [],
 }: {
   groupId: string;
   memberId: string;
   modificabile: boolean;
   iniziali: Elemento[];
   prova?: boolean; // sala prove: tutto funziona ma non si salva niente
+  totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il MIO totem: le sue toppe compaiono nel cassetto
+  personalizzate?: RigaPersonalizzata[]; // toppe create dall'organizzatore per il gruppo
 }) {
+  // toppe del gruppo (dall'organizzatore) + catalogo fisso
+  const delGruppo = personalizzate.map(toppaPersonalizzata);
+  const toppaDi = (id: string): Toppa | undefined => trovaToppa(id) ?? delGruppo.find((t) => t.id === id);
+  const rapportoDi = (e: Elemento) => (e.kind === "toppa" ? (toppaDi(e.content.toppa ?? "")?.rapporto ?? 1) : (e.content.rapporto ?? 1));
+
   const supabase = clientSoloBrowser();
   const router = useRouter();
   const telaRef = useRef<HTMLDivElement>(null);
@@ -154,6 +158,7 @@ export function Bacheca({
       );
       if (error) setErrore("Non sono riuscito a salvare l'ultima modifica.");
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [supabase, traccia, prova],
   );
 
@@ -171,7 +176,7 @@ export function Bacheca({
       x: dove?.x ?? 50 + spostamentoCasuale(18),
       y: dove?.y ?? ALTEZZA / 2 + spostamentoCasuale(24),
       width,
-      height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1),
+      height: width / (content.rapporto ?? toppaDi(content.toppa ?? "")?.rapporto ?? 1),
       rotation: dove?.rotation ?? inclinazioneCasuale(),
       z,
     };
@@ -317,7 +322,7 @@ export function Bacheca({
 
   // ---------- disegno di un elemento ----------
   function contenuto(e: Elemento) {
-    if (e.kind === "toppa") return <>{trovaToppa(e.content.toppa ?? "")?.disegno()}</>;
+    if (e.kind === "toppa") return <>{toppaDi(e.content.toppa ?? "")?.disegno()}</>;
     const src = e.kind === "foto" ? urlFoto[e.content.path ?? ""] : e.content.url;
     return (
       <span className="block h-full w-full bg-white p-[6%] pb-[14%] shadow-[0_3px_6px_rgba(0,0,0,.3)]">
@@ -328,6 +333,41 @@ export function Bacheca({
           <span className="block h-full w-full animate-pulse bg-kraft/40" />
         )}
       </span>
+    );
+  }
+
+  // una griglia di toppe del cassetto (simboli e texture a 3 colonne, parole alla loro misura)
+  function elencoToppe(toppe: Toppa[]) {
+    const parole = toppe[0]?.tipo === "parola";
+    return (
+      <ul className={`mt-3 ${parole ? "flex flex-wrap justify-center gap-3" : "grid grid-cols-3 gap-3"}`}>
+        {toppe.map((t) => {
+          // massimo 5 copie per toppa
+          const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length;
+          const finite = usate >= MAX_COPIE;
+          return (
+            <li key={t.id} className="relative" style={parole ? { width: `min(100%, ${(t.larghezza ?? 46) * 2.6}px)` } : undefined}>
+              <button
+                aria-label={`Attacca: ${t.nome}`}
+                disabled={finite}
+                onClick={() => {
+                  suoni.toppa();
+                  aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, parole ? (t.larghezza ?? 46) : 26);
+                }}
+                className="block w-full transition-transform active:scale-95 disabled:opacity-40"
+                style={{ aspectRatio: String(t.rapporto) }}
+              >
+                {t.disegno()}
+              </button>
+              {usate > 0 && (
+                <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
+                  {usate}/{MAX_COPIE}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     );
   }
 
@@ -426,16 +466,12 @@ export function Bacheca({
 
           {cassetto && !modoRicamo && (
             <Feltro className="mt-4">
-              <div role="tablist" className="-mx-2 flex gap-2 overflow-x-auto px-2 pb-1">
+              {/* quattro toppe-tasto: la prima allineata alla colonna di sinistra, l'ultima a quella di destra */}
+              <div role="tablist" className="flex justify-between">
                 {(["simbolo", "parola", "palette", "foto"] as const).map((t) => (
-                  <button
-                    key={t}
-                    role="tab"
-                    aria-selected={cassetto === t}
-                    onClick={() => setCassetto(t)}
-                    className={`cliccabile relative flex-none rounded-full px-4 py-2 text-sm ${cassetto === t ? "stoffa-vermiglio" : "stoffa-chiara"}`}
-                  >
-                    {t === "foto" ? "Foto" : NOMI_TIPI[t]}
+                  <button key={t} role="tab" aria-selected={cassetto === t} onClick={() => setCassetto(t)} className="tasto-toppa">
+                    <span className={`tasto-tondo cucitura cliccabile ${cassetto === t ? "stoffa-vermiglio" : "stoffa-chiara"}`}>{ICONE_CASSETTO[t]}</span>
+                    <span className={`font-titolo text-base leading-none ${cassetto === t ? "text-vermiglio-scuro" : "text-abete"}`}>{t === "foto" ? "Foto" : NOMI_TIPI[t]}</span>
                   </button>
                 ))}
               </div>
@@ -467,34 +503,30 @@ export function Bacheca({
                   </div>
                 </div>
               ) : (
-                <ul className="mt-5 grid grid-cols-3 gap-3">
-                  {CATALOGO.filter((t) => t.tipo === cassetto).map((t) => {
-                    // massimo 5 copie per toppa
-                    const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length;
-                    const finite = usate >= MAX_COPIE;
-                    return (
-                      <li key={t.id} className={`relative ${t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}`}>
-                        <button
-                          aria-label={`Attacca: ${t.nome}`}
-                          disabled={finite}
-                          onClick={() => {
-                            suoni.toppa();
-                            aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26);
-                          }}
-                          className="block w-full transition-transform active:scale-95 disabled:opacity-40"
-                          style={{ aspectRatio: String(t.rapporto) }}
-                        >
-                          {t.disegno()}
-                        </button>
-                        {usate > 0 && (
-                          <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
-                            {usate}/{MAX_COPIE}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div className="mt-6 flex flex-col gap-5">
+                  {/* prima quelle del mio totem (un premio: si vedono solo nel mio cassetto), poi del gruppo, poi per tutti */}
+                  {totem && CATALOGO.some((t) => t.totem === totem.profilo && t.tipo === cassetto) && (
+                    <section className="rounded-[20px] bg-senape/20 p-3 ring-2 ring-senape/60">
+                      <h3 className="flex items-center gap-2 text-sm text-inchiostro/80">
+                        <FrancobolloTotem profilo={totem.profilo} immagine={totem.immagine} className="w-6 flex-none -rotate-6" />
+                        <span>
+                          Dal tuo totem · <b className="font-titolo text-base text-vermiglio-scuro">{totem.nome}</b>
+                        </span>
+                      </h3>
+                      {elencoToppe(CATALOGO.filter((t) => t.totem === totem.profilo && t.tipo === cassetto))}
+                    </section>
+                  )}
+                  {delGruppo.some((t) => t.tipo === cassetto) && (
+                    <section>
+                      <h3 className="text-sm text-inchiostro/70">Del gruppo</h3>
+                      {elencoToppe(delGruppo.filter((t) => t.tipo === cassetto))}
+                    </section>
+                  )}
+                  <section>
+                    {cassetto !== "palette" && <h3 className="text-sm text-inchiostro/70">Per tutti</h3>}
+                    {elencoToppe(CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === cassetto))}
+                  </section>
+                </div>
               )}
             </Feltro>
           )}
@@ -546,7 +578,8 @@ function StratoRicamo({
   const storia = useRef<string[]>([]);
   const ultima = useRef<{ c: number; r: number } | null>(null);
   const [filo, setFilo] = useState(0);
-  const [gomma, setGomma] = useState(false);
+  const [strumento, setStrumento] = useState<"ago" | "gomma" | "secchiello">("ago");
+  const gomma = strumento === "gomma";
   const [puoAnnullare, setPuoAnnullare] = useState(false);
   const idRicamo = useRef<string | null>(iniziale?.id ?? null);
   const timerSalva = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -676,6 +709,14 @@ function StratoRicamo({
           if (storia.current.length > 30) storia.current.shift();
           setPuoAnnullare(true);
           const p = puntoDa(ev);
+          if (strumento === "secchiello") {
+            // riempie tutta l'area dello stesso colore (sulla tela vuota: tutta la bacheca)
+            riempi(celle.current, COLONNE, RIGHE, p.c, p.r, String(filo));
+            ridisegna();
+            suoni.toppa();
+            salvaPresto();
+            return;
+          }
           ultima.current = p;
           cuci(p.c, p.r);
           suoni.punto();
@@ -706,7 +747,7 @@ function StratoRicamo({
                   aria-label={`Filo ${NOMI_FILI[i]}`}
                   onClick={() => {
                     setFilo(i);
-                    setGomma(false);
+                    if (gomma) setStrumento("ago");
                   }}
                   className={`size-11 rounded-full border-[3px] border-white shadow ${!gomma && filo === i ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
                   style={{ background: f }}
@@ -714,7 +755,14 @@ function StratoRicamo({
               ))}
             </div>
             <div className="relative flex gap-3">
-              <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={gomma} className={gomma ? "!bg-senape" : ""} onClick={() => setGomma(!gomma)} />
+              <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={gomma} className={gomma ? "!bg-senape" : ""} onClick={() => setStrumento(gomma ? "ago" : "gomma")} />
+              <TastoTondo
+                etichetta="Secchiello: colora tutta l'area"
+                icona={Icone.secchiello}
+                aria-pressed={strumento === "secchiello"}
+                className={strumento === "secchiello" ? "!bg-senape" : ""}
+                onClick={() => setStrumento(strumento === "secchiello" ? "ago" : "secchiello")}
+              />
               <TastoTondo
                 etichetta="Annulla l'ultimo tratto"
                 icona={Icone.annulla}
@@ -737,3 +785,30 @@ function StratoRicamo({
     </>
   );
 }
+
+// icone dei quattro cassetti
+const ICONE_CASSETTO = {
+  simbolo: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z" />
+    </svg>
+  ),
+  parola: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect x="2.5" y="7" width="19" height="10" rx="5" />
+      <path d="M7 12h10" />
+    </svg>
+  ),
+  palette: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 3.9v16.2M16 3.9v16.2M3.9 8h16.2M3.9 16h16.2" />
+    </svg>
+  ),
+  foto: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect x="4" y="3" width="16" height="18" rx="1.5" />
+      <rect x="7" y="6" width="10" height="9" />
+    </svg>
+  ),
+};
