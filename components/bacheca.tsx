@@ -60,6 +60,7 @@ export function Bacheca({
   modificabile,
   iniziali,
   prova = false,
+  iniziaRicamando = false,
   totem = null,
   personalizzate = [],
 }: {
@@ -68,6 +69,7 @@ export function Bacheca({
   modificabile: boolean;
   iniziali: Elemento[];
   prova?: boolean; // sala prove: tutto funziona ma non si salva niente
+  iniziaRicamando?: boolean; // si apre già col ricamo (dal kit del punto croce)
   totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il MIO totem: le sue toppe compaiono nel cassetto
   personalizzate?: RigaPersonalizzata[]; // toppe create dall'organizzatore per il gruppo
 }) {
@@ -84,7 +86,7 @@ export function Bacheca({
   const [ricamo, setRicamo] = useState<Elemento | null>(iniziali.find((e) => e.kind === "ricamo") ?? null);
   const [selezionato, setSelezionato] = useState<string | null>(null);
   const [cassetto, setCassetto] = useState<TipoToppa | "foto" | null>(null);
-  const [modoRicamo, setModoRicamo] = useState(false);
+  const [modoRicamo, setModoRicamo] = useState(iniziaRicamando);
   const [urlFoto, setUrlFoto] = useState<Record<string, string>>({});
   const [errore, setErrore] = useState("");
   const [linkImmagine, setLinkImmagine] = useState("");
@@ -349,6 +351,7 @@ export function Bacheca({
               >
                 {t.disegno()}
               </button>
+              {!parole && <span className="mt-1 block text-center text-xs leading-tight text-inchiostro/75">{t.nome}</span>}
               {usate > 0 && (
                 <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
                   {usate}/{MAX_COPIE}

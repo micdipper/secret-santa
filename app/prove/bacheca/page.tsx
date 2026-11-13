@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { Bacheca } from "@/components/bacheca";
 import { leggiToppeProva } from "@/components/editor-toppe";
 import type { RigaPersonalizzata } from "@/components/toppe";
@@ -9,6 +10,15 @@ import { TestataInterna } from "@/components/ui";
 import { PROFILI, TOTEM_PREDEFINITI, type Profilo } from "@/lib/totem";
 
 export default function ProvaBacheca() {
+  return (
+    <Suspense>
+      <Prova />
+    </Suspense>
+  );
+}
+
+function Prova() {
+  const ricamo = useSearchParams().get("ricamo") === "1";
   const [profilo, setProfilo] = useState<Profilo>("IMPEGNO_ALTO_RICEVE_TUTTO");
   // le toppe create in /prove/toppe (solo in questo telefono; servono solo a cassetto aperto)
   const [personalizzate] = useState<RigaPersonalizzata[]>(() => (typeof window === "undefined" ? [] : leggiToppeProva()));
@@ -41,7 +51,7 @@ export default function ProvaBacheca() {
         Totem: <b className="font-titolo text-base text-senape">{TOTEM_PREDEFINITI[profilo].nome}</b>
       </p>
       <div className="mt-4">
-        <Bacheca groupId="prova" memberId="prova" modificabile iniziali={[]} prova totem={{ profilo, nome: TOTEM_PREDEFINITI[profilo].nome }} personalizzate={personalizzate} />
+        <Bacheca groupId="prova" memberId="prova" modificabile iniziali={[]} prova iniziaRicamando={ricamo} totem={{ profilo, nome: TOTEM_PREDEFINITI[profilo].nome }} personalizzate={personalizzate} />
       </div>
     </main>
   );
