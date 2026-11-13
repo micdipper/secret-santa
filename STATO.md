@@ -1,17 +1,28 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 13 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
+Aggiornato al 13 novembre 2026 (sera, dopo la Santa Chat). Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
 
 
-## ➡ PROSSIMO BLOCCO: SANTA CHAT (chat anonima col proprio Babbo Natale) — CLAUDE.md, Fase 2, punto 9
-Stato al 13/11: **tutta la Fase 1 è fatta e collaudata** (gruppi, inviti, esclusioni, estrazione, busta 3D con slot machine, bacheca, personaggio e premi, sondaggio totem, suoni, sala prove `/prove`). Mancano: **Santa Chat**, toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale, **pubblicazione** (unire il ramo in `main` → Production su Vercel).
-Decisioni già prese da Marzia sulla Santa Chat:
-- Si chiama **Santa Chat**. Chi regala scrive alla persona pescata **senza rivelarsi**; il destinatario può rispondere (a chi scrive, senza sapere chi è).
-- RLS: ogni conversazione leggibile solo dai due partecipanti; **al destinatario non si espone MAI l'identità/id di chi scrive**. Realtime di Supabase.
-- Il **Taglio Super** (premio, id `super`) si sblocca **chattando col proprio Babbo Natale**: serve un segno "ha scritto almeno un messaggio" in `private.unlocked_accessories` (oggi la riga `null::text -- 'super'` è il segnaposto). I capelli olografici e gli occhiali veloci olografici richiedono tutti e 5 i premi, quindi anche questo.
-- Aggiungere la chat anche alla **sala prove** (`/prove`, riquadro "In arrivo": Santa Chat) in modo che si possa provare senza creare gruppi.
-- Regole di interfaccia sempre valide (vedi CLAUDE.md): mobile first, tasto finale chiaro, contrasto, animazioni fluide con curve di Bézier, un solo tasto audio fisso, suoni da `lib/suoni.ts`. Prima di scrivere codice: **breve piano e aspettare l'ok di Marzia**.
-Note tecniche utili: test automatici in `scratchpad/e2e/` (sondaggio.js, slot.js…) usano gruppi "Test E2E Natale" e vanno ripuliti dopo (cancellare SOLO quei gruppi/utenti; chiedere prima di toccare altro). Per le prove locali: `NODE_USE_ENV_PROXY=1 npx next start -p <porta>` dopo `npx next build`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). Marzia vuole risparmiare token: sessioni nuove per blocco, richieste raggruppate, poche prove visive.
+## ➡ PROSSIMO BLOCCO: da scegliere con Marzia
+Stato al 13/11 sera: **Fase 1 fatta e collaudata + Santa Chat fatta e collaudata** (vedi sotto). Mancano: toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale ("Chi era il Babbo Natale di chi"), **pubblicazione** (unire il ramo in `main` → Production su Vercel).
+Regole sempre valide: prima di scrivere codice **breve piano e aspettare l'ok di Marzia**; mobile first, tasto finale chiaro, contrasto, animazioni con curve di Bézier, suoni da `lib/suoni.ts`. Marzia vuole risparmiare token: sessioni nuove per blocco, richieste raggruppate, poche prove visive.
+Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte senza node_modules), `npx next build`, poi `NODE_USE_ENV_PROXY=1 npx next start -p <porta>`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). I test automatici ora stanno nel repo in `test-e2e/` (quelli vecchi in `scratchpad/e2e/` sono andati persi con le sessioni) e creano gruppi "Test E2E Natale" da ripulire dopo (cancellare SOLO quei gruppi/utenti, chiedendo prima).
+
+## Rami git (13/11)
+- Si lavora sul ramo **`ccr-0d4074c1-k65cqp`**, nato dall'ultimo commit di `claude/confident-sagan-im9axa` (c281c77): contiene tutto il lavoro. Il vecchio ramo `confident-sagan` resta indietro, non usarlo più.
+- `main` è ancora quasi vuoto: la pubblicazione = unire questo ramo in `main` (PR quando Marzia lo chiede).
+- Vercel fa un'anteprima per ogni ramo: il link di anteprima di questo ramo è diverso da quello di `confident-sagan`.
+
+## Santa Chat ✅ (13/11)
+- Database (migrazione `20261113120000_santa_chat.sql`, applicata): tabella `santa_messages` (group_id, receiver_member_id, dal_babbo, testo ≤ 500, created_at). **L'id di chi regala non viene mai salvato**: ogni persona ha un solo Babbo, quindi la conversazione si riconosce dal destinatario. Lettura (RLS): il destinatario oppure chi l'ha pescato (`private.my_receiver_ids()`, su assignments). Scrittura solo con `invia_santa_message(p_group, p_dal_babbo, p_testo)`: controlla gruppo, estrazione fatta, testo 1–500 caratteri (spazi tolti). Tabella nella pubblicazione `supabase_realtime`.
+- Premio **Taglio Super** (`super`): almeno un messaggio scritto nella Santa Chat, da Babbo o da destinatario (in `private.unlocked_accessories`). Così anche capelli olografici + occhiali veloci olografici sono ora raggiungibili.
+- Interfaccia: `components/santa-chat.tsx` (disegno, usato anche dalla sala prove), pagina `/gruppo/[id]/chat?con=pescato` (io sono il Babbo: solo dopo aver aperto la busta, se no rimanda alla busta) e `?con=babbo` (scrivo al mio Babbo). Nella pagina del gruppo, dopo l'estrazione, sezione "Santa Chat" con due voci ("Scrivi a <nome>" e "Il tuo Babbo Natale") e pallino senape dei messaggi nuovi (`components/pallino-chat.tsx`; ultimo letto in localStorage `santa-chat-letto:<receiverId>:<ruolo>`).
+- Colori (richiesta di Marzia): **Babbo = fumetto vermiglio, testo crema · chi riceve = fumetto feltro crema, testo inchiostro**, uguali da tutte e due le parti; i miei a destra, dell'altro a sinistra; toppa del Babbo segreto = cappello rosso con "?" (`ToppaBabbo`). Fumetti piatti con cucitura (classi `.fumetto*` in globals.css).
+- Invio: Invio manda, Maiusc+Invio va a capo; il messaggio compare subito ("Invio…"), poi ora e "inviato ✓"; se fallisce torna nel campo con l'errore. Suoni nuovi `suoni.inviato()` e `suoni.arrivato()`. Tempo reale + ricarica quando si torna sull'app. Dopo il primo messaggio controlla i premi (pop-up del Taglio Super).
+- Sala prove: `/prove/chat`, risponde un'amica inventata, tasto per passare dall'altra parte.
+- Collaudo: `test-e2e/santa-chat.mjs` (22 controlli tutti OK: segretezza, terzo escluso anche in Realtime, estranei, insert diretto vietato, limiti testo, Taglio Super).
+- ⚠ Dati di prova rimasti da ripulire (chiedere a Marzia): 2 gruppi "Test E2E Natale" del 13/11 (`dc309576-4f8b-4ea2-a87f-4e6de5a9b609`, `a988807a-23de-4270-b5fb-27be88a41257`) e i loro accessi finti (più un accesso finto senza gruppo, `ea354d17-bcf7-4cdd-beb6-2b111b6ea253`, usato per provare il Realtime).
+- Non fatto (volutamente semplice): niente notifiche push, niente modifica/cancellazione dei messaggi, niente "sta scrivendo…".
 
 ## Dove siamo
 | Blocco | Stato |
@@ -30,7 +41,8 @@ Note tecniche utili: test automatici in `scratchpad/e2e/` (sondaggio.js, slot.js
 | Pubblicazione: unire il ramo in `main` → sito ufficiale su Vercel (Production) | ⏳ a fine Fase 1 |
 | Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` + personaggio anche in "Crea un gruppo" (riquadro "Tu") | ✅ fatto: 12 tagli, barba/baffi, occhiali, pelle, colore capelli, maglione. Premi: accessori (sciarpa, gomitolo, fiocco, stellina), taglio **Super** (10 cose sulla bacheca), capelli **olografici** (tutti e 4 gli accessori), cappello col quiz. Il database rifiuta i premi non sbloccati. Niente login separato (deciso da Marzia: resta tutto com'era). |
 | Apertura busta "a slot machine" + busta 3D | ✅ fatta (da provare sul telefono): slot "Babbo-matic" con leva vera da trascinare, lampadine, giro di 7,5 s, si ferma su un PACCHETTO "?" (scelta A di Marzia: nome e faccia solo nella busta); scena a tutto schermo con busta 3D (three.js, caricato solo qui) che arriva girando, neve, scintille; "Apri la busta" chiede il permesso movimento su iPhone, lembo che si apre con fodera a righe; biglietto che si gira e si inclina con riflesso olografico; versione 2D con "riduci movimento" o senza WebGL. |
-| Fase 2: chat anonima, feed del gruppo, rivelazione finale | ⏳ dopo |
+| Santa Chat (chat anonima col proprio Babbo Natale) | ✅ fatta e collaudata (13/11) |
+| Fase 2: feed del gruppo, rivelazione finale | ⏳ dopo |
 
 ## Decisioni prese (oltre a quelle in CLAUDE.md)
 - **Accesso con password di almeno 8 caratteri** (non più PIN). Email finta generata dal sito, nessuna email inviata.
@@ -54,7 +66,7 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
 
 ## Note tecniche per chi riprende
 - **Progetto Supabase**: `gesihnbtflnpjxwmpxkd` (Irlanda, piano gratuito). Migrazioni in `supabase/migrations/`.
-- **Vercel**: team "Secret Santa", progetto `secret-santa`. Le anteprime si costruiscono dal ramo `claude/confident-sagan-im9axa`; `main` è ancora vuoto (per questo i deploy di `main` danno "No Next.js version detected"). Il collegamento MCP a Vercel a volte non vede il progetto: in quel caso Marzia guarda la scheda Deployments.
+- **Vercel**: team "Secret Santa", progetto `secret-santa`. Le anteprime si costruiscono dal ramo di lavoro (dal 13/11 `ccr-0d4074c1-k65cqp`, prima `claude/confident-sagan-im9axa`); `main` è ancora vuoto (per questo i deploy di `main` danno "No Next.js version detected"). Il collegamento MCP a Vercel a volte non vede il progetto: in quel caso Marzia guarda la scheda Deployments.
 - **Collaudo locale nel computer in cloud**: il server Next.js deve passare dal proxy di rete → avviarlo con `NODE_USE_ENV_PROXY=1 npx next start`. Il test automatico (Playwright, 4 telefoni simulati) crea il gruppo "Test E2E Natale".
 - **Pulizia dei dati di prova**: cancellare **solo** i dati creati dai test (es. il gruppo "Test E2E Natale" e gli accessi che fanno parte solo di quel gruppo). Mai cancellare per tipo di email: anche gli accessi veri usano `@users.secretsanta.local`. Chiedere sempre prima.
 - **Gruppo di prova di Marzia "Cja"**: creato quando l'accesso era ancora con il PIN → quell'accesso non funziona più da un altro telefono con il nuovo sistema a password; conviene ricrearlo.

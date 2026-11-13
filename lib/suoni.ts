@@ -117,6 +117,17 @@ export const suoni = {
     for (let k = 0; k < 6; k++) rumore(0.018, { volume: 0.05, filtro: 3200, tipoFiltro: "bandpass", q: 2, ritardo: 0.08 + k * 0.022 });
   },
 
+  // Santa Chat: messaggio inviato (foglietto che scivola via + "plin" che sale)
+  inviato() {
+    rumore(0.14, { volume: 0.1, filtro: 2400, tipoFiltro: "bandpass", q: 0.9, scendi: 1.8 });
+    nota(660, 0.12, { tipo: "triangle", volume: 0.08, scivola: 1.5, ritardo: 0.05 });
+  },
+  // Santa Chat: messaggio arrivato (due sonagli)
+  arrivato() {
+    campana(1318, 0, 0.1);
+    campana(1976, 0.11, 0.07);
+  },
+
   punto() {
     rumore(0.04, { volume: 0.05, filtro: 3500, tipoFiltro: "bandpass", q: 2 });
   },

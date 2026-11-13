@@ -337,6 +337,68 @@ textarea {
   border: 1.5px dashed rgb(44 74 50 / 0.55);
 }
 
+/* ---------- Santa Chat: fumetti di stoffa (NON cliccabili: piatti, cuciti) ----------
+   Babbo Natale = vermiglio con testo crema; chi riceve = feltro crema con testo inchiostro.
+   Il colore dice CHI scrive (uguale per tutti e due), il lato dice se sei tu (destra) o l'altro (sinistra). */
+.fumetto {
+  position: relative;
+  max-width: 82%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.035) 0 1px, transparent 1px 3px);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fumetto::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 16px;
+  border: 1.5px dashed;
+  pointer-events: none;
+}
+.fumetto-babbo {
+  background-color: var(--color-vermiglio);
+  color: var(--color-crema);
+}
+.fumetto-babbo::before {
+  border-color: rgb(243 232 207 / 0.55);
+}
+.fumetto-pescato {
+  background-color: var(--color-feltro);
+  color: var(--color-inchiostro);
+}
+.fumetto-pescato::before {
+  border-color: rgb(44 74 50 / 0.35);
+}
+/* la "punta" del fumetto: angolo stretto verso chi scrive */
+.fumetto-mio {
+  border-bottom-right-radius: 6px;
+}
+.fumetto-mio::before {
+  border-bottom-right-radius: 2px;
+}
+.fumetto-altro {
+  border-bottom-left-radius: 6px;
+}
+.fumetto-altro::before {
+  border-bottom-left-radius: 2px;
+}
+/* campo del messaggio: cresce con il testo (stessa cucitura dei campi) */
+.campo-cucito textarea {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  max-height: 160px;
+  padding: 15px 20px;
+  background: transparent;
+  color: var(--color-inchiostro);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -55,7 +55,10 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 9bis. **Avatar e premi** (approvato da Marzia): l'**avatar sostituisce le emoji** ovunque. Personaggio **originale** disegnato da noi in SVG, stile feltro morbido, **sempre a mezzobusto**. Nella pagina "Il mio profilo" si scelgono pelle, capelli e maglione; gli **accessori natalizi si sbloccano SOLO così**: quiz completato → cappello legato al verdetto · almeno una toppa di ogni tipo → sciarpa a maglia nordica · primo ricamo a punto croce → ditale d'oro/gomitolo · almeno una foto o immagine attaccata alla bacheca → fiocco (provvisorio, da confermare) · busta aperta → stellina. **Apertura della busta "a slot machine"**: gli avatar di tutti scorrono come rulli, rallentano e si fermano sulla persona pescata (il risultato è già deciso dal database, è solo spettacolo), poi busta 3D e biglietto. Ordine dei lavori: bacheca → avatar e profilo → slot machine + busta 3D → suoni → pubblicazione.
 
 ### Fase 2 – Mini social (domani)
-9. **Chat anonima con il tuo Babbo Natale**: chi regala può scrivere alla persona pescata senza rivelarsi; il destinatario può rispondere. Supabase Realtime. RLS: ogni conversazione è leggibile solo dai due partecipanti, e al destinatario non viene mai esposto l'id di chi scrive.
+9. **Santa Chat** (si chiama così ovunque nell'interfaccia) ✅ fatta: chi regala può scrivere alla persona pescata senza rivelarsi; il destinatario può rispondere. Supabase Realtime. RLS: ogni conversazione è leggibile solo dai due partecipanti, e al destinatario non viene mai esposto l'id di chi scrive (nella tabella `santa_messages` l'id di chi regala **non esiste proprio**: la conversazione si riconosce dal destinatario).
+   - **Colori fissi per ruolo** (uguali da tutte e due le parti): messaggi di **Babbo Natale = fumetto vermiglio con testo crema**, messaggi di **chi riceve = fumetto di feltro crema con testo inchiostro**; i miei a destra, quelli dell'altro a sinistra. Fumetti piatti (non cliccabili) con cucitura tratteggiata, come le etichette di stoffa.
+   - Chi regala vede "Scrivi a …" solo dopo aver aperto la busta; "Il tuo Babbo Natale" c'è per tutti subito dopo l'estrazione. Pallino senape con i messaggi nuovi (ultimo letto ricordato nel telefono).
+   - Il **Taglio Super** si sblocca scrivendo almeno un messaggio nella Santa Chat (da Babbo o da destinatario).
 9ter. **SONDAGGIO TOTEM personalizzabile** (richiesto da Marzia):
    - **Cos'è**: breve sondaggio a risposta multipla che ogni membro compila; alla fine riceve un **totem**, profilo ironico su come si comporta nel Secret Santa quando regala e quando riceve. Compare sul suo profilo, visibile a tutto il gruppo. Tono leggero: chi risponde non deve accorgersi che le domande servono a profilarlo.
    - **Logica fissa (uguale per tutti i gruppi)**: due parametri, **IMPEGNO** (come regala: + = regalo pensato e curato, − = la prima cosa che capita) ed **ESIGENZA** (come riceve: + = esigente, − = va bene tutto). Ogni domanda appartiene a UN solo parametro e ha sempre 4 risposte con punti fissi **+2, +1, −1, −2**; si sommano i punti per parametro.
@@ -117,7 +120,8 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - `exclusions` (group_id, user_a, user_b)
 - `assignments` (group_id, giver_id, receiver_id) — RLS: leggibile solo dal giver, finché lo stato non è "rivelato"
 - `moodboard_items` (id, user_id, group_id, tipo, contenuto, x, y, larghezza, altezza, rotazione, z)
-- Fase 2: `messages`, `feed_events`, `reactions`
+- `santa_messages` (id, group_id, receiver_member_id, dal_babbo, testo ≤ 500, created_at) — si scrive solo con `invia_santa_message`
+- Fase 2 (da fare): `feed_events`, `reactions`
 
 ## Regole di lavoro
 - Procedere per fasi; a fine di ogni fase: commit, deploy su Vercel, verifica dal telefono.

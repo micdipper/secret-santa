@@ -221,6 +221,17 @@ export const Icone = {
       <path d="M5 12l5 5 9-10" />
     </svg>
   ),
+  invia: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M4 12l16-8-6 16-3-6z" />
+      <path d="M11 14l9-10" />
+    </svg>
+  ),
+  fumetto: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+    </svg>
+  ),
   ago: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 19L18 6" />
