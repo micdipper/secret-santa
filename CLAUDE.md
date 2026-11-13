@@ -44,6 +44,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 6. **Bacheca personale** (nell'interfaccia si chiama "bacheca", non "moodboard"; è il cuore del sito):
    - è una **tela da ricamo** (trama a quadretti tipo aida) su cui si attaccano toppe e si ricama
    - ~~quiz "Questo o quello"~~ **sostituito dal SONDAGGIO TOTEM** (Fase 2, punto 9ter).
+   - **cassettiera** sotto la tela (al posto del "+" e del tasto del ricamo): sul piano il kit da ricamo (toccandolo si ricama sulla tela), 4 cassetti Simboli/Parole/Texture/Foto che si aprono al tocco o allo swipe; dentro ci sono TUTTE le toppe (del proprio totem ✦, del gruppo, per tutti), si trascinano e un tocco le attacca; targhette di stoffa sui pomelli che dondolano col giroscopio
    - **cassetto di toppe ricamate già pronte**, disegnate da noi in **SVG**: vibe e atmosfere (texture, simboli, parole ricamate col font dei titoli, palette), non prodotti. Sul telefono: tocca per attaccare → poi trascina, ridimensiona e ruota con le dita
    - **ricamo a punto croce col dito**: ogni quadretto toccato diventa una crocetta; griglia abbastanza fine da permettere un minimo di dettaglio (non grossolana), 4-5 colori di filo, gomma e annulla
    - anche foto caricate e immagini da link; niente post-it

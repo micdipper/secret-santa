@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CATALOGO, NOMI_TIPI, toppaPersonalizzata, trovaToppa, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
-import { FrancobolloTotem } from "@/components/totem";
+import { CATALOGO, toppaPersonalizzata, trovaToppa, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
+import { Cassettiera, oggettoDaToppa } from "@/components/cassettiera";
+import { AnimatePresence, motion } from "framer-motion";
 import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
 import { STOFFE, STOFFE_PERSONALIZZABILI, type Stoffa } from "@/lib/parole";
 import type { Profilo } from "@/lib/totem";
 import { useRouter } from "next/navigation";
-import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
+import { Errore, Icone, Tasto, TastoTondo } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
@@ -85,7 +86,13 @@ export function Bacheca({
   const [elementi, setElementi] = useState<Elemento[]>(iniziali.filter((e) => e.kind !== "ricamo"));
   const [ricamo, setRicamo] = useState<Elemento | null>(iniziali.find((e) => e.kind === "ricamo") ?? null);
   const [selezionato, setSelezionato] = useState<string | null>(null);
-  const [cassetto, setCassetto] = useState<TipoToppa | "foto" | null>(null);
+  const [attaccata, setAttaccata] = useState("");
+  // la conferma "è sulla tela" sparisce da sola
+  useEffect(() => {
+    if (!attaccata) return;
+    const t = setTimeout(() => setAttaccata(""), 1800);
+    return () => clearTimeout(t);
+  }, [attaccata, elementi.length]);
   const [modoRicamo, setModoRicamo] = useState(iniziaRicamando);
   const [urlFoto, setUrlFoto] = useState<Record<string, string>>({});
   const [errore, setErrore] = useState("");
@@ -220,7 +227,7 @@ export function Bacheca({
       if (prova) {
         // nella sala prove la foto resta solo nel telefono
         await aggiungi("immagine_link", { url: URL.createObjectURL(blob), rapporto }, 36);
-        setCassetto(null);
+        setAttaccata("La foto");
         setCaricamento(false);
         return;
       }
@@ -228,7 +235,7 @@ export function Bacheca({
       const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
       if (error) throw error;
       await aggiungi("foto", { path, rapporto }, 36);
-      setCassetto(null);
+      setAttaccata("La foto");
     } catch {
       setErrore("Non sono riuscito a caricare la foto. Riprova con un'altra immagine.");
     }
@@ -242,7 +249,7 @@ export function Bacheca({
       const rapporto = await caricaDimensioni(url);
       await aggiungi("immagine_link", { url, rapporto }, 36);
       setLinkImmagine("");
-      setCassetto(null);
+      setAttaccata("L'immagine");
     } catch {
       setErrore("Questa immagine non si apre: alcuni siti non permettono di mostrarle altrove. Prova a salvarla e caricarla come foto.");
     }
@@ -328,40 +335,17 @@ export function Bacheca({
     );
   }
 
-  // una griglia di toppe del cassetto (simboli e texture a 3 colonne, parole alla loro misura)
-  function elencoToppe(toppe: Toppa[]) {
-    const parole = toppe[0]?.tipo === "parola";
-    return (
-      <ul className={`mt-3 ${parole ? "flex flex-wrap justify-center gap-3" : "grid grid-cols-3 gap-3"}`}>
-        {toppe.map((t) => {
-          // massimo 5 copie per toppa
-          const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length;
-          const finite = usate >= MAX_COPIE;
-          return (
-            <li key={t.id} className="relative" style={parole ? { width: `min(100%, ${(t.larghezza ?? 46) * 2.6}px)` } : undefined}>
-              <button
-                aria-label={`Attacca: ${t.nome}`}
-                disabled={finite}
-                onClick={() => {
-                  suoni.toppa();
-                  aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, parole ? (t.larghezza ?? 46) : 26);
-                }}
-                className="block w-full transition-transform active:scale-95 disabled:opacity-40"
-                style={{ aspectRatio: String(t.rapporto) }}
-              >
-                {t.disegno()}
-              </button>
-              {!parole && <span className="mt-1 block text-center text-xs leading-tight text-inchiostro/75">{t.nome}</span>}
-              {usate > 0 && (
-                <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
-                  {usate}/{MAX_COPIE}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    );
+  // cosa c'è in un cassetto: prima le toppe del mio totem, poi quelle del gruppo, poi quelle per tutti
+  function cassetto(tipo: TipoToppa) {
+    const toppe = [
+      ...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && t.tipo === tipo) : []),
+      ...delGruppo.filter((t) => t.tipo === tipo),
+      ...CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo),
+    ];
+    return toppe.map((t) => {
+      const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length; // massimo 5 copie per toppa
+      return oggettoDaToppa(t, { nota: usate ? `${usate}/${MAX_COPIE}` : undefined, spento: usate >= MAX_COPIE });
+    });
   }
 
   const ordinati = [...elementi].sort((a, b) => a.z - b.z);
@@ -442,19 +426,9 @@ export function Bacheca({
 
       {modificabile && (
         <>
-          {/* Comandi: uno per funzione */}
+          {/* Comandi per la toppa toccata sulla tela (attaccare e ricamare si fa dalla cassettiera qui sotto) */}
           {!modoRicamo && (
             <div className="mt-4 flex items-center justify-center gap-3">
-              <TastoTondo etichetta="Apri il cassetto delle toppe" icona={Icone.piu} aria-pressed={!!cassetto} onClick={() => setCassetto(cassetto ? null : "simbolo")} />
-              <TastoTondo
-                etichetta="Ricama"
-                icona={Icone.ago}
-                onClick={() => {
-                  setModoRicamo(true);
-                  setCassetto(null);
-                  setSelezionato(null);
-                }}
-              />
               <TastoTondo etichetta="Duplica" icona={Icone.sopra} disabled={!sel} onClick={() => sel && duplica(sel)} />
               <TastoTondo etichetta="Togli dalla bacheca" icona={Icone.cestino} disabled={!sel} onClick={() => sel && togli(sel.id)} />
             </div>
@@ -466,71 +440,66 @@ export function Bacheca({
             </div>
           )}
 
-          {cassetto && !modoRicamo && (
-            <Feltro className="mt-4">
-              {/* quattro toppe-tasto: la prima allineata alla colonna di sinistra, l'ultima a quella di destra */}
-              <div role="tablist" className="flex justify-between">
-                {(["simbolo", "parola", "palette", "foto"] as const).map((t) => (
-                  <button key={t} role="tab" aria-selected={cassetto === t} onClick={() => setCassetto(t)} className="tasto-toppa">
-                    <span className={`tasto-tondo cucitura cliccabile ${cassetto === t ? "stoffa-vermiglio" : "stoffa-chiara"}`}>{ICONE_CASSETTO[t]}</span>
-                    <span className={`font-titolo text-base leading-none ${cassetto === t ? "text-vermiglio-scuro" : "text-abete"}`}>{t === "foto" ? "Foto" : NOMI_TIPI[t]}</span>
-                  </button>
-                ))}
-              </div>
-
-              {cassetto === "foto" ? (
-                <div className="mt-5 flex flex-col gap-4">
-                  <label className="tasto cucitura cliccabile stoffa-vermiglio relative cursor-pointer">
-                    <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      disabled={caricamento}
-                      onChange={(ev) => {
-                        const f = ev.target.files?.[0];
-                        if (f) aggiungiFoto(f);
-                        ev.target.value = "";
-                      }}
-                    />
-                  </label>
-                  <div className="flex items-end gap-3">
-                    <label className="flex min-w-0 flex-1 flex-col gap-2">
-                      <span className="font-medium">Oppure un&apos;immagine da un link</span>
-                      <span className="campo-cucito block">
-                        <input value={linkImmagine} onChange={(ev) => setLinkImmagine(ev.target.value)} placeholder="https://…" inputMode="url" />
-                      </span>
+          {!modoRicamo && (
+            <div className="mt-6">
+              <Cassettiera
+                contenuto={{ simbolo: cassetto("simbolo"), parola: cassetto("parola"), palette: cassetto("palette") }}
+                onPrendi={(o) => {
+                  suoni.toppa();
+                  const t = toppaDi(o.id);
+                  if (t) aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? (t.larghezza ?? 46) : 26);
+                  setAttaccata(o.nome);
+                }}
+                onKit={() => {
+                  setModoRicamo(true);
+                  setSelezionato(null);
+                  telaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                foto={
+                  <div className="flex flex-col gap-4 rounded-2xl bg-feltro p-4 text-inchiostro shadow-[0_3px_6px_rgba(0,0,0,.35)]">
+                    <label className="tasto cucitura cliccabile stoffa-vermiglio relative cursor-pointer">
+                      <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        disabled={caricamento}
+                        onChange={(ev) => {
+                          const f = ev.target.files?.[0];
+                          if (f) aggiungiFoto(f);
+                          ev.target.value = "";
+                        }}
+                      />
                     </label>
-                    <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim()} onClick={aggiungiDaLink} />
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-6 flex flex-col gap-5">
-                  {/* prima quelle del mio totem (un premio: si vedono solo nel mio cassetto), poi del gruppo, poi per tutti */}
-                  {totem && CATALOGO.some((t) => t.totem === totem.profilo && t.tipo === cassetto) && (
-                    <section className="rounded-[20px] bg-senape/20 p-3 ring-2 ring-senape/60">
-                      <h3 className="flex items-center gap-2 text-sm text-inchiostro/80">
-                        <FrancobolloTotem profilo={totem.profilo} immagine={totem.immagine} className="w-6 flex-none -rotate-6" />
-                        <span>
-                          Dal tuo totem · <b className="font-titolo text-base text-vermiglio-scuro">{totem.nome}</b>
+                    <div className="flex items-end gap-3">
+                      <label className="flex min-w-0 flex-1 flex-col gap-2">
+                        <span className="text-sm font-medium">Oppure un&apos;immagine da un link</span>
+                        <span className="campo-cucito block">
+                          <input value={linkImmagine} onChange={(ev) => setLinkImmagine(ev.target.value)} placeholder="https://…" inputMode="url" />
                         </span>
-                      </h3>
-                      {elencoToppe(CATALOGO.filter((t) => t.totem === totem.profilo && t.tipo === cassetto))}
-                    </section>
-                  )}
-                  {delGruppo.some((t) => t.tipo === cassetto) && (
-                    <section>
-                      <h3 className="text-sm text-inchiostro/70">Del gruppo</h3>
-                      {elencoToppe(delGruppo.filter((t) => t.tipo === cassetto))}
-                    </section>
-                  )}
-                  <section>
-                    {cassetto !== "palette" && <h3 className="text-sm text-inchiostro/70">Per tutti</h3>}
-                    {elencoToppe(CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === cassetto))}
-                  </section>
-                </div>
-              )}
-            </Feltro>
+                      </label>
+                      <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim()} onClick={aggiungiDaLink} />
+                    </div>
+                  </div>
+                }
+              />
+              {/* conferma breve: la toppa è finita sulla tela, qui sopra */}
+              <AnimatePresence>
+                {attaccata && (
+                  <motion.p
+                    key={attaccata + elementi.length}
+                    role="status"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                    className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-[200] mx-auto w-fit rounded-full bg-crema px-4 py-2 text-sm text-abete shadow-[0_6px_16px_-6px_rgba(0,0,0,.6)]"
+                  >
+                    ↑ «{attaccata}» è sulla tela
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           )}
 
           {/* Si salva da sola, ma serve un modo chiaro per dire "ho finito" */}
@@ -814,29 +783,3 @@ function StratoRicamo({
   );
 }
 
-// icone dei quattro cassetti
-export const ICONE_CASSETTO = {
-  simbolo: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z" />
-    </svg>
-  ),
-  parola: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <rect x="2.5" y="7" width="19" height="10" rx="5" />
-      <path d="M7 12h10" />
-    </svg>
-  ),
-  palette: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 3.9v16.2M16 3.9v16.2M3.9 8h16.2M3.9 16h16.2" />
-    </svg>
-  ),
-  foto: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <rect x="4" y="3" width="16" height="18" rx="1.5" />
-      <rect x="7" y="6" width="10" height="9" />
-    </svg>
-  ),
-};
