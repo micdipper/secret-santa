@@ -1,10 +1,10 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 13 novembre 2026 (sera, dopo la Santa Chat). Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
+Aggiornato al 13 novembre 2026 (notte, dopo Santa Chat e Novità). Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
 
 
 ## ➡ PROSSIMO BLOCCO: da scegliere con Marzia
-Stato al 13/11 sera: **Fase 1 fatta e collaudata + Santa Chat fatta e collaudata** (vedi sotto). Mancano: toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale ("Chi era il Babbo Natale di chi"), **pubblicazione** (unire il ramo in `main` → Production su Vercel).
+Stato al 13/11 notte: **Fase 1 fatta e collaudata + Santa Chat + Novità (feed, post, reazioni) + censura dei nomi, tutto collaudato** (vedi sotto). Mancano: toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), rivelazione finale ("Chi era il Babbo Natale di chi"), **pubblicazione** (unire il ramo in `main` → Production su Vercel).
 Regole sempre valide: prima di scrivere codice **breve piano e aspettare l'ok di Marzia**; mobile first, tasto finale chiaro, contrasto, animazioni con curve di Bézier, suoni da `lib/suoni.ts`. Marzia vuole risparmiare token: sessioni nuove per blocco, richieste raggruppate, poche prove visive.
 Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte senza node_modules), `npx next build`, poi `NODE_USE_ENV_PROXY=1 npx next start -p <porta>`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). I test automatici ora stanno nel repo in `test-e2e/` (quelli vecchi in `scratchpad/e2e/` sono andati persi con le sessioni) e creano gruppi "Test E2E Natale" da ripulire dopo (cancellare SOLO quei gruppi/utenti, chiedendo prima).
 
@@ -24,6 +24,18 @@ Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte se
 - ⚠ Dati di prova rimasti da ripulire (chiedere a Marzia): 2 gruppi "Test E2E Natale" del 13/11 (`dc309576-4f8b-4ea2-a87f-4e6de5a9b609`, `a988807a-23de-4270-b5fb-27be88a41257`) e i loro accessi finti (più un accesso finto senza gruppo, `ea354d17-bcf7-4cdd-beb6-2b111b6ea253`, usato per provare il Realtime).
 - Non fatto (volutamente semplice): niente notifiche push, niente modifica/cancellazione dei messaggi, niente "sta scrivendo…".
 
+## Novità (feed del gruppo) ✅ (13/11 notte)
+- Richieste di Marzia: post da max 100 caratteri e/o foto, ai quali si può solo reagire; emoji 🎄 ❤️ 😂 🔥 👀 + 🇮🇱; regola ferrea: nomi dei partecipanti asteriscati in post e Santa Chat, anche con trucchi (leet, lettere vicine, ecc.). Scelte di default (le avevo proposte, Marzia non ha obiettato): **una reazione a testa** e **feed riempito con quello che era già successo**.
+- Database (migrazioni `20261113180000_feed_e_censura`, `…181000_censura_correzione`, `…183000_censura_sala_prove`, `…184000_censura_scambi`, tutte applicate):
+  - `feed_events` (tipo: creato, entrato, estrazione, busta, bacheca, totem, post; `dati` = {testo, foto} o {profilo}; `quando`) e `feed_reactions` (una riga a testa per voce, emoji solo dall'elenco). Lettura: solo chi è nel gruppo. Scrittura: solo trigger e funzioni.
+  - Trigger: `group_members` (creato/entrato; se l'organizzatore libera un nome la voce "entrato" sparisce; busta aperta), `groups` (estrazione), `moodboard_items` (bacheca: entro 1 ora la stessa voce torna in cima invece di moltiplicarsi), `quiz_results` (totem; il nome del totem si legge da quiz_totems, così resta modificabile).
+  - `pubblica_post(p_group, p_testo, p_foto)`: testo ≤ 100 caratteri (censurato), foto solo da `moodboard/<gruppo>/<mio member id>/<uuid>.jpg` già caricata (stesso archivio privato della bacheca, foto ridotte a 1200px con `lib/foto.ts`). `elimina_post` (solo il proprio; la foto la toglie il sito). `reagisci(p_event, p_emoji)`.
+  - Censura: `private.censura_testo(nomi[], testo)` (cuore, vedi CLAUDE.md punto 10bis per cosa riconosce), `private.censura_nomi(gruppo, testo)` (nomi del gruppo), usata da `invia_santa_message` e `pubblica_post`. `public.prova_censura(nomi[], testo)` per la sala prove (senza accesso, non salva niente). Il sito mostra "Alcuni nomi sono diventati asterischi, per evitare spoiler" quando il testo salvato è diverso da quello scritto.
+- Interfaccia: `components/feed.tsx` (VoceFeed, ComponiPost, ElencoFeed: disegno puro), `components/feed-gruppo.tsx` (dati veri). Pagina del gruppo: sezione "Novità" con le ultime 3 voci e "Tutte le novità (N nuove)" (ultima vista in localStorage `feed-visto:<gruppo>`). Pagina `/gruppo/[id]/novita` con "Scrivi un post" (campo 100 caratteri, "Aggiungi una foto", "Pubblica"). Voci = riquadri di feltro piatti; reazioni = pillole in rilievo (la mia vermiglio) + tasto tondo "Reagisci" che apre le 6 emoji; tasto tondo cestino sui propri post; tasto tondo → sulle voci bacheca. Suono `suoni.reazione()`.
+- Sala prove: `/prove/novita` (voci inventate, post e reazioni locali, censura vera sui nomi Giulia, Marco, Sara, Luca, Anna) e la censura anche in `/prove/chat`.
+- Collaudo: `test-e2e/feed.mjs` (tutti OK: voci automatiche, estraneo escluso da feed e foto, niente scritture dirette, 9 casi di censura, limiti dei post, foto di un altro rifiutata, reazione unica/cambio/tolta/🇮🇱, cancellazione solo dei propri post, bacheca accorpata, estrazione e busta, Santa Chat censurata, prova_censura).
+- ⚠ Dati di prova in più da ripulire (chiedere a Marzia): gruppi "Test E2E Natale" `534ccc39-31bf-4cae-a937-f74b0cfda4da` e `abddbc2d-d78c-4711-a69b-294a20318caa` con i loro accessi finti (4 per gruppo, compreso un "estraneo" senza gruppo).
+
 ## Dove siamo
 | Blocco | Stato |
 |---|---|
@@ -42,7 +54,8 @@ Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte se
 | Avatar a mezzobusto (sostituisce le emoji ovunque) + pagina `/profilo` + personaggio anche in "Crea un gruppo" (riquadro "Tu") | ✅ fatto: 12 tagli, barba/baffi, occhiali, pelle, colore capelli, maglione. Premi: accessori (sciarpa, gomitolo, fiocco, stellina), taglio **Super** (10 cose sulla bacheca), capelli **olografici** (tutti e 4 gli accessori), cappello col quiz. Il database rifiuta i premi non sbloccati. Niente login separato (deciso da Marzia: resta tutto com'era). |
 | Apertura busta "a slot machine" + busta 3D | ✅ fatta (da provare sul telefono): slot "Babbo-matic" con leva vera da trascinare, lampadine, giro di 7,5 s, si ferma su un PACCHETTO "?" (scelta A di Marzia: nome e faccia solo nella busta); scena a tutto schermo con busta 3D (three.js, caricato solo qui) che arriva girando, neve, scintille; "Apri la busta" chiede il permesso movimento su iPhone, lembo che si apre con fodera a righe; biglietto che si gira e si inclina con riflesso olografico; versione 2D con "riduci movimento" o senza WebGL. |
 | Santa Chat (chat anonima col proprio Babbo Natale) | ✅ fatta e collaudata (13/11) |
-| Fase 2: feed del gruppo, rivelazione finale | ⏳ dopo |
+| Novità (feed del gruppo, post con foto, reazioni) + censura dei nomi in post e Santa Chat | ✅ fatte e collaudate (13/11) |
+| Fase 2: rivelazione finale | ⏳ dopo |
 
 ## Decisioni prese (oltre a quelle in CLAUDE.md)
 - **Accesso con password di almeno 8 caratteri** (non più PIN). Email finta generata dal sito, nessuna email inviata.

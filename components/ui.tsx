@@ -227,6 +227,18 @@ export const Icone = {
       <path d="M11 14l9-10" />
     </svg>
   ),
+  foto: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  ),
+  reazione: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M20 12.5A8 8 0 1 1 11.5 4" />
+      <path d="M9 14.5c1.6 1.6 4.4 1.6 6 0M9 10h.01M14 10h.01M18 3v6M15 6h6" />
+    </svg>
+  ),
   fumetto: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />

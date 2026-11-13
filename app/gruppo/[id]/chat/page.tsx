@@ -111,7 +111,7 @@ function Chat() {
   }, [conv, messaggi]);
 
   async function invia(testo: string) {
-    if (!conv) return "Un attimo, sto ancora caricando.";
+    if (!conv) return { errore: "Un attimo, sto ancora caricando." };
     const provvisorio: Messaggio = {
       id: `attesa-${Date.now()}`,
       dal_babbo: conv.ruolo === "babbo",
@@ -127,12 +127,13 @@ function Chat() {
       if (error || !vero || senza.some((m) => m.id === vero.id)) return senza;
       return [...senza, vero];
     });
-    if (error) return error.message.includes("fetch") ? "Messaggio non inviato: controlla la connessione e riprova." : error.message;
+    if (error) return { errore: error.message.includes("fetch") ? "Messaggio non inviato: controlla la connessione e riprova." : error.message };
     if (!giaInviato.current) {
       giaInviato.current = true;
       controllaPremi(); // il primo messaggio sblocca il Taglio Super
     }
-    return null;
+    // regola anti-spoiler: il database copre i nomi del gruppo con asterischi
+    return (data as Messaggio | null)?.testo !== testo ? { nota: "Alcuni nomi sono diventati asterischi, per evitare spoiler." } : {};
   }
 
   if (!conv) return <main className="flex-1" />;

@@ -128,6 +128,12 @@ export const suoni = {
     campana(1976, 0.11, 0.07);
   },
 
+  // Novità: reazione con un'emoji ("pop" di bottone)
+  reazione() {
+    nota(740, 0.07, { tipo: "triangle", volume: 0.12, scivola: 1.6 });
+    nota(1480, 0.1, { volume: 0.05, ritardo: 0.05 });
+  },
+
   punto() {
     rumore(0.04, { volume: 0.05, filtro: 3500, tipoFiltro: "bandpass", q: 2 });
   },

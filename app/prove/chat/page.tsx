@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { normalizzaLook } from "@/components/avatar";
 import { SantaChat, type Messaggio, type Ruolo } from "@/components/santa-chat";
 import { Tasto } from "@/components/ui";
+import { censuraProva } from "@/lib/prove";
 import { suoni } from "@/lib/suoni";
 
 // Sala prove della Santa Chat: l'altra parte risponde da sola con frasi pronte. Non si salva niente.
@@ -42,7 +43,8 @@ export default function ProvaChat() {
   async function invia(testo: string) {
     const ora = new Date().toISOString();
     const mio = ruolo === "babbo";
-    setMessaggi((m) => [...m, { id: `p${Date.now()}`, dal_babbo: mio, testo, created_at: ora }]);
+    const coperto = await censuraProva(testo); // stessa regola anti-spoiler dei gruppi veri
+    setMessaggi((m) => [...m, { id: `p${Date.now()}`, dal_babbo: mio, testo: coperto, created_at: ora }]);
     const frasi = mio ? DAL_PESCATO : DAL_BABBO;
     const risposta = frasi[giro.current++ % frasi.length];
     timer.current.push(
@@ -51,7 +53,7 @@ export default function ProvaChat() {
         suoni.arrivato();
       }, 1400 + Math.random() * 1200),
     );
-    return null;
+    return coperto !== testo ? { nota: "Alcuni nomi sono diventati asterischi, per evitare spoiler." } : {};
   }
 
   return (
@@ -63,7 +65,7 @@ export default function ProvaChat() {
       onInvia={invia}
       indietro="/prove"
       etichettaIndietro="Torna alla sala prove"
-      contesto="Sala prove · niente viene salvato"
+      contesto="Sala prove · prova a scrivere Giulia, Marco, Sara, Luca o Anna"
       sopra={
         <Tasto tipo="secondario" type="button" className="mt-6" onClick={cambiaParte}>
           {ruolo === "babbo" ? "Prova come chi riceve" : "Prova come Babbo Natale"}

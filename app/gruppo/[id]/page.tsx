@@ -5,6 +5,7 @@ import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { PallinoChat } from "@/components/pallino-chat";
+import { FeedGruppo } from "@/components/feed-gruppo";
 import { ToppaBabbo } from "@/components/santa-chat";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
@@ -155,6 +156,21 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             <PallinoChat receiverId={io.id} ruolo="pescato" />
             <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
           </Link>
+        </section>
+      )}
+
+      {io && (
+        <section className="mt-8">
+          <h2 className="font-titolo text-2xl">Novità</h2>
+          <div className="mt-4">
+            <FeedGruppo
+              groupId={id}
+              io={io.id}
+              persone={Object.fromEntries(membri.map((m) => [m.id, { nome: m.display_name, look: look(m) }]))}
+              totem={Object.fromEntries((nomiTotem ?? []).map((t) => [t.profilo, { nome: t.nome, immagine: t.immagine }]))}
+              limite={3}
+            />
+          </div>
         </section>
       )}
 

@@ -65,7 +65,7 @@ export function SantaChat({
   nomeAltro: string; // per il Babbo: il nome della persona pescata
   lookAltro: Look | null;
   messaggi: Messaggio[];
-  onInvia: (testo: string) => Promise<string | null>; // restituisce l'errore, se c'è
+  onInvia: (testo: string) => Promise<{ errore?: string; nota?: string }>; // errore o nota (es. nomi coperti)
   indietro: string;
   etichettaIndietro: string;
   contesto?: string;
@@ -73,6 +73,7 @@ export function SantaChat({
 }) {
   const [testo, setTesto] = useState("");
   const [errore, setErrore] = useState("");
+  const [nota, setNota] = useState("");
   const campo = useRef<HTMLTextAreaElement>(null);
   const primaVolta = useRef(true);
   const riduci = useReducedMotion();
@@ -98,15 +99,17 @@ export function SantaChat({
   async function invia() {
     if (!pulito || troppo) return;
     setErrore("");
+    setNota("");
     const daInviare = pulito;
     setTesto("");
     suoni.inviato();
     campo.current?.focus();
-    const e = await onInvia(daInviare);
-    if (e) {
-      setErrore(e);
+    const r = await onInvia(daInviare);
+    if (r.errore) {
+      setErrore(r.errore);
       setTesto(daInviare);
     }
+    if (r.nota) setNota(r.nota);
   }
 
   const ultimoMio = [...messaggi].reverse().find((m) => m.dal_babbo === sonoBabbo);
@@ -187,6 +190,11 @@ export function SantaChat({
           invia();
         }}
       >
+        {nota && (
+          <p role="status" className="mb-3 text-center text-sm text-crema/80">
+            {nota}
+          </p>
+        )}
         {errore && (
           <div className="mb-3">
             <Errore>{errore}</Errore>

@@ -11,10 +11,11 @@ const PROVE = [
   { titolo: "Sondaggio totem", testo: "Rispondi alle domande predefinite e scopri il tuo totem. Si rifà quante volte vuoi.", href: "/prove/sondaggio" },
   { titolo: "Bacheca", testo: "Toppe, ricamo e foto su una tela libera. Non si salva niente.", href: "/prove/bacheca" },
   { titolo: "Santa Chat", testo: "Scrivi come Babbo Natale o come chi riceve: dall'altra parte risponde un amico inventato.", href: "/prove/chat" },
+  { titolo: "Novità", testo: "Il feed del gruppo con post, foto e reazioni. Prova a scrivere i nomi degli amici inventati: diventano asterischi.", href: "/prove/novita" },
   { titolo: "Personaggio", testo: "L'editor completo con tutti i premi già sbloccati.", href: "/prove/personaggio" },
   { titolo: "Galleria dello stile", testo: "Personaggi, premi, olografie, tasti e colori del sito.", href: "/stile" },
 ];
-const IN_ARRIVO = ["Feed del gruppo", "Rivelazione finale"];
+const IN_ARRIVO = ["Rivelazione finale"];
 
 export default function SalaProve() {
   return (
