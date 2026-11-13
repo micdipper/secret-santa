@@ -1,6 +1,17 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 9 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
+Aggiornato al 13 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
+
+
+## ➡ PROSSIMO BLOCCO: SANTA CHAT (chat anonima col proprio Babbo Natale) — CLAUDE.md, Fase 2, punto 9
+Stato al 13/11: **tutta la Fase 1 è fatta e collaudata** (gruppi, inviti, esclusioni, estrazione, busta 3D con slot machine, bacheca, personaggio e premi, sondaggio totem, suoni, sala prove `/prove`). Mancano: **Santa Chat**, toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale, **pubblicazione** (unire il ramo in `main` → Production su Vercel).
+Decisioni già prese da Marzia sulla Santa Chat:
+- Si chiama **Santa Chat**. Chi regala scrive alla persona pescata **senza rivelarsi**; il destinatario può rispondere (a chi scrive, senza sapere chi è).
+- RLS: ogni conversazione leggibile solo dai due partecipanti; **al destinatario non si espone MAI l'identità/id di chi scrive**. Realtime di Supabase.
+- Il **Taglio Super** (premio, id `super`) si sblocca **chattando col proprio Babbo Natale**: serve un segno "ha scritto almeno un messaggio" in `private.unlocked_accessories` (oggi la riga `null::text -- 'super'` è il segnaposto). I capelli olografici e gli occhiali veloci olografici richiedono tutti e 5 i premi, quindi anche questo.
+- Aggiungere la chat anche alla **sala prove** (`/prove`, riquadro "In arrivo": Santa Chat) in modo che si possa provare senza creare gruppi.
+- Regole di interfaccia sempre valide (vedi CLAUDE.md): mobile first, tasto finale chiaro, contrasto, animazioni fluide con curve di Bézier, un solo tasto audio fisso, suoni da `lib/suoni.ts`. Prima di scrivere codice: **breve piano e aspettare l'ok di Marzia**.
+Note tecniche utili: test automatici in `scratchpad/e2e/` (sondaggio.js, slot.js…) usano gruppi "Test E2E Natale" e vanno ripuliti dopo (cancellare SOLO quei gruppi/utenti; chiedere prima di toccare altro). Per le prove locali: `NODE_USE_ENV_PROXY=1 npx next start -p <porta>` dopo `npx next build`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). Marzia vuole risparmiare token: sessioni nuove per blocco, richieste raggruppate, poche prove visive.
 
 ## Dove siamo
 | Blocco | Stato |
