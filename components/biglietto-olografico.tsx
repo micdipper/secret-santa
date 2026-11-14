@@ -18,11 +18,13 @@ export function BigliettoOlografico({
   nome,
   look,
   olografiaDopo = 0,
+  accesa = true,
   olografia = OLOGRAFIA_SCELTA,
 }: {
   nome: string;
   look: Look | null;
   olografiaDopo?: number; // secondi prima che l'effetto olografico si accenda
+  accesa?: boolean; // si può preparare la card spenta (già pronta, senza scatti) e accendere l'olografia dopo
   olografia?: Olografia;
 }) {
   const ridotto = useReducedMotion();
@@ -84,8 +86,8 @@ export function BigliettoOlografico({
         <motion.div
           className="pointer-events-none absolute inset-0"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: olografiaDopo, duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+          animate={{ opacity: accesa ? 1 : 0 }}
+          transition={{ delay: accesa ? olografiaDopo : 0, duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
         >
           <motion.div
             className="absolute inset-0 mix-blend-multiply"

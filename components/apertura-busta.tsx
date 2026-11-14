@@ -450,11 +450,11 @@ export function AperturaBusta({
                   transition: "filter .6s",
                 }}
               >
-                <div className="absolute inset-x-0 -top-[120px] h-[120px] bg-crema" />
+                <div className="absolute inset-x-0 -top-[120px] h-[120px] bg-[#efe3c9]" />
                 {voci.map((p, i) => (
                   <div
                     key={i}
-                    className={`flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-crema"}`}
+                    className={`flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-[#efe3c9]"}`} // stesso colore della carta della busta
                     style={{ height: ALTEZZA_VOCE }}
                   >
                     {p === "?" ? (
@@ -839,7 +839,8 @@ export function AperturaBusta({
                       ? `${faseScena}-${tocchi}`
                       : "semplice"
                 }
-                className="flex min-h-14 flex-1 items-center justify-center text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
+                // altezza fissa (due righe): se la scritta cambia numero di righe, il posto del biglietto non si sposta
+                className="flex h-[64px] flex-1 items-center justify-center text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
@@ -877,12 +878,15 @@ export function AperturaBusta({
                   <BustaGrande />
                 </motion.div>
               )}
-              {rivelato && (
-                <div className="pointer-events-auto">
+              {/* la card vera è pronta fin dall'inizio (nascosta): quando prende il posto del biglietto 3D non ci sono scatti,
+                  e l'olografia si accende piano */}
+              {(rivelato || busta3d) && (
+                <div className={rivelato ? "pointer-events-auto" : "pointer-events-none"}>
                   <BigliettoOlografico
                     nome={destinatario.nome}
                     look={destinatario.look}
-                    olografiaDopo={0.3}
+                    accesa={rivelato}
+                    olografiaDopo={0.15}
                   />
                 </div>
               )}
@@ -986,7 +990,24 @@ function Sigillo({ acceso = false }: { acceso?: boolean }) {
         strokeOpacity=".5"
         strokeWidth="3"
       />
-      <path d="M50 27l5 18 18 5-18 5-5 18-5-18-18-5 18-5z" fill="#f1d27a" />
+      {/* la S del logo impressa nella cera: bordo scuro in alto a sinistra, riflesso in basso a destra */}
+      {[
+        [1.6, "rgba(255,190,170,.55)"],
+        [0, "#3e0808"],
+        [1, "#8a1812"],
+      ].map(([d, c]) => (
+        <text
+          key={c as string}
+          x={50 + (d as number)}
+          y={53 + (d as number)}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={c as string}
+          style={{ fontFamily: "var(--font-basteleur), Georgia, serif", fontSize: 58 }}
+        >
+          S
+        </text>
+      ))}
     </motion.svg>
   );
 }

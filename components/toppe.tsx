@@ -112,7 +112,7 @@ export function ToppaParola({ righe, stoffa, senzaTesto = false }: { righe: Riga
 }
 
 // ---------- testa di lupo di profilo (girata a destra), per "i due lupi" ----------
-const TESTA_LUPO = "M8 92C10 72 14 58 24 49L21 35L28 43L32 37L35 46C41 47 46 50 48 53L47 56.5C42 57.5 37 59 33 63C31 73 31 83 33 92Z";
+const TESTA_LUPO = "M6 96C8 80 10 66 18 46L21 30L28 42L32 42C38 44 43 46 47.5 49.5L48.5 52L46 53.6C42 55 39 55.6 36 56L38.5 60.5L34 62L36.5 68L31.5 70L33.5 77L29 81L30 96Z";
 
 // Le parole su una tela larga 100: una parola da una riga e 220 di larghezza diventa larga 46.
 const SCALA_PAROLA = 46 / 220;
@@ -375,36 +375,42 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    // dalla reference di Marzia: lupo bianco seduto su uno scoglio, abbraccia le ginocchia e guarda in alto, mare in tempesta
+    // dalla reference di Marzia: lupo bianco seduto ai piedi di un grande albero, abbraccia le ginocchia e guarda in alto, mare in tempesta
     id: "aa-lupo", tipo: "simbolo", nome: "uno dei due lupi", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
         <Ritaglio id="lupo-scoglio">
-          {[22, 30, 72, 80].map((x) => (
-            <path key={x} d={`M${x} 14l-3 14`} stroke="#5b6b86" strokeWidth="1" opacity=".7" />
+          {[14, 22, 30].map((x) => (
+            <path key={x} d={`M${x} 18l-3 14`} stroke="#5b6b86" strokeWidth="1" opacity=".7" />
           ))}
-          <path d="M6 70c8-3 12 1 20-1M74 68c8-3 12 1 20-1" stroke="#5b6b86" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M10 94c4-12 14-16 30-16s32 2 46 16z" fill="#4a5160" />
-          <path d="M26 84c10-3 24-3 36 0" stroke="#626b7d" strokeWidth="1.6" fill="none" />
+          <path d="M4 64c6-3 10 1 16-1s8-3 14-1" stroke="#5b6b86" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M4 71c6-2 10 1 16-1" stroke="#5b6b86" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          {/* il grande albero a cui si appoggia: tronco, rami che si aprono sopra, radici */}
+          <path d="M62 96C64 76 62 58 66 44c2-8 6-14 14-20l6 5c-6 6-8 12-8 22 0 18 2 32 8 45z" fill="#3b2a20" />
+          <path d="M70 40c-6-10-16-16-30-20M74 30c2-8 8-12 16-14M66 50c-8-4-14-4-20 0" stroke="#3b2a20" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M48 24c-4-2-8-2-10 0M84 18c2-3 6-4 8-3M52 49c-3-2-6-1-8 1" stroke="#3b2a20" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M70 56c1 10 0 22 2 34M76 62c-1 8 0 18 3 28" stroke="#2a1d16" strokeWidth="1.4" fill="none" />
+          <path d="M8 96c6-12 16-16 34-16s30 4 50 16z" fill="#4a5160" />
+          <path d="M58 90c4-4 10-4 14 0M78 88c3-3 8-3 10 0" stroke="#3b2a20" strokeWidth="3" fill="none" strokeLinecap="round" />
         </Ritaglio>
-        {/* coda appoggiata sullo scoglio */}
-        <path d="M60 76c9 2 17-1 22-8-6 3-13 4-21 3z" fill="#d7d3cb" />
-        {/* il lupo seduto, di profilo, muso all'insù */}
+        {/* coda appoggiata */}
+        <path d="M58 79c9 2 15 1 20-3-6 1-12 0-19-2z" fill="#d7d3cb" />
+        {/* il lupo seduto, di profilo, muso all'insù, schiena contro il tronco */}
         <path
-          d="M36 22L48 26L53 22L56 13L59 24C62 30 61 36 58 40C64 46 67 56 66 66C66 72 64 78 60 79L40 79C35 79 33 76 35 74L37 66C33 64 32 58 36 54L41 50C42 46 43 42 45 38L41 33L35 26Z"
+          d="M30 24L42 28L47 24L50 15L53 26C56 32 55 38 52 42C58 48 61 58 60 68C60 74 58 80 54 81L34 81C29 81 27 78 29 76L31 68C27 66 26 60 30 56L35 52C36 48 37 44 39 40L35 35L29 28Z"
           fill="#f3efe6"
         />
         {/* braccio che abbraccia le ginocchia */}
-        <path d="M55 47c-5 4-11 8-17 10" stroke="#d7d3cb" strokeWidth="5" fill="none" strokeLinecap="round" />
-        <path d="M54 46c-5 4-11 8-17 10" stroke="#f3efe6" strokeWidth="4" fill="none" strokeLinecap="round" />
-        <circle cx="37" cy="57" r="2.8" fill="#f3efe6" />
+        <path d="M49 49c-5 4-11 8-17 10" stroke="#d7d3cb" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <path d="M48 48c-5 4-11 8-17 10" stroke="#f3efe6" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <circle cx="31" cy="59" r="2.8" fill="#f3efe6" />
         {/* criniera, orecchio, occhio pensieroso, naso */}
-        <path d="M45 38l3 2-1 3 3 1-1 3" stroke="#c9c5bc" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M56.4 16l1 6" stroke="#c9c5bc" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M60 64c-2 5-6 8-12 9" stroke="#d7d3cb" strokeWidth="1.4" fill="none" strokeLinecap="round" />
-        <path d="M47.2 28.6q1.6-1.4 3.4 0" stroke={C.ink} strokeWidth="1.3" fill="none" strokeLinecap="round" />
-        <circle cx="35.8" cy="23.6" r="1.6" fill={C.ink} />
-        <path d="M38 28.4l4.4 2" stroke="#b9bcc1" strokeWidth="1" strokeLinecap="round" />
+        <path d="M39 40l3 2-1 3 3 1-1 3" stroke="#c9c5bc" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M50.4 18l1 6" stroke="#c9c5bc" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M54 66c-2 5-6 8-12 9" stroke="#d7d3cb" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        <path d="M41.2 30.6q1.6-1.4 3.4 0" stroke={C.ink} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <circle cx="29.8" cy="25.6" r="1.6" fill={C.ink} />
+        <path d="M32 30.4l4.4 2" stroke="#b9bcc1" strokeWidth="1" strokeLinecap="round" />
       </Rotonda>
     ),
   },
@@ -461,22 +467,31 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "aa-sisifo", tipo: "simbolo", nome: "Sisifo", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    // Sisifo che spinge il masso su per la montagna (il masso ha il fiocco: è il regalo)
+    id: "aa-sisifo", tipo: "simbolo", nome: "quando faccio un regalo", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
-      <Rotonda fondo={C.ink} filo={C.crema}>
-        <Ritaglio id="sisifo">
-          <circle cx="50" cy="52" r="31" fill={C.crema} />
-          <circle cx="57" cy="45" r="19" fill={C.ink} />
-          {/* il pendio taglia il cerchio in basso a destra */}
-          <path d="M44 90L90 56V96H40z" fill={C.ink} />
-          {/* Sisifo che spinge il masso */}
-          <g stroke={C.ink} strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
-            <path d="M37 61.5L31 69.5" />
-            <path d="M36.4 62.5l5.2-3.4M35 65l6-1.6" />
-            <path d="M31 69.5l-4 5.6M31 69.5l3 4 -1.4 3.4" />
-          </g>
-          <circle cx="38.6" cy="58" r="3.2" fill={C.ink} />
+      <Rotonda fondo={C.ghiaccio} filo={C.notte}>
+        <Ritaglio id="montagna">
+          {/* la montagna, con la neve in cima */}
+          <path d="M-2 98L6 90L78 30L100 50V100z" fill={C.abete} />
+          <path d="M70 36.6L78 30l8 7.3-4 1-3-3-3 4-2-3z" fill={C.bianco} />
+          <path d="M6 90L78 30" stroke="#1e3826" strokeWidth="1.6" />
+          <path d="M26 88l6-5M44 84l8-7M60 74l6-5M70 82l6-5" stroke="#1e3826" strokeWidth="1.4" strokeLinecap="round" />
         </Ritaglio>
+        {/* il masso, con il fiocco del regalo */}
+        <circle cx="52" cy="40" r="11" fill={C.grigio} />
+        <path d="M45 34c3-3 7-4 11-2" stroke="#b4b7bc" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M41 42c7 2 15 2 22-1M52 29c-2 7-2 15 0 22" stroke={C.verm} strokeWidth="2.6" fill="none" />
+        <path d="M52 29c-6-6-11-1-6 1zM52 29c6-6 11-1 6 1z" fill={C.verm} />
+        {/* lui che spinge, piegato in avanti */}
+        <path d="M34 61L40 52.5" stroke={C.verm} strokeWidth="5.4" strokeLinecap="round" />
+        <path d="M34 61l-8 11.6M34 61l1.6 5.4-3.6 3.4" stroke={C.notte} strokeWidth="3.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M39.6 54l4.4-4.6M38.4 56.6l5.4-2.4" stroke={C.pelle} strokeWidth="2.6" strokeLinecap="round" />
+        <circle cx="41.6" cy="48.6" r="3.4" fill={C.pelle} />
+        <path d="M38.6 47c1-2.6 3.6-3.6 6-2.4" stroke={C.capelli} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        {/* fatica */}
+        <path d="M34 44c1.4 2.6 2.4 3.6 2.4 4.8a2.4 2.4 0 0 1-4.8 0c0-1.2 1-2.2 2.4-4.8z" fill={C.bianco} />
+        <path d="M22 66h-6M24 60h-5M22 72h-4" stroke={C.notte} strokeWidth="1.4" strokeLinecap="round" opacity=".6" />
       </Rotonda>
     ),
   },
@@ -708,28 +723,41 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    // dalla reference di Marzia: lupo mannaro grigio che ulula alla luna e si strappa la camicia, nel bosco di notte
+    // lupo mannaro arrabbiatissimo che si strappa la camicia, con la luna piena sotto
     id: "be-lupo", tipo: "simbolo", nome: "l'altro lupo", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
-        <Ritaglio id="bosco-lupo">
-          <circle cx="50" cy="22" r="11" fill="#d8dce6" opacity=".9" />
-          <path d="M6 90l10-40 10 40zM14 90l8-30 8 30zM94 90l-10-40-10 40zM86 90l-8-30-8 30z" fill="#16241b" />
-          {/* corpo: busto peloso con la camicia strappata */}
-          <path d="M26 96c0-18 9-30 24-32 15 2 24 14 24 32z" fill={C.grigio} />
-          <path d="M42 66l8 14 8-14c-2 8-4 14-8 20-4-6-6-12-8-20z" fill="#b4b7bc" />
-          <path d="M26 96c0-16 5-26 14-30l3 8-5 4 5 6-4 12zM74 96c0-16-5-26-14-30l-3 8 5 4-5 6 4 12z" fill="#3a3f45" />
-          {/* braccia che strappano la camicia */}
-          <path d="M30 78c4-6 8-10 12-11M70 78c-4-6-8-10-12-11" stroke={C.grigio} strokeWidth="7" strokeLinecap="round" fill="none" />
-          <path d="M40 66l-2-3M43 66l-1-3.6M60 66l2-3M57 66l1-3.6" stroke={C.bianco} strokeWidth="1.2" strokeLinecap="round" />
+        <Ritaglio id="lupo-arrabbiato">
+          <circle cx="50" cy="86" r="32" fill="#e9e5db" />
+          <circle cx="36" cy="74" r="4" fill="#d6d1c4" />
+          <circle cx="66" cy="80" r="3" fill="#d6d1c4" />
+          {/* busto peloso */}
+          <path d="M26 100c0-18 10-30 24-32 14 2 24 14 24 32z" fill={C.grigio} />
+          <path d="M42 70l8 14 8-14c-2 8-4 14-8 20-4-6-6-12-8-20z" fill="#b4b7bc" />
+          {/* camicia a quadri strappata, che si apre ai lati */}
+          <path d="M26 100c0-14 4-24 12-29l4 6-4 3 5 5-4 4 3 11z" fill={C.verm} />
+          <path d="M74 100c0-14-4-24-12-29l-4 6 4 3-5 5 4 4-3 11z" fill={C.verm} />
+          <path d="M30 80l8 4M28 88l10 3M70 80l-8 4M72 88l-10 3" stroke="#9e2a0b" strokeWidth="1.4" />
+          {/* pugni che tirano la camicia */}
+          <circle cx="38" cy="80" r="5" fill={C.grigio} />
+          <circle cx="62" cy="80" r="5" fill={C.grigio} />
+          <path d="M35 78l2 1.6M37 76.6l2 1.6M65 78l-2 1.6M63 76.6l-2 1.6" stroke={C.grigioScuro} strokeWidth="1.2" strokeLinecap="round" />
         </Ritaglio>
-        {/* testa all'insù che ulula */}
-        <path d="M42 64c-3-10-1-22 4-32l1-8h6l1 8c5 10 7 22 4 32z" fill={C.grigio} />
-        <path d="M42 50l-7-8 9 3zM58 50l7-8-9 3z" fill={C.grigioScuro} />
-        <path d="M47.4 26l2.6 13 2.6-13z" fill="#5a1f2b" />
-        <path d="M47.6 27l1 3M52.4 27l-1 3" stroke={C.bianco} strokeWidth="1" strokeLinecap="round" />
-        <circle cx="50" cy="24.6" r="1.8" fill={C.ink} />
-        <path d="M44.6 48l2.4 1M55.4 48l-2.4 1" stroke={C.senape} strokeWidth="1.6" strokeLinecap="round" />
+        {/* brandelli di stoffa che volano */}
+        <path d="M18 60l6-3-1 6zM82 58l-6-2 2 6zM24 48l4 1-3 3z" fill={C.verm} />
+        {/* testa di fronte: orecchie dritte, sopracciglia aggrottate, occhi rossi, ringhio */}
+        <path d="M33 34l4-18 9 12zM67 34l-4-18-9 12z" fill={C.grigio} />
+        <path d="M36 30l2-9 4 6zM64 30l-2-9-4 6z" fill={C.grigioScuro} />
+        <path d="M32 40c0-11 8-17 18-17s18 6 18 17c0 8-5 14-9 19l-9 10-9-10c-4-5-9-11-9-19z" fill={C.grigio} />
+        <path d="M43 47c2-4 12-4 14 0l-2 11-5 6-5-6z" fill="#b4b7bc" />
+        <path d="M37 36l10 5M63 36l-10 5" stroke={C.ink} strokeWidth="3" strokeLinecap="round" />
+        <ellipse cx="42" cy="43" rx="2.6" ry="1.8" fill="#ff5c3a" />
+        <ellipse cx="58" cy="43" rx="2.6" ry="1.8" fill="#ff5c3a" />
+        <ellipse cx="50" cy="50" rx="3" ry="2.2" fill={C.ink} />
+        <path d="M43 57c4 3 10 3 14 0l-2 5c-3 2-7 2-10 0z" fill="#5a1f2b" />
+        <path d="M44.6 57.6l1.4 2.4 1.2-2M55.4 57.6l-1.4 2.4-1.2-2" fill={C.bianco} />
+        {/* simbolo della rabbia */}
+        <path d="M72 22l3 3M76 20l-1 4M78 25l-4 1" stroke={C.verm} strokeWidth="2" strokeLinecap="round" />
       </Rotonda>
     ),
   },
@@ -767,7 +795,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "bo-zuppa", tipo: "simbolo", nome: "sei cucinato", rapporto: 1, totem: "BONUS",
+    id: "bo-zuppa", tipo: "simbolo", nome: "cucinato", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.senape} filo={C.abete}>
         <path d="M38 42c-4-6 4-8 0-15M50 42c-4-6 4-8 0-15M62 42c-4-6 4-8 0-15" stroke={C.abete} strokeWidth="3" fill="none" strokeLinecap="round" />
@@ -784,29 +812,31 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    // dalla reference di Marzia: due lupi, uno nero e uno bianco, muso contro muso davanti alla luna piena
+    // dalla reference di Marzia: due lupi, uno nero e uno bianco, muso contro muso davanti alla luna piena (specchiati)
     id: "bo-lupi", tipo: "simbolo", nome: "i due lupi", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
         <Ritaglio id="due-lupi">
-          <circle cx="50" cy="48" r="27" fill="#e9e5db" />
-          <circle cx="42" cy="40" r="4" fill="#d6d1c4" />
-          <circle cx="58" cy="56" r="3" fill="#d6d1c4" />
-          <circle cx="60" cy="36" r="2" fill="#d6d1c4" />
-          <path d={TESTA_LUPO} fill="#1c1f24" />
-          <circle cx="33.6" cy="48.6" r="1.3" fill="#c9ccd1" />
+          <circle cx="50" cy="46" r="27" fill="#e9e5db" />
+          <circle cx="40" cy="36" r="4" fill="#d6d1c4" />
+          <circle cx="60" cy="36" r="4" fill="#d6d1c4" />
+          <circle cx="50" cy="62" r="3" fill="#d6d1c4" />
+          <path d={TESTA_LUPO} fill="#1c1f24" stroke="#3a3f45" strokeWidth="1" />
+          <path d="M22 34l3.4 6.6" stroke="#3a3f45" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="34" cy="47.4" r="1.3" fill="#c9ccd1" />
           <g transform="translate(100 0) scale(-1 1)">
-            <path d={TESTA_LUPO} fill={C.bianco} />
-            <path d="M24 49c4 2 6 6 8 12M28 43l2 4" stroke="#b9bcc1" strokeWidth="1.3" fill="none" strokeLinecap="round" />
-            <circle cx="33.6" cy="48.6" r="1.3" fill={C.ink} />
-            <circle cx="47.4" cy="53.6" r="1.4" fill={C.ink} />
+            <path d={TESTA_LUPO} fill={C.bianco} stroke="#b9bcc1" strokeWidth="1" />
+            <path d="M22 34l3.4 6.6" stroke="#b9bcc1" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M16 60c2 6 4 12 6 20" stroke="#b9bcc1" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+            <circle cx="34" cy="47.4" r="1.3" fill={C.ink} />
+            <circle cx="47.6" cy="51" r="1.3" fill={C.ink} />
           </g>
         </Ritaglio>
       </Rotonda>
     ),
   },
   {
-    id: "bo-pandoro", tipo: "simbolo", nome: "quello che succede quando", rapporto: 1, totem: "BONUS",
+    id: "bo-pandoro", tipo: "simbolo", nome: "il pandoro che cade a capodanno", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.bordeaux} filo={C.senape}>
         <ellipse cx="50" cy="76" rx="32" ry="6" fill="#000" opacity=".2" />
@@ -877,10 +907,10 @@ export const CATALOGO: Toppa[] = [
       ["ae-diva", [{ testo: "diva", icona: "stellina" }], "rosa", "IMPEGNO_ALTO_ESIGENTE"],
       ["ae-grindset", "grindset", "nero", "IMPEGNO_ALTO_ESIGENTE"],
       ["ae-no-pain", "no pain no gain", "vermiglio", "IMPEGNO_ALTO_ESIGENTE", true],
-      ["ae-obbligandoti", "😊 obbligandoti a farmi\nil regalo perfetto 😊", "vermiglio", "IMPEGNO_ALTO_ESIGENTE"],
+      ["ae-obbligandoti", "😊 obbligandoti a farmi\nil regalo perfetto 😊", "notte", "IMPEGNO_ALTO_ESIGENTE"],
       // impegno basso · va bene tutto
       ["ba-non-mi-va", "non mi va", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO", true],
-      ["ba-tiger-p", "preso da tiger,\nti piace????", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO"],
+      ["ba-tiger-p", "lo prendo da Tiger,\nva bene si?", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-amo-noi", [{ testo: "amo noi", icona: "cuore" }], "bordeaux", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-zero-effort", "zero effort", "verde", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-chills", "nel chills", "ghiaccio", "IMPEGNO_BASSO_RICEVE_TUTTO"],
@@ -889,7 +919,7 @@ export const CATALOGO: Toppa[] = [
       [
         "be-spero",
         [{ testo: "👍😊 spero ti piaccia 😊👍" }, { testo: "(con l'intenzione di ucciderti in caso contrario)", piccola: true }],
-        "senape",
+        "verde",
         "IMPEGNO_BASSO_ESIGENTE",
       ],
       ["be-bella-merda", "bella merda", "marrone", "IMPEGNO_BASSO_ESIGENTE"],

@@ -107,6 +107,7 @@ export function PillolaNome({ nome }: { nome: string | null }) {
 
 // ---------- il fondo di un cassetto aperto, con le toppe trascinabili e il doppio fondo ----------
 function FondoCassetto({
+  azione,
   visibili,
   nascosti,
   stoffa,
@@ -115,6 +116,7 @@ function FondoCassetto({
   onScopri,
   onTrema,
 }: {
+  azione?: React.ReactNode; // in alto nel cassetto (es. "+ il tuo simbolo")
   visibili: OggettoCassetto[];
   nascosti: OggettoCassetto[];
   stoffa: Stoffa;
@@ -126,7 +128,7 @@ function FondoCassetto({
   const riduci = useReducedMotion();
   const fondo = useRef<HTMLDivElement>(null);
   // prima quelle in vista; quelle del doppio fondo, quando si scoprono, arrivano nelle file sotto
-  const [{ pos: iniziali, fine: fineVisibili }] = useState(() => disponi(visibili));
+  const [{ pos: iniziali, fine: fineVisibili }] = useState(() => disponi(visibili, azione ? 19 : 3));
   const [{ pos: inizialiNascosti, fine: fineTutti }] = useState(() => disponi(nascosti, fineVisibili - 1));
   const [pos, setPos] = useState({ ...iniziali, ...inizialiNascosti });
   const [ordine, setOrdine] = useState<string[]>(() => [...visibili, ...nascosti].map((o) => o.id));
@@ -156,6 +158,7 @@ function FondoCassetto({
     // contenitore largo quanto il fondo: le misure in cqw (altezza e posizioni) si riferiscono alla sua larghezza
     <div style={{ containerType: "inline-size" }}>
       <motion.div ref={fondo} className="cassetto-fondo relative w-full overflow-hidden" animate={{ height: `${fine}cqw` }} transition={{ type: "spring", stiffness: 300, damping: 34 }}>
+        {azione && <div className="absolute top-3 right-3 left-3 z-[450] flex justify-end">{azione}</div>}
         {oggetti.map((o) => {
           const p = pos[o.id] ?? { x: 0, y: 0 };
           const z = ordine.indexOf(o.id) + 1;
@@ -640,8 +643,8 @@ export function Cassettiera({
                 <div className="cassetto-fondo p-4">{foto}</div>
               ) : (
                 <>
-                  {azioni?.[c.id] && <div className="cassetto-fondo px-3 pt-3">{azioni[c.id]}</div>}
                   <FondoCassetto
+                    azione={azioni?.[c.id]}
                     key={[...contenuto[c.id].visibili, ...contenuto[c.id].nascosti].map((o) => o.id).sort().join()}
                     visibili={contenuto[c.id].visibili}
                     nascosti={contenuto[c.id].nascosti}

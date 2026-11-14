@@ -98,6 +98,9 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           <TastoLink href={`/gruppo/${id}/bacheca/${destinatario.id}`} className="mt-5">
             Guarda la sua bacheca
           </TastoLink>
+          <TastoLink href={`/gruppo/${id}/biglietto`} tipo="secondario" className="mt-3">
+            Ricorda chi hai pescato
+          </TastoLink>
         </Feltro>
       ) : (
         <Feltro className="mt-6">

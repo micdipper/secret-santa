@@ -424,8 +424,9 @@ export function Bacheca({
     const m = mie.find((x) => x.r.tipo === tipo);
     const parola = tipo === "parola";
     return (
-      <Tasto
-        tipo="secondario"
+      <button
+        type="button"
+        className="cucitura cliccabile stoffa-chiara relative flex h-11 items-center rounded-full px-4 font-titolo text-sm text-abete"
         onClick={() => {
           setErroreEditor("");
           setEditor({
@@ -436,8 +437,8 @@ export function Bacheca({
           });
         }}
       >
-        {m ? (parola ? "Cambia la tua parola" : "Cambia il tuo simbolo") : parola ? "+ Crea la tua parola" : "+ Crea il tuo simbolo"}
-      </Tasto>
+        <span className="pt-0.5">{m ? (parola ? "Cambia la tua parola" : "Cambia il tuo simbolo") : parola ? "+ La tua parola" : "+ Il tuo simbolo"}</span>
+      </button>
     );
   }
 
@@ -797,8 +798,9 @@ function StratoRicamo({
   }
 
   function puntoDa(ev: React.PointerEvent) {
+    // in proporzione alla tela com'è davvero sullo schermo (non con la misura ricordata, che può essere vecchia)
     const r = canvasRef.current!.getBoundingClientRect();
-    return { c: Math.floor((ev.clientX - r.left) / cella), r: Math.floor((ev.clientY - r.top) / cella) };
+    return { c: Math.floor(((ev.clientX - r.left) / r.width) * COLONNE), r: Math.floor(((ev.clientY - r.top) / r.height) * RIGHE) };
   }
 
   function cuci(c: number, r: number) {

@@ -28,6 +28,8 @@ const EFFETTI = {
 
 const LARGHEZZA = 3.4;
 const ALTEZZA = 2.2;
+const R_CERA = 0.36; // raggio del sigillo di ceralacca
+const SIGILLO_PX = 92; // nella slot il sigillo è grande quanto i cerchi dei personaggi
 const SUOLO = -2; // altezza della neve
 
 function tela(w: number, h: number, disegna: (c: CanvasRenderingContext2D) => void) {
@@ -113,13 +115,18 @@ function disegnaCeralacca(c: CanvasRenderingContext2D) {
     c.beginPath();
     c.arc(128, 128, 84, 0, Math.PI * 2);
     c.stroke();
-    // stellina a 4 punte dorata
-    c.fillStyle = "#f1d27a";
-    c.beginPath();
-    const p = [[128, 70], [142, 114], [186, 128], [142, 142], [128, 186], [114, 142], [70, 128], [114, 114]];
-    p.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
-    c.closePath();
-    c.fill();
+    // la S del logo impressa nella cera (scavata): bordo scuro in alto a sinistra, riflesso chiaro in basso a destra
+    c.font = `150px ${famiglia("--font-basteleur", "Georgia, serif")}`;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    const x = 128;
+    const y = 136;
+    c.fillStyle = "rgba(255,190,170,.55)";
+    c.fillText("S", x + 4, y + 4);
+    c.fillStyle = "#3e0808";
+    c.fillText("S", x, y);
+    c.fillStyle = "#8a1812";
+    c.fillText("S", x + 2.5, y + 2.5);
   }
 }
 
@@ -337,6 +344,7 @@ export default function ScenaBusta({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // un po' meno pixel: molto più leggero, a occhio uguale
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.localClippingEnabled = true; // la busta nella slot si vede solo dalla finestrella (vedi "attesa")
     renderer.localClippingEnabled = true; // per nascondere il biglietto finché è dentro la busta
     renderer.domElement.style.touchAction = "none";
     box.appendChild(renderer.domElement);
@@ -482,7 +490,6 @@ export default function ScenaBusta({
     const texCera = new THREE.CanvasTexture(telaCera);
     texCera.colorSpace = THREE.SRGBColorSpace;
     const matCera = new THREE.MeshStandardMaterial({ map: texCera, roughness: 0.35, metalness: 0.1, transparent: true, alphaTest: 0.1, emissive: new THREE.Color(0xffb86b), emissiveIntensity: 0 });
-    const R_CERA = 0.36;
     const cera = new THREE.Mesh(new THREE.CircleGeometry(R_CERA, 48), matCera);
     cera.position.set(0, ALTEZZA / 2 - ALTO_LEMBO + 0.3, 0.03);
     busta.add(cera);
@@ -659,6 +666,8 @@ export default function ScenaBusta({
     let fase: FaseBusta = "attesa";
     let partenzaBusta: { pos: THREE.Vector3; quat: THREE.Quaternion; scala: number } | null = null;
     let scalaVicina = 1;
+    const pianiFinestrella = [new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane()];
+    let tagliata = false;
     let inizioFase = 0;
     let tocchi = 0;
     let salto = 0; // altezza del sobbalzo
@@ -822,17 +831,50 @@ export default function ScenaBusta({
           const punto = new THREE.Vector3((cx / w) * 2 - 1, -(cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
           const pos = camera.position.clone().add(punto.multiplyScalar(distanza));
           const perPixel = (2 * distanza * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
-          // dentro la slot: larga quanto la finestrella (meno un margine)
-          const scala = (((r ? r.width : 170) - 8) * perPixel) / LARGHEZZA;
-          scalaVicina = (w * 0.85 * perPixel) / LARGHEZZA; // quando la slot si rompe si avvicina allo schermo
+          // dentro la slot: il sigillo grande quanto i personaggi (la busta è più larga della finestrella: lì dietro si vede solo carta)
+          const scala = (SIGILLO_PX * perPixel) / (2 * R_CERA);
+          scalaVicina = Math.max(scala, (w * 0.85 * perPixel) / LARGHEZZA); // quando la slot si rompe si avvicina allo schermo
           const quat = camera.quaternion.clone();
+          // il sigillo (non il centro della busta) va esattamente al centro della finestrella
+          pos.add(new THREE.Vector3(0, -(ALTEZZA / 2 - ALTO_LEMBO + 0.3) * scala, 0).applyQuaternion(quat));
           partenzaBusta = { pos, quat, scala };
           busta.position.copy(pos);
           busta.quaternion.copy(quat);
           busta.scale.setScalar(scala);
+          // la busta è più grande della finestrella: la taglio lungo i bordi della finestrella
+          // (quattro piani che passano per l'occhio della telecamera e per i bordi del rettangolo)
+          if (r) {
+            const aSchermo = (x: number, y: number) => new THREE.Vector3((x / w) * 2 - 1, -(y / h) * 2 + 1, 0.5).unproject(camera);
+            const occhio = camera.position;
+            const centro = aSchermo(cx, cy);
+            const angoli = [
+              [r.left, r.top, r.right, r.top],
+              [r.right, r.top, r.right, r.bottom],
+              [r.right, r.bottom, r.left, r.bottom],
+              [r.left, r.bottom, r.left, r.top],
+            ];
+            angoli.forEach(([x1, y1, x2, y2], i) => {
+              pianiFinestrella[i].setFromCoplanarPoints(occhio, aSchermo(x1, y1), aSchermo(x2, y2));
+              if (pianiFinestrella[i].distanceToPoint(centro) < 0) pianiFinestrella[i].negate();
+            });
+            if (!tagliata) {
+              busta.traverse((o) => {
+                const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+                if (m) m.clippingPlanes = pianiFinestrella;
+              });
+              tagliata = true;
+            }
+          }
           if (partiRef.current) vaiA("cade");
         }
       } else if (fase === "cade" && partenzaBusta) {
+        if (tagliata) {
+          busta.traverse((o) => {
+            const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+            if (m) m.clippingPlanes = null;
+          });
+          tagliata = false;
+        }
         // dal posto del sigillo la busta cade nella neve girando; l'inquadratura scende con lei
         // un attimo sospesa (dondola mentre i pezzi volano via), poi cade
         const SOSPESA = 0.65;

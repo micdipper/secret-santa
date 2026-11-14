@@ -6,7 +6,9 @@
 import { useState } from "react";
 import { EtichettaStoffa, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
 
-export type Esclusione = { member_a: string; member_b: string; reason: "coppia" | "anno_scorso" };
+// coppia = "si amano", odio = "si odiano" (valgono nei due versi); anno_scorso = A ha regalato a B (solo quel verso)
+export type Esclusione = { member_a: string; member_b: string; reason: "coppia" | "odio" | "anno_scorso" };
+const DUE_VERSI = (r: Esclusione["reason"]) => r !== "anno_scorso";
 export type Persona = { id: string; nome: string };
 
 export function RiquadroEsclusioni({
@@ -35,7 +37,7 @@ export function RiquadroEsclusioni({
   async function salva() {
     if (!coppiaA || !coppiaB || coppiaA === coppiaB) return setErrore("Scegli due persone diverse.");
     // Coppia: vale nei due versi, la salvo in ordine. Anno scorso: A ha regalato a B, conta solo quel verso.
-    const [a, b] = motivo === "coppia" ? [coppiaA, coppiaB].sort() : [coppiaA, coppiaB];
+    const [a, b] = DUE_VERSI(motivo) ? [coppiaA, coppiaB].sort() : [coppiaA, coppiaB];
     const e = await onAggiungi({ member_a: a, member_b: b, reason: motivo });
     if (e) return setErrore(e);
     setNuova(false);
@@ -62,7 +64,7 @@ export function RiquadroEsclusioni({
           {esclusioni.map((c) => {
             const a = nome(c.member_a).split(" ")[0];
             const b = nome(c.member_b).split(" ")[0];
-            const testo = c.reason === "coppia" ? `💞 ${a} e ${b}` : `🎁 ${a} → ${b}, anno scorso`;
+            const testo = c.reason === "coppia" ? `💞 ${a} e ${b} si amano` : c.reason === "odio" ? `😤 ${a} e ${b} si odiano` : `🎁 ${a} → ${b}, anno scorso`;
             return (
               <li key={c.member_a + c.member_b + c.reason}>
                 {togli ? (
@@ -70,7 +72,7 @@ export function RiquadroEsclusioni({
                     Togli {testo}
                   </button>
                 ) : (
-                  <EtichettaStoffa colore={c.reason === "coppia" ? "verde" : "crema"}>{testo}</EtichettaStoffa>
+                  <EtichettaStoffa colore={c.reason === "coppia" ? "verde" : c.reason === "odio" ? "vermiglio" : "crema"}>{testo}</EtichettaStoffa>
                 )}
               </li>
             );
@@ -79,10 +81,11 @@ export function RiquadroEsclusioni({
       )}
       {nuova && (
         <div className="mt-5 flex flex-col gap-4">
-          <div role="radiogroup" aria-label="Perché non devono pescarsi?" className="grid grid-cols-2 gap-3">
+          <div role="radiogroup" aria-label="Perché non devono pescarsi?" className="grid grid-cols-3 gap-2">
             {(
               [
-                ["coppia", "💞", "Sono una coppia", "Non si pescano a vicenda"],
+                ["coppia", "💞", "Si amano", "Non si pescano a vicenda"],
+                ["odio", "😤", "Si odiano", "Non si pescano a vicenda"],
                 ["anno_scorso", "🎁", "Già fatto l'anno scorso", "Chi ha regalato non ripesca la stessa persona"],
               ] as const
             ).map(([v, emoji, titolo, spiegazione]) => (
@@ -95,32 +98,32 @@ export function RiquadroEsclusioni({
                   setMotivo(v);
                   setCoppiaB("");
                 }}
-                className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 rounded-[20px] px-3 pt-4 pb-3 text-center ${
+                className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 rounded-[20px] px-2 pt-4 pb-3 text-center ${
                   motivo === v ? "outline-3 outline-offset-2 outline-vermiglio" : ""
                 }`}
               >
                 <span className="text-3xl" aria-hidden>
                   {emoji}
                 </span>
-                <span className="font-titolo text-[17px] leading-tight text-abete">{titolo}</span>
-                <span className="text-[13px] leading-snug text-inchiostro/70">{spiegazione}</span>
+                <span className="font-titolo text-base leading-tight text-abete">{titolo}</span>
+                <span className="text-xs leading-snug text-inchiostro/70">{spiegazione}</span>
               </button>
             ))}
           </div>
           {[
-            { v: coppiaA, set: setCoppiaA, seconda: false, et: motivo === "coppia" ? "Prima persona" : "Chi ha fatto il regalo", opzioni: persone },
+            { v: coppiaA, set: setCoppiaA, seconda: false, et: DUE_VERSI(motivo) ? "Prima persona" : "Chi ha fatto il regalo", opzioni: persone },
             {
               v: coppiaB,
               set: setCoppiaB,
               seconda: true,
-              et: motivo === "coppia" ? "Seconda persona" : "A chi l'ha fatto",
+              et: DUE_VERSI(motivo) ? "Seconda persona" : "A chi l'ha fatto",
               // senza la prima persona e senza chi è già escluso con lei per lo stesso motivo (e verso)
               opzioni: persone.filter(
                 (m) =>
                   m.id !== coppiaA &&
                   !esclusioni.some((c) =>
-                    motivo === "coppia"
-                      ? c.reason === "coppia" && ((c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id))
+                    DUE_VERSI(motivo)
+                      ? c.reason === motivo && ((c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id))
                       : c.reason === "anno_scorso" && c.member_a === coppiaA && c.member_b === m.id,
                   ),
               ),

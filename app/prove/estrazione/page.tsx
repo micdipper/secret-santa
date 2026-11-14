@@ -28,7 +28,7 @@ export default function ProvaEstrazione() {
     const numero = (id: string) => persone.findIndex((p) => p.id === id) + 1;
     const { data, error } = await creaClientBrowser().rpc("prova_estrazione", {
       p_n: persone.length,
-      p_coppie: esclusioni.filter((v) => v.reason === "coppia").flatMap((v) => [numero(v.member_a), numero(v.member_b)]),
+      p_coppie: esclusioni.filter((v) => v.reason !== "anno_scorso").flatMap((v) => [numero(v.member_a), numero(v.member_b)]),
       p_anno: esclusioni.filter((v) => v.reason === "anno_scorso").flatMap((v) => [numero(v.member_a), numero(v.member_b)]),
     });
     setEstraggo(false);
