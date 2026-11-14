@@ -6,7 +6,7 @@ import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { TestataInterna } from "@/components/ui";
 
 // tutti i premi sbloccati, per vederli tutti
-const TUTTI = [...ACCESSORI.map((a) => a.id), "super", "olografico"];
+const TUTTI = [...ACCESSORI.map((a) => a.id), "super", "olografico", "cuciture"];
 
 export default function ProvaPersonaggio() {
   const [look, setLook] = useState<Look>(LOOK_BASE);

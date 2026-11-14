@@ -13,6 +13,7 @@ const NOMI: Record<string, string> = {
   ...Object.fromEntries(ACCESSORI.map((a) => [a.id, a.nome])),
   super: "Taglio Super",
   olografico: "Capelli olografici",
+  cuciture: "Cuciture di lusso",
 };
 
 // Le altre parti del sito possono chiedere un controllo subito (es. dopo aver attaccato qualcosa)

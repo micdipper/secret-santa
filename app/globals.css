@@ -331,6 +331,10 @@ textarea {
 }
 
 /* ---------- Toppa rotonda (membri) ---------- */
+/* con una cucitura "di lusso" (premio) la filza tratteggiata non c'è */
+.toppa-senza-cucitura::before {
+  display: none;
+}
 .toppa {
   position: relative;
   display: flex;

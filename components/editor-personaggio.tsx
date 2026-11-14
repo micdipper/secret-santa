@@ -12,8 +12,10 @@ import {
   MAGLIONI,
   NOMI_BARBA,
   NOMI_CAPELLI,
+  NOMI_CUCITURE,
   NOMI_OCCHIALI,
   PELLI,
+  ToppaAvatar,
   type Look,
 } from "@/components/avatar";
 import { Feltro, TitoloRiquadro } from "@/components/ui";
@@ -101,6 +103,28 @@ export function EditorPersonaggio({
         titolo: "Maglione",
         children: <Campioni colori={MAGLIONI} scelto={look.maglione} nome="Maglione" onScegli={(maglione) => onCambia({ maglione })} />,
       })}
+
+      {sbloccati.includes("cuciture") &&
+        parte({
+          titolo: "Cucitura della toppa",
+          children: (
+            <div role="radiogroup" aria-label="Cucitura della toppa" className="mt-4 grid grid-cols-3 gap-3">
+              {NOMI_CUCITURE.map((nome, i) => (
+                <button
+                  key={nome}
+                  type="button"
+                  role="radio"
+                  aria-checked={(look.cucitura ?? 0) === i}
+                  onClick={() => onCambia({ cucitura: i })}
+                  className={`cliccabile stoffa-chiara flex flex-col items-center gap-1 rounded-[20px] p-2 text-sm text-inchiostro ${(look.cucitura ?? 0) === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
+                >
+                  <ToppaAvatar look={{ ...look, cucitura: i }} dimensione={64} />
+                  {nome}
+                </button>
+              ))}
+            </div>
+          ),
+        })}
 
       {premi.length > 0 &&
         parte({
