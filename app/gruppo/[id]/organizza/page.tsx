@@ -1,12 +1,12 @@
 "use client";
 
+import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import {
   Campo,
   Errore,
-  EtichettaStoffa,
   Feltro,
   Icone,
   Tasto,
@@ -29,11 +29,7 @@ type Gruppo = {
   quiz_salvato_at: string | null;
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
-type Coppia = {
-  member_a: string;
-  member_b: string;
-  reason: "coppia" | "anno_scorso";
-};
+type Coppia = Esclusione;
 
 export default function PaginaOrganizza() {
   return (
@@ -66,11 +62,6 @@ function Organizza() {
     url: string;
   } | null>(null);
   const [nuovoNome, setNuovoNome] = useState("");
-  const [nuovaCoppia, setNuovaCoppia] = useState(false);
-  const [coppiaA, setCoppiaA] = useState("");
-  const [coppiaB, setCoppiaB] = useState("");
-  const [motivo, setMotivo] = useState<Coppia["reason"]>("coppia");
-  const [togliCoppie, setTogliCoppie] = useState(false);
   const [estrazioneInCorso, setEstrazioneInCorso] = useState(false);
 
   const carica = useCallback(async () => {
@@ -127,8 +118,6 @@ function Organizza() {
     );
 
   const modificabile = gruppo.status === "aperto";
-  const nome = (mid: string) =>
-    membri.find((m) => m.id === mid)?.display_name ?? "?";
   const mancanti = membri.filter((m) => !m.user_id);
   const puoEstrarre =
     modificabile && mancanti.length === 0 && membri.length >= 3;
@@ -203,38 +192,6 @@ function Organizza() {
       .eq("id", m.id);
     setErrore(error ? "Non sono riuscito a toglierlo." : "");
     setAperto(null);
-    carica();
-  }
-
-  async function salvaCoppia() {
-    if (!coppiaA || !coppiaB || coppiaA === coppiaB)
-      return setErrore("Scegli due persone diverse.");
-    // Coppia: vale nei due versi, la salvo in ordine. Anno scorso: A ha regalato a B, conta solo quel verso.
-    const [a, b] =
-      motivo === "coppia" ? [coppiaA, coppiaB].sort() : [coppiaA, coppiaB];
-    const { error } = await supabase
-      .from("exclusions")
-      .insert({ group_id: id, member_a: a, member_b: b, reason: motivo });
-    if (error)
-      return setErrore(
-        error.code === "23505" ? "C'è già." : "Non sono riuscito a salvarla.",
-      );
-    setNuovaCoppia(false);
-    setCoppiaA("");
-    setCoppiaB("");
-    setErrore("");
-    carica();
-  }
-
-  async function togliCoppia(c: Coppia) {
-    await supabase
-      .from("exclusions")
-      .delete()
-      .eq("group_id", id)
-      .eq("member_a", c.member_a)
-      .eq("member_b", c.member_b)
-      .eq("reason", c.reason);
-    if (coppie.length <= 1) setTogliCoppie(false);
     carica();
   }
 
@@ -494,177 +451,22 @@ function Organizza() {
         )}
       </Feltro>
 
-      <Feltro className="mt-4">
-        <TitoloRiquadro>Chi non deve pescarsi</TitoloRiquadro>
-        <p className="mt-2 text-sm text-inchiostro/70">
-          {togliCoppie
-            ? "Tocca quella da togliere."
-            : "L'estrazione è una catena: nessuno pesca se stesso o chi gli fa il regalo. Qui aggiungi chi altro non deve pescarsi."}
-        </p>
-        {coppie.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {coppie.map((c) => {
-              const a = nome(c.member_a).split(" ")[0];
-              const b = nome(c.member_b).split(" ")[0];
-              const testo =
-                c.reason === "coppia"
-                  ? `💞 ${a} e ${b}`
-                  : `🎁 ${a} → ${b}, anno scorso`;
-              return (
-                <li key={c.member_a + c.member_b + c.reason}>
-                  {togliCoppie ? (
-                    <button
-                      type="button"
-                      onClick={() => togliCoppia(c)}
-                      className="cucitura cliccabile stoffa-chiara relative rounded-full px-4 py-2 text-sm"
-                    >
-                      Togli {testo}
-                    </button>
-                  ) : (
-                    <EtichettaStoffa
-                      colore={c.reason === "coppia" ? "verde" : "crema"}
-                    >
-                      {testo}
-                    </EtichettaStoffa>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {nuovaCoppia && (
-          <div className="mt-5 flex flex-col gap-4">
-            <div
-              role="radiogroup"
-              aria-label="Perché non devono pescarsi?"
-              className="grid grid-cols-2 gap-3"
-            >
-              {(
-                [
-                  [
-                    "coppia",
-                    "💞",
-                    "Sono una coppia",
-                    "Non si pescano a vicenda",
-                  ],
-                  [
-                    "anno_scorso",
-                    "🎁",
-                    "Già fatto l'anno scorso",
-                    "Chi ha regalato non ripesca la stessa persona",
-                  ],
-                ] as const
-              ).map(([v, emoji, titolo, spiegazione]) => (
-                <button
-                  key={v}
-                  type="button"
-                  role="radio"
-                  aria-checked={motivo === v}
-                  onClick={() => {
-                    setMotivo(v);
-                    setCoppiaB("");
-                  }}
-                  className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 rounded-[20px] px-3 pt-4 pb-3 text-center ${
-                    motivo === v
-                      ? "outline-3 outline-offset-2 outline-vermiglio"
-                      : ""
-                  }`}
-                >
-                  <span className="text-3xl" aria-hidden>
-                    {emoji}
-                  </span>
-                  <span className="font-titolo text-[17px] leading-tight text-abete">
-                    {titolo}
-                  </span>
-                  <span className="text-[13px] leading-snug text-inchiostro/70">
-                    {spiegazione}
-                  </span>
-                </button>
-              ))}
-            </div>
-            {[
-              {
-                v: coppiaA,
-                set: setCoppiaA,
-                seconda: false,
-                et:
-                  motivo === "coppia"
-                    ? "Prima persona"
-                    : "Chi ha fatto il regalo",
-                opzioni: membri,
-              },
-              {
-                v: coppiaB,
-                set: setCoppiaB,
-                seconda: true,
-                et:
-                  motivo === "coppia" ? "Seconda persona" : "A chi l'ha fatto",
-                // senza la prima persona e senza chi è già escluso con lei per lo stesso motivo (e verso)
-                opzioni: membri.filter(
-                  (m) =>
-                    m.id !== coppiaA &&
-                    !coppie.some((c) =>
-                      motivo === "coppia"
-                        ? c.reason === "coppia" &&
-                          ((c.member_a === coppiaA && c.member_b === m.id) ||
-                            (c.member_b === coppiaA && c.member_a === m.id))
-                        : c.reason === "anno_scorso" &&
-                          c.member_a === coppiaA &&
-                          c.member_b === m.id,
-                    ),
-                ),
-              },
-            ].map((s) => (
-              <label key={s.et} className="flex flex-col gap-2">
-                <span className="font-medium">{s.et}</span>
-                <span className="campo-cucito block">
-                  <select
-                    value={s.v}
-                    disabled={s.seconda && !coppiaA}
-                    onChange={(e) => {
-                      s.set(e.target.value);
-                      if (!s.seconda) setCoppiaB("");
-                    }}
-                    className="h-14 w-full appearance-none bg-transparent px-5 text-inchiostro outline-none"
-                  >
-                    <option value="">
-                      {s.seconda && !coppiaA
-                        ? "Prima scegli la persona sopra"
-                        : "Scegli…"}
-                    </option>
-                    {s.opzioni.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.display_name}
-                      </option>
-                    ))}
-                  </select>
-                </span>
-              </label>
-            ))}
-            <Tasto onClick={salvaCoppia} disabled={!coppiaA || !coppiaB}>
-              Salva
-            </Tasto>
-          </div>
-        )}
-        {modificabile && !nuovaCoppia && (
-          <div className="mt-5 flex items-center gap-3">
-            <Tasto
-              tipo="secondario"
-              className="flex-1"
-              onClick={() => setNuovaCoppia(true)}
-            >
-              Aggiungi
-            </Tasto>
-            <TastoTondo
-              etichetta={togliCoppie ? "Fine" : "Togli una coppia"}
-              icona={Icone.meno}
-              disabled={coppie.length === 0}
-              aria-pressed={togliCoppie}
-              onClick={() => setTogliCoppie(!togliCoppie)}
-            />
-          </div>
-        )}
-      </Feltro>
+      <RiquadroEsclusioni
+        className="mt-4"
+        persone={membri.map((m) => ({ id: m.id, nome: m.display_name }))}
+        esclusioni={coppie}
+        modificabile={modificabile}
+        onAggiungi={async (e) => {
+          const { error } = await supabase.from("exclusions").insert({ group_id: id, ...e });
+          if (error) return error.code === "23505" ? "C'è già." : "Non sono riuscito a salvarla.";
+          carica();
+          return null;
+        }}
+        onTogli={async (c) => {
+          await supabase.from("exclusions").delete().eq("group_id", id).eq("member_a", c.member_a).eq("member_b", c.member_b).eq("reason", c.reason);
+          carica();
+        }}
+      />
 
       <Feltro className="mt-4">
         <TitoloRiquadro>Estrazione</TitoloRiquadro>
