@@ -185,6 +185,18 @@ export function Bacheca({
     router.refresh();
   }
 
+  // nella mia bacheca il pinch della pagina è spento: due dita servono a ingrandire le toppe
+  // (e la pagina ingrandita spostava i punti del ricamo rispetto al dito)
+  useEffect(() => {
+    if (!modificabile) return;
+    const html = document.documentElement;
+    const prima = html.style.touchAction;
+    html.style.touchAction = "pan-x pan-y";
+    return () => {
+      html.style.touchAction = prima;
+    };
+  }, [modificabile]);
+
   // Larghezza reale della tela (per convertire pixel ↔ unità)
   useEffect(() => {
     const el = telaRef.current;
@@ -321,6 +333,7 @@ export function Bacheca({
 
   // ---------- gesti: un dito sposta, due dita ingrandiscono e ruotano ----------
   const tocchi = useRef(new Map<number, { x: number; y: number }>());
+  const maniglia = useRef<{ e: Elemento; cx: number; cy: number; d0: number; a0: number } | null>(null);
   const partenza = useRef<{ e: Elemento; punti: { x: number; y: number }[] } | null>(null);
 
   // Un gesto alla volta, su UN solo elemento: prima il ricordo del movimento era condiviso
@@ -329,7 +342,16 @@ export function Bacheca({
     if (!modificabile || modoRicamo) return;
     ev.stopPropagation();
     if (partenza.current && partenza.current.e.id !== el.id) {
-      // c'è già un gesto su un'altra toppa: se quei tocchi sono "appesi" li dimentico, altrimenti ignoro questo dito
+      // c'è già un gesto su un'altra toppa con un dito: questo è il secondo dito e vale per QUELLA toppa
+      if (tocchi.current.size === 1) {
+        (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+        tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+        const g = partenza.current;
+        const corrente = elementi.find((x) => x.id === g.e.id) ?? g.e;
+        partenza.current = { e: corrente, punti: [...tocchi.current.values()] };
+        return;
+      }
+      // se quei tocchi sono "appesi" li dimentico, altrimenti ignoro questo dito
       if (tocchi.current.size > 0) return;
       partenza.current = null;
     }
@@ -456,8 +478,24 @@ export function Bacheca({
           // la tela colorata col secchiello: tinta unita
           backgroundColor: ricamo?.content.fondo ? STOFFE[ricamo.content.fondo].fondo : undefined,
           transition: "background-color 400ms cubic-bezier(.4,0,.2,1)",
+          touchAction: modificabile && selezionato ? "none" : undefined,
         }}
-        onPointerDown={() => !modoRicamo && setSelezionato(null)}
+        onPointerDown={(ev) => {
+          if (modoRicamo) return;
+          // secondo dito ovunque sulla tela mentre il primo tiene una toppa: ingrandisce e ruota quella toppa
+          const g = partenza.current;
+          if (modificabile && g && tocchi.current.size === 1) {
+            (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+            tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+            const corrente = elementi.find((x) => x.id === g.e.id) ?? g.e;
+            partenza.current = { e: corrente, punti: [...tocchi.current.values()] };
+            return;
+          }
+          setSelezionato(null);
+        }}
+        onPointerMove={(ev) => partenza.current && muoviGesto(ev, partenza.current.e.id)}
+        onPointerUp={(ev) => partenza.current && fineGesto(ev, partenza.current.e.id)}
+        onPointerCancel={(ev) => partenza.current && fineGesto(ev, partenza.current.e.id)}
       >
         {larghezza > 0 && (
           <StratoRicamo
@@ -484,10 +522,10 @@ export function Bacheca({
                 role={modificabile ? "button" : undefined}
                 aria-label={modificabile ? "Elemento della bacheca: trascina per spostarlo" : undefined}
                 onPointerDown={(ev) => inizioGesto(ev, e)}
-                onPointerMove={(ev) => muoviGesto(ev, e.id)}
-                onPointerUp={(ev) => fineGesto(ev, e.id)}
-                onPointerCancel={(ev) => fineGesto(ev, e.id)}
-                onLostPointerCapture={(ev) => fineGesto(ev, e.id)}
+                onPointerMove={(ev) => muoviGesto(ev, partenza.current?.e.id ?? e.id)}
+                onPointerUp={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
+                onPointerCancel={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
+                onLostPointerCapture={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
                 className={`absolute select-none ${modificabile && !modoRicamo ? "cursor-grab touch-none" : "pointer-events-none"} ${
                   modoRicamo ? "opacity-40" : ""
                 }`}
@@ -504,6 +542,47 @@ export function Bacheca({
                 }}
               >
                 {contenuto(e)}
+                {modificabile && !modoRicamo && selezionato === e.id && (
+                  // maniglia nell'angolo: trascinandola con un dito la toppa si ingrandisce, rimpicciolisce e ruota
+                  <span
+                    role="slider"
+                    aria-label="Trascina per ingrandire o ruotare"
+                    aria-valuenow={Math.round(e.width)}
+                    className="absolute -right-6 -bottom-6 flex size-11 touch-none items-center justify-center"
+                    onPointerDown={(ev) => {
+                      ev.stopPropagation();
+                      (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+                      const box = (ev.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+                      const cx = box.left + box.width / 2;
+                      const cy = box.top + box.height / 2;
+                      maniglia.current = { e, cx, cy, d0: Math.hypot(ev.clientX - cx, ev.clientY - cy) || 1, a0: Math.atan2(ev.clientY - cy, ev.clientX - cx) };
+                    }}
+                    onPointerMove={(ev) => {
+                      const m = maniglia.current;
+                      if (!m) return;
+                      ev.stopPropagation();
+                      const d = Math.hypot(ev.clientX - m.cx, ev.clientY - m.cy);
+                      const a = Math.atan2(ev.clientY - m.cy, ev.clientX - m.cx);
+                      const width = Math.max(10, Math.min(90, (m.e.width * d) / m.d0));
+                      const rotation = m.e.rotation + ((a - m.a0) * 180) / Math.PI;
+                      setElementi((l) => l.map((x) => (x.id === m.e.id ? { ...x, width, rotation } : x)));
+                    }}
+                    onPointerUp={(ev) => {
+                      ev.stopPropagation();
+                      const m = maniglia.current;
+                      maniglia.current = null;
+                      const ora = m && elementi.find((x) => x.id === m.e.id);
+                      if (ora) salvaPosizione(ora);
+                    }}
+                    onPointerCancel={() => (maniglia.current = null)}
+                  >
+                    <span className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-vermiglio text-white shadow-[0_2px_4px_rgba(0,0,0,.4)]">
+                      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
+                        <path d="M7 17L17 7M11 7h6v6M7 11v6h6" />
+                      </svg>
+                    </span>
+                  </span>
+                )}
               </div>
             );
           })}
@@ -799,7 +878,12 @@ function StratoRicamo({
 
   function puntoDa(ev: React.PointerEvent) {
     // in proporzione alla tela com'è davvero sullo schermo (non con la misura ricordata, che può essere vecchia)
-    const r = canvasRef.current!.getBoundingClientRect();
+    const cv = canvasRef.current!;
+    const n = ev.nativeEvent;
+    if (n.target === cv && cv.clientWidth > 0) {
+      return { c: Math.floor((n.offsetX / cv.clientWidth) * COLONNE), r: Math.floor((n.offsetY / cv.clientHeight) * RIGHE) };
+    }
+    const r = cv.getBoundingClientRect();
     return { c: Math.floor(((ev.clientX - r.left) / r.width) * COLONNE), r: Math.floor(((ev.clientY - r.top) / r.height) * RIGHE) };
   }
 

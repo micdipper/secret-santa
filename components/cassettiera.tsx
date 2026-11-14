@@ -134,6 +134,7 @@ function FondoCassetto({
   const [ordine, setOrdine] = useState<string[]>(() => [...visibili, ...nascosti].map((o) => o.id));
   const [preso, setPreso] = useState<string | null>(null);
   const [tocchi, setTocchi] = useState(0); // tocchi sul doppio fondo (3 = si apre)
+  const [annuncio, setAnnuncio] = useState(false);
   const scoperto = tocchi >= 3;
   const gesto = useRef<{ id: string; x0: number; y0: number; px: number; py: number; mosso: boolean } | null>(null);
   const larg = () => fondo.current?.getBoundingClientRect().width ?? 1;
@@ -149,6 +150,9 @@ function FondoCassetto({
     suoni.punto();
     if (n >= 3) {
       suoni.toppa();
+      suoni.fanfara();
+      setAnnuncio(true);
+      setTimeout(() => setAnnuncio(false), 2200);
       navigator.vibrate?.(20);
       setTimeout(() => onScopri(nascosti.map((o) => o.id)), 1400);
     }
@@ -158,7 +162,7 @@ function FondoCassetto({
     // contenitore largo quanto il fondo: le misure in cqw (altezza e posizioni) si riferiscono alla sua larghezza
     <div style={{ containerType: "inline-size" }}>
       <motion.div ref={fondo} className="cassetto-fondo relative w-full overflow-hidden" animate={{ height: `${fine}cqw` }} transition={{ type: "spring", stiffness: 300, damping: 34 }}>
-        {azione && <div className="absolute top-3 right-3 left-3 z-[450] flex justify-end">{azione}</div>}
+        {azione && <div className="absolute top-3 right-3 left-3 z-[450] flex justify-center">{azione}</div>}
         {oggetti.map((o) => {
           const p = pos[o.id] ?? { x: 0, y: 0 };
           const z = ordine.indexOf(o.id) + 1;
@@ -225,6 +229,26 @@ function FondoCassetto({
             </motion.button>
           );
         })}
+
+        {/* annuncio: doppio fondo scoperto! */}
+        <AnimatePresence>
+          {scoperto && annuncio && (
+            <motion.div
+              key="annuncio"
+              role="status"
+              className="pointer-events-none absolute inset-x-0 top-[38%] z-[600] flex justify-center"
+              initial={{ opacity: 0, scale: 0.4, rotate: -8 }}
+              animate={{ opacity: 1, scale: 1, rotate: -3 }}
+              exit={{ opacity: 0, scale: 0.9, y: -20 }}
+              transition={{ type: "spring", stiffness: 380, damping: 16 }}
+            >
+              <span className="relative rounded-full bg-senape px-5 py-3 font-titolo text-xl text-inchiostro shadow-[0_10px_24px_-8px_rgba(0,0,0,.7)]">
+                <span className="absolute inset-[4px] rounded-full border-2 border-dashed border-inchiostro/40" />
+                <span className="relative">✦ Hai scoperto il doppio fondo!! ✦</span>
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* il doppio fondo: angolo sollevato in basso a destra (si vede che sotto c'è dell'altro) */}
         {nascosti.length > 0 && (
