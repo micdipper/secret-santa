@@ -7,6 +7,7 @@
 // 4) il lembo si apre trascinando in su, curvandosi come carta;
 // 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
+import { CRISTALLI } from "@/lib/olografie";
 import { fontNome } from "@/components/biglietto-olografico";
 import { suoni } from "@/lib/suoni";
 import * as THREE from "three";
@@ -195,6 +196,52 @@ function disegnaFronte(c: CanvasRenderingContext2D, w: number, h: number, nome: 
   arrotonda(c, w, h, w * 0.082);
   c.fillStyle = "#f3e8cf";
   c.fillRect(0, 0, w, h);
+  // olografia "ghiaccio e argento" già stampata sul biglietto (come la card che arriva dopo, ferma):
+  // così quando si gira è olografico da subito, e il passaggio alla card vera non si vede
+  {
+    c.save();
+    c.globalCompositeOperation = "multiply";
+    c.globalAlpha = 0.32;
+    c.translate(w / 2, h / 2);
+    c.rotate((25 * Math.PI) / 180); // bande a 115°
+    const colori = ["#6fb8f2", "#e9f4ff", "#b9c6d6", "#ffffff", "#4fa3e8", "#d9e8f7", "#c7b8f0", "#6fb8f2"];
+    const tappe = [0, 7, 12, 16, 23, 29, 34, 40];
+    const periodo = w * 1.2;
+    for (let x0 = -2 * w; x0 < 2 * w; x0 += periodo) {
+      const g = c.createLinearGradient(x0, 0, x0 + periodo, 0);
+      tappe.forEach((t, i) => g.addColorStop(t / 40, colori[i]));
+      c.fillStyle = g;
+      c.fillRect(x0, -2 * h, periodo + 1, 4 * h);
+    }
+    c.restore();
+    // brina: cristalli bianchi
+    c.save();
+    c.globalAlpha = 0.35;
+    c.strokeStyle = "#ffffff";
+    c.lineWidth = 1.1;
+    c.lineCap = "round";
+    const lato = w * 0.34;
+    const cristalli = new Path2D(CRISTALLI);
+    for (let y = 0; y < h; y += lato)
+      for (let x = 0; x < w; x += lato) {
+        c.save();
+        c.translate(x, y);
+        c.scale(lato / 200, lato / 200);
+        c.stroke(cristalli);
+        c.restore();
+      }
+    c.restore();
+    // bordi gelati
+    c.save();
+    c.translate(w / 2, h / 2);
+    c.scale(1.2, 0.9 * (h / w));
+    const bordo = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.7);
+    bordo.addColorStop(0.62, "rgba(225,240,255,0)");
+    bordo.addColorStop(1, "rgba(225,240,255,.75)");
+    c.fillStyle = bordo;
+    c.fillRect(-w, -w, 2 * w, 2 * w);
+    c.restore();
+  }
   // cucitura
   c.setLineDash([w * 0.024, w * 0.016]);
   c.strokeStyle = "rgba(229,72,30,.75)";

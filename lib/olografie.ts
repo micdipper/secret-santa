@@ -23,7 +23,7 @@ function cristallo(x: number, y: number, r: number, a: number) {
   });
   return rami.join("");
 }
-const CRISTALLI = [
+export const CRISTALLI = [
   [22, 30, 14, 0], [88, 18, 9, 15], [150, 52, 16, 30], [60, 96, 11, 10], [124, 120, 8, 25],
   [30, 160, 13, 5], [170, 170, 10, 20], [100, 190, 15, 0], [190, 100, 7, 12], [8, 104, 7, 22],
 ]

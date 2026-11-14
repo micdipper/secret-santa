@@ -142,10 +142,9 @@ export function AperturaBusta({
   const [fase, setFase] = useState<
     "leva" | "gira" | "fermo" | "crepa" | "rotta" | "scena"
   >("leva");
-  const [voci, setVoci] = useState<(Persona | "?")[]>([
-    "?",
-    ...candidati.slice(0, 2),
-  ]);
+  // si parte da un personaggio del gruppo "a caso" (sempre lo stesso per la stessa persona, così la pagina non salta)
+  const primo = candidati.length ? candidati[[...(groupId + destinatario.id)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % candidati.length] : null;
+  const [voci, setVoci] = useState<(Persona | "?")[]>(primo ? [primo, ...candidati.filter((c) => c !== primo).slice(0, 2)] : ["?"]);
   const [sfocato, setSfocato] = useState(false);
   const [busta3d, setBusta3d] = useState<boolean | null>(null); // null = non lo so ancora
   const [scenaPronta, setScenaPronta] = useState(false);
@@ -252,7 +251,7 @@ export function AperturaBusta({
     const mescolati: Persona[] = [];
     while (mescolati.length < GIRI)
       mescolati.push(...[...candidati].sort(() => Math.random() - 0.5));
-    setVoci(["?", ...mescolati.slice(0, GIRI), "?", mescolati[0] ?? "?"]);
+    setVoci([primo ?? "?", ...mescolati.slice(0, GIRI), "?", mescolati[0] ?? "?"]);
     setFase("gira");
     setSfocato(true);
     animaMacchina(
@@ -451,10 +450,11 @@ export function AperturaBusta({
                 }}
               >
                 <div className="absolute inset-x-0 -top-[120px] h-[120px] bg-[#efe3c9]" />
+                {/* ogni casella è una busta: al posto del sigillo c'è il personaggio; l'ultima è la busta vera (col sigillo) */}
                 {voci.map((p, i) => (
                   <div
                     key={i}
-                    className={`flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-[#efe3c9]"}`} // stesso colore della carta della busta
+                    className={`relative flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-[#efe3c9]"}`} // stesso colore della carta della busta
                     style={{ height: ALTEZZA_VOCE }}
                   >
                     {p === "?" ? (
@@ -462,7 +462,15 @@ export function AperturaBusta({
                         <Sigillo />
                       )
                     ) : (
-                      <ToppaAvatar look={p.look} dimensione={92} />
+                      <>
+                        <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
+                          <path d="M-20 -24L50 30L120 -24" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                          <path d="M-20 84L36 38M120 84L64 38" fill="none" stroke="rgba(0,0,0,.07)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                        </svg>
+                        <span className="relative rounded-full shadow-[0_3px_5px_rgba(0,0,0,.3)]">
+                          <ToppaAvatar look={p.look} dimensione={92} />
+                        </span>
+                      </>
                     )}
                   </div>
                 ))}
@@ -885,8 +893,8 @@ export function AperturaBusta({
                   <BigliettoOlografico
                     nome={destinatario.nome}
                     look={destinatario.look}
-                    accesa={rivelato}
-                    olografiaDopo={0.15}
+                    accesa
+                    olografiaDopo={0}
                   />
                 </div>
               )}
