@@ -111,38 +111,8 @@ export function ToppaParola({ righe, stoffa, senzaTesto = false }: { righe: Riga
   );
 }
 
-// ---------- il lupo che ulula (bianco o grigio), girato a sinistra, muso in su ----------
-function Lupo({ pelo, ombra, petto }: { pelo: string; ombra: string; petto: string }) {
-  return (
-    <g>
-      {/* coda appoggiata a terra */}
-      <path d="M66 81c8 2 15-1 16-8-4 3-9 4-15 3z" fill={ombra} />
-      <path
-        d="M24 18L37 24L41 22L44 10L49 23C53 26 57 30 58 36C62 44 64 50 68 58C73 64 74 74 70 80L68 84L38 84C36 84 36 81 38 80L41 70C40 62 39 56 38 50L34 44L31 35L24 27L31 25.5L25 20.6Z"
-        fill={pelo}
-      />
-      {/* petto chiaro, zampa posteriore, orecchio */}
-      <path d="M31 35l3 9 4 6c1 6 2 12 3 20l-2 10c3 0 5-4 5-10 0-9-2-18-5-25-2-5-5-9-8-10z" fill={petto} />
-      <path d="M56 84c-1-9 3-16 11-18" stroke={ombra} strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <path d="M45 14l2 7" stroke={ombra} strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M50 28c2 3 4 5 7 6M52 34c2 2 4 3 6 3" stroke={ombra} strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      <circle cx="38.6" cy="27" r="1.3" fill={C.ink} />
-      <circle cx="24.8" cy="18.9" r="1.5" fill={C.ink} />
-    </g>
-  );
-}
-const LUPO_BIANCO = { pelo: "#f3efe6", ombra: "#b9bcc1", petto: "#ffffff" };
-const LUPO_GRIGIO = { pelo: C.grigio, ombra: C.grigioScuro, petto: "#b4b7bc" };
-
-function CieloStellato() {
-  return (
-    <>
-      <Stellina x={72} y={26} r={3} fill={C.senape} />
-      <Stellina x={22} y={44} r={2.2} fill={C.crema} />
-      <Stellina x={78} y={56} r={2} fill={C.crema} />
-    </>
-  );
-}
+// ---------- testa di lupo di profilo (girata a destra), per "i due lupi" ----------
+const TESTA_LUPO = "M8 92C10 72 14 58 24 49L21 35L28 43L32 37L35 46C41 47 46 50 48 53L47 56.5C42 57.5 37 59 33 63C31 73 31 83 33 92Z";
 
 // Le parole su una tela larga 100: una parola da una riga e 220 di larghezza diventa larga 46.
 const SCALA_PAROLA = 46 / 220;
@@ -275,7 +245,7 @@ export const CATALOGO: Toppa[] = [
 
   {
     // dalla foto di Marzia: ricci, occhiali tondi, barbone, occhi sbarrati verso chi guarda, tubo di biscotti in bocca
-    id: "oreo", tipo: "simbolo", nome: "Christmas oreo", rapporto: 1,
+    id: "oreo", tipo: "simbolo", nome: "Christmas oreo", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.senape} filo={C.abete}>
         {/* ricci */}
@@ -341,7 +311,7 @@ export const CATALOGO: Toppa[] = [
   // ===== Simboli dei totem =====
   // Impegno alto · va bene tutto
   {
-    id: "aa-portatile", tipo: "simbolo", nome: "Portatile", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    id: "aa-portatile", tipo: "simbolo", ritirata: true, nome: "Portatile", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.senape} filo={C.abete}>
         <rect x="26" y="27" width="48" height="35" rx="3.5" fill="#3a3f45" />
@@ -355,7 +325,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "aa-sudato", tipo: "simbolo", nome: "Faccia sudata che ammicca", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    id: "aa-sudato", tipo: "simbolo", ritirata: true, nome: "Faccia sudata che ammicca", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.abete} filo={C.senape}>
         <circle cx="28.5" cy="56" r="4" fill={C.pelle} />
@@ -383,7 +353,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "aa-capra", tipo: "simbolo", nome: "Capra", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    id: "aa-capra", tipo: "simbolo", ritirata: true, nome: "Capra", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.verm} filo={C.crema}>
         <path d="M39 35c-5-9-14-11-19-5 6-1 10 1 14 8zM61 35c5-9 14-11 19-5-6-1-10 1-14 8z" fill={C.legno} />
@@ -405,20 +375,115 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "aa-lupo", tipo: "simbolo", nome: "Lupo bianco", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    // dalla reference di Marzia: lupo bianco seduto su uno scoglio, abbraccia le ginocchia e guarda in alto, mare in tempesta
+    id: "aa-lupo", tipo: "simbolo", nome: "uno dei due lupi", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
-        <CieloStellato />
-        <g transform="translate(2 1)">
-          <Lupo {...LUPO_BIANCO} />
+        <Ritaglio id="lupo-scoglio">
+          {[22, 30, 72, 80].map((x) => (
+            <path key={x} d={`M${x} 14l-3 14`} stroke="#5b6b86" strokeWidth="1" opacity=".7" />
+          ))}
+          <path d="M6 70c8-3 12 1 20-1M74 68c8-3 12 1 20-1" stroke="#5b6b86" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M10 94c4-12 14-16 30-16s32 2 46 16z" fill="#4a5160" />
+          <path d="M26 84c10-3 24-3 36 0" stroke="#626b7d" strokeWidth="1.6" fill="none" />
+        </Ritaglio>
+        {/* coda appoggiata sullo scoglio */}
+        <path d="M60 76c9 2 17-1 22-8-6 3-13 4-21 3z" fill="#d7d3cb" />
+        {/* il lupo seduto, di profilo, muso all'insù */}
+        <path
+          d="M36 22L48 26L53 22L56 13L59 24C62 30 61 36 58 40C64 46 67 56 66 66C66 72 64 78 60 79L40 79C35 79 33 76 35 74L37 66C33 64 32 58 36 54L41 50C42 46 43 42 45 38L41 33L35 26Z"
+          fill="#f3efe6"
+        />
+        {/* braccio che abbraccia le ginocchia */}
+        <path d="M55 47c-5 4-11 8-17 10" stroke="#d7d3cb" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <path d="M54 46c-5 4-11 8-17 10" stroke="#f3efe6" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <circle cx="37" cy="57" r="2.8" fill="#f3efe6" />
+        {/* criniera, orecchio, occhio pensieroso, naso */}
+        <path d="M45 38l3 2-1 3 3 1-1 3" stroke="#c9c5bc" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M56.4 16l1 6" stroke="#c9c5bc" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M60 64c-2 5-6 8-12 9" stroke="#d7d3cb" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        <path d="M47.2 28.6q1.6-1.4 3.4 0" stroke={C.ink} strokeWidth="1.3" fill="none" strokeLinecap="round" />
+        <circle cx="35.8" cy="23.6" r="1.6" fill={C.ink} />
+        <path d="M38 28.4l4.4 2" stroke="#b9bcc1" strokeWidth="1" strokeLinecap="round" />
+      </Rotonda>
+    ),
+  },
+  {
+    id: "aa-pc", tipo: "simbolo", nome: "fabbricando il miglior regalo del mondo", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    disegno: () => (
+      <Rotonda fondo={C.senape} filo={C.abete}>
+        {/* ricci */}
+        {[[36, 34, 7], [41, 26, 7], [50, 23, 7.5], [59, 26, 7], [64, 34, 7], [66, 43, 6], [34, 43, 6]].map(([x, y, r]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill={C.capelli} />
+        ))}
+        <circle cx="35.5" cy="47" r="3" fill={C.pelle} />
+        <circle cx="64.5" cy="47" r="3" fill={C.pelle} />
+        <ellipse cx="50" cy="45" rx="14" ry="15" fill={C.pelle} />
+        {[[44, 31], [50, 29], [56, 31]].map(([x, y]) => (
+          <circle key={x} cx={x} cy={y} r="4.4" fill={C.capelli} />
+        ))}
+        {/* occhi azzurri, concentrati sullo schermo */}
+        <ellipse cx="44.5" cy="46" rx="3.3" ry="3" fill={C.bianco} />
+        <ellipse cx="55.5" cy="46" rx="3.3" ry="3" fill={C.bianco} />
+        <circle cx="44.8" cy="47" r="2.1" fill="#3b82c4" />
+        <circle cx="55.8" cy="47" r="2.1" fill="#3b82c4" />
+        <circle cx="44.8" cy="47.2" r="1" fill={C.ink} />
+        <circle cx="55.8" cy="47.2" r="1" fill={C.ink} />
+        <path d="M40.5 41.5q4-1.6 8 .4M51.5 41.9q4-2 8-.4" stroke={C.capelli} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M47 53.5q3 1.4 6 0" stroke={C.ink} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        {/* il portatile visto da dietro, con l'adesivo del pacchetto */}
+        <path d="M24 58h52l-3 24H27z" fill={C.argento} />
+        <path d="M24 58h52" stroke={C.grigio} strokeWidth="1.6" />
+        <rect x="45" y="64" width="10" height="9" rx="1" fill={C.verm} />
+        <path d="M50 64v9M45 67.5h10" stroke={C.senape} strokeWidth="1.6" />
+        <path d="M47.5 64c-2-3 1-4 2.5 0 1.5-4 4.5-3 2.5 0" fill="none" stroke={C.senape} strokeWidth="1.2" />
+        {/* scintille di concentrazione */}
+        <Stellina x={24} y={30} r={3.4} fill={C.bianco} />
+        <Stellina x={77} y={28} r={4} fill={C.verm} />
+        <Stellina x={79} y={46} r={2.4} fill={C.bianco} />
+      </Rotonda>
+    ),
+  },
+  {
+    // stemma originale ispirato al ruolo "carry" (reference di Marzia)
+    id: "aa-carry", tipo: "simbolo", nome: "carry", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    disegno: () => (
+      <Rotonda fondo={C.notte} filo={C.senape}>
+        <g fill={C.senape}>
+          <path d="M50 17l5.4 10.6L50 40l-5.4-12.4z" />
+          <path d="M36 25l4 6.4-4 6.6-3.6-6.6zM64 25l3.6 6.4-3.6 6.6-4-6.6z" />
+          <path d="M47 45C39 39 28 39 20 49c9 0 15 3 19 10l8-4zM53 45c8-6 19-6 27 4-9 0-15 3-19 10l-8-4z" />
+          <path d="M45.5 44h9v25l4.5 4.5L50 85l-9-11.5 4.5-4.5z" />
+          <path d="M39 55h22l-2.6 4.4H41.6z" />
         </g>
+        <path d="M50 46v22" stroke={C.notte} strokeWidth="1.4" />
+      </Rotonda>
+    ),
+  },
+  {
+    id: "aa-sisifo", tipo: "simbolo", nome: "Sisifo", rapporto: 1, totem: "IMPEGNO_ALTO_RICEVE_TUTTO",
+    disegno: () => (
+      <Rotonda fondo={C.ink} filo={C.crema}>
+        <Ritaglio id="sisifo">
+          <circle cx="50" cy="52" r="31" fill={C.crema} />
+          <circle cx="57" cy="45" r="19" fill={C.ink} />
+          {/* il pendio taglia il cerchio in basso a destra */}
+          <path d="M44 90L90 56V96H40z" fill={C.ink} />
+          {/* Sisifo che spinge il masso */}
+          <g stroke={C.ink} strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d="M37 61.5L31 69.5" />
+            <path d="M36.4 62.5l5.2-3.4M35 65l6-1.6" />
+            <path d="M31 69.5l-4 5.6M31 69.5l3 4 -1.4 3.4" />
+          </g>
+          <circle cx="38.6" cy="58" r="3.2" fill={C.ink} />
+        </Ritaglio>
       </Rotonda>
     ),
   },
 
   // Impegno alto · esigente
   {
-    id: "ae-martelletto", tipo: "simbolo", nome: "Martelletto", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
+    id: "ae-martelletto", tipo: "simbolo", nome: "Is this the law??", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.senape} filo={C.abete}>
         <ellipse cx="50" cy="76" rx="22" ry="5" fill={C.marrone} />
@@ -454,35 +519,44 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "ae-unghie", tipo: "simbolo", nome: "Mano con lo smalto", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
+    id: "ae-unghie", tipo: "simbolo", nome: "girly girl just girlin'", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.rosa}>
-        <g transform="rotate(-14 50 58)">
-          <path d="M33 53h33v16c0 9-7 16-16.5 16S33 78 33 69z" fill={C.pelle} />
+        <g transform="rotate(-10 50 60)">
+          {/* polso col bracciale di perline */}
+          <path d="M42 68h17l3 20H39z" fill={C.pelle} />
+          {[40.5, 44.5, 48.5, 52.5, 56.5, 60.5].map((x) => (
+            <circle key={x} cx={x} cy="76" r="2.2" fill={C.bianco} />
+          ))}
+          {/* dita sottili con le unghie lunghe a mandorla */}
           {[
-            [34, 31, 26],
-            [42, 24, 33],
-            [50, 26, 31],
-            [58, 32, 25],
-          ].map(([x, y, h]) => (
-            <g key={x}>
-              <rect x={x} y={y} width="7.6" height={h + 4} rx="3.8" fill={C.pelle} />
-              <rect x={x + 1.3} y={y + 1.3} width="5" height="8" rx="2.5" fill={C.verm} />
-              <rect x={x + 2.2} y={y + 2.4} width="1.3" height="3.4" rx=".6" fill="#fff" opacity=".7" />
+            [37, 34, 30, -6],
+            [44, 26, 38, -2],
+            [51, 25, 39, 2],
+            [58, 30, 34, 6],
+          ].map(([x, y, h, r]) => (
+            <g key={x} transform={`rotate(${r} ${x + 3} ${y + h})`}>
+              <rect x={x} y={y} width="6.4" height={h} rx="3.2" fill={C.pelle} />
+              <path d={`M${x + 0.6} ${y + 6}c0-5 1.4-9 2.6-11 1.2 2 2.6 6 2.6 11z`} fill="#ff5c93" />
+              <path d={`M${x + 2.2} ${y + 3}l.4-3`} stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".8" />
             </g>
           ))}
-          <path d="M34 62c-6-1-11-6-10-11 2-3 6-2 9 2l4 4z" fill={C.pelle} />
-          <path d="M42 56v6M50 56v6M58 57v5" stroke={C.pelleScura} strokeWidth="1.2" strokeLinecap="round" />
+          {/* anello */}
+          <rect x="50.6" y="50" width="7.2" height="2.6" rx="1.3" fill={C.senape} />
+          <circle cx="54.2" cy="49.6" r="1.8" fill={C.rosa} />
+          <path d="M36 54c0-2 2-4 4-4h20c3 0 5 2 5 5v10c0 4-3 7-7 7H43c-4 0-7-3-7-7z" fill={C.pelle} />
+          <path d="M36 62c-6-1-10-6-9-11 2-3 6-2 8 2l4 4z" fill={C.pelle} />
+          <path d="M27.4 51.6c-1-4 1-7 2.6-8.4 1 2 1.4 4.6.6 7.4z" fill="#ff5c93" />
         </g>
-        <Stellina x={25} y={30} r={5} fill={C.senape} />
-        <Stellina x={76} y={30} r={3.6} fill={C.bianco} />
-        <Stellina x={79} y={58} r={4.4} fill={C.senape} />
-        <Stellina x={22} y={68} r={2.8} fill={C.bianco} />
+        <Stellina x={24} y={32} r={5} fill={C.bianco} />
+        <Stellina x={76} y={30} r={4} fill="#ff9cc0" />
+        <Stellina x={79} y={58} r={3.6} fill={C.senape} />
+        <path d="M24 72c-1.2-1.6-3.8-.6-2.6 1.4l2.6 2.4 2.6-2.4c1.2-2-1.4-3-2.6-1.4z" fill="#ff9cc0" />
       </Rotonda>
     ),
   },
   {
-    id: "ae-imprenditore", tipo: "simbolo", nome: "Imprenditore col giusto mindset", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
+    id: "ae-imprenditore", tipo: "simbolo", nome: "calcolando il giusto regalo da ricevere se io regalo una casa", rapporto: 1, totem: "IMPEGNO_ALTO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.crema} filo={C.verm}>
         <path d="M18 60l14-10 9 6 20-22" stroke={C.verm} strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -505,7 +579,7 @@ export const CATALOGO: Toppa[] = [
 
   // Impegno basso · va bene tutto
   {
-    id: "ba-pugno", tipo: "simbolo", nome: "Pugno chiuso", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
+    id: "ba-pugno", tipo: "simbolo", nome: "communism, I guess...", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.verm} filo={C.crema}>
         <rect x="40" y="58" width="21" height="30" fill={C.crema} />
@@ -517,23 +591,43 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "ba-shaka", tipo: "simbolo", nome: "Mano che fa 🤙", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
+    id: "ba-shaka", tipo: "simbolo", nome: "californiaaa🤙", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.abete} filo={C.crema}>
-        <g transform="rotate(-12 50 54)">
-          <rect x="41" y="60" width="18" height="28" fill={C.pelle} />
-          <rect x="39" y="78" width="22" height="6" rx="2" fill={C.verm} />
-          <rect x="31" y="18" width="9.4" height="28" rx="4.7" transform="rotate(-30 36 44)" fill={C.pelle} />
-          <rect x="58" y="55" width="25" height="8.6" rx="4.3" transform="rotate(22 60 59)" fill={C.pelle} />
-          <rect x="33" y="37" width="31" height="29" rx="10" fill={C.pelle} />
-          <path d="M40 45h19M40 51.5h19M40 58h16" stroke={C.pelleScura} strokeWidth="2.2" strokeLinecap="round" />
+        <g transform="rotate(-8 50 56)">
+          <rect x="43" y="64" width="18" height="24" fill={C.pelle} />
+          <rect x="41" y="78" width="22" height="6" rx="2" fill={C.verm} />
+          {/* pollice in su a sinistra */}
+          <path d="M39 50C33 42 28 32 26 25c-1-4 4-6 6-3 4 7 9 16 15 23z" fill={C.pelle} />
+          <ellipse cx="28.6" cy="24.4" rx="2.4" ry="3" transform="rotate(-25 28.6 24.4)" fill={C.pelleScura} opacity=".55" />
+          {/* mignolo in fuori a destra */}
+          <path d="M63 57c7 0 15 2 20 4 4 2 2 7-2 7-6-1-13-2-19-4z" fill={C.pelle} />
+          <ellipse cx="81" cy="64" rx="2.6" ry="2" fill={C.pelleScura} opacity=".55" />
+          {/* dorso della mano con le tre dita piegate */}
+          <path d="M37 47c0-6 4-9 10-9h12c6 0 9 4 9 9v12c0 7-5 11-11 11H47c-6 0-10-4-10-11z" fill={C.pelle} />
+          <path d="M41 46.5q11-3 23 0M41 53.5q11-3 23 0M42 60.5q10-3 21 0" stroke={C.pelleScura} strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M64 46.5l1.6 1.6M64 53.5l1.6 1.6" stroke={C.pelleScura} strokeWidth="1.4" strokeLinecap="round" />
         </g>
-        <path d="M24 70q-4-4 0-8M78 34q4 4 0 8" stroke={C.senape} strokeWidth="2" fill="none" strokeLinecap="round" />
+        <path d="M74 30q4 3 1 7M80 26q5 5 1 11" stroke={C.senape} strokeWidth="2" fill="none" strokeLinecap="round" />
+        <path d="M20 66q-4 3-1 7" stroke={C.senape} strokeWidth="2" fill="none" strokeLinecap="round" />
       </Rotonda>
     ),
   },
   {
-    id: "ba-bradipo", tipo: "simbolo", nome: "Bradipo", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
+    id: "ba-tiger", tipo: "simbolo", nome: "tiger", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
+    disegno: () => (
+      <Rotonda fondo={C.crema} filo={C.verm}>
+        <path d="M41 22h14v13h12v12H55v15c0 6 4 8 11 7v13c-15 3-25-3-25-17V47h-8V35h8z" fill={C.ink} />
+        {/* occhi un po' storti sulla traversa */}
+        <ellipse cx="45" cy="41" rx="5.6" ry="4.6" fill={C.bianco} />
+        <ellipse cx="59" cy="41" rx="5.6" ry="4.6" fill={C.bianco} />
+        <circle cx="47.6" cy="40.4" r="2.3" fill={C.ink} />
+        <circle cx="61.6" cy="40.4" r="2.3" fill={C.ink} />
+      </Rotonda>
+    ),
+  },
+  {
+    id: "ba-bradipo", tipo: "simbolo", ritirata: true, nome: "Bradipo", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.ghiaccio} filo={C.notte}>
         <path d="M12 32q38-10 76 0" stroke={C.marrone} strokeWidth="5" fill="none" strokeLinecap="round" />
@@ -556,7 +650,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "ba-cartello", tipo: "simbolo", nome: "Cartello di protesta", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
+    id: "ba-cartello", tipo: "simbolo", ritirata: true, nome: "Cartello di protesta", rapporto: 1, totem: "IMPEGNO_BASSO_RICEVE_TUTTO",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
         <rect x="47.5" y="50" width="5" height="36" rx="1.5" fill={C.legno} />
@@ -573,7 +667,7 @@ export const CATALOGO: Toppa[] = [
 
   // Impegno basso · esigente
   {
-    id: "be-lupetto", tipo: "simbolo", nome: "Lupetto grigio col cartellino", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
+    id: "be-lupetto", tipo: "simbolo", nome: "lupetto grigio da restituire", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.rosa} filo={C.bordeaux}>
         <path d="M22 80l6-28c2-8 7-12 14-12h16c7 0 12 4 14 12l6 28-10 2-2-20-2 22H36l-2-22-2 20z" fill={C.grigio} />
@@ -594,7 +688,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "be-scontrino", tipo: "simbolo", nome: "Scontrino", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
+    id: "be-scontrino", tipo: "simbolo", nome: "per portarlo indietro", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.abete} filo={C.crema}>
         <g transform="rotate(7 50 50)">
@@ -614,42 +708,56 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "be-lupo", tipo: "simbolo", nome: "Lupo grigio", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
+    // dalla reference di Marzia: lupo mannaro grigio che ulula alla luna e si strappa la camicia, nel bosco di notte
+    id: "be-lupo", tipo: "simbolo", nome: "l'altro lupo", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
-        <CieloStellato />
-        <g transform="translate(2 1)">
-          <Lupo {...LUPO_GRIGIO} />
-        </g>
+        <Ritaglio id="bosco-lupo">
+          <circle cx="50" cy="22" r="11" fill="#d8dce6" opacity=".9" />
+          <path d="M6 90l10-40 10 40zM14 90l8-30 8 30zM94 90l-10-40-10 40zM86 90l-8-30-8 30z" fill="#16241b" />
+          {/* corpo: busto peloso con la camicia strappata */}
+          <path d="M26 96c0-18 9-30 24-32 15 2 24 14 24 32z" fill={C.grigio} />
+          <path d="M42 66l8 14 8-14c-2 8-4 14-8 20-4-6-6-12-8-20z" fill="#b4b7bc" />
+          <path d="M26 96c0-16 5-26 14-30l3 8-5 4 5 6-4 12zM74 96c0-16-5-26-14-30l-3 8 5 4-5 6 4 12z" fill="#3a3f45" />
+          {/* braccia che strappano la camicia */}
+          <path d="M30 78c4-6 8-10 12-11M70 78c-4-6-8-10-12-11" stroke={C.grigio} strokeWidth="7" strokeLinecap="round" fill="none" />
+          <path d="M40 66l-2-3M43 66l-1-3.6M60 66l2-3M57 66l1-3.6" stroke={C.bianco} strokeWidth="1.2" strokeLinecap="round" />
+        </Ritaglio>
+        {/* testa all'insù che ulula */}
+        <path d="M42 64c-3-10-1-22 4-32l1-8h6l1 8c5 10 7 22 4 32z" fill={C.grigio} />
+        <path d="M42 50l-7-8 9 3zM58 50l7-8-9 3z" fill={C.grigioScuro} />
+        <path d="M47.4 26l2.6 13 2.6-13z" fill="#5a1f2b" />
+        <path d="M47.6 27l1 3M52.4 27l-1 3" stroke={C.bianco} strokeWidth="1" strokeLinecap="round" />
+        <circle cx="50" cy="24.6" r="1.8" fill={C.ink} />
+        <path d="M44.6 48l2.4 1M55.4 48l-2.4 1" stroke={C.senape} strokeWidth="1.6" strokeLinecap="round" />
       </Rotonda>
     ),
   },
   {
+    // dalla reference di Marzia: il telefono pieghevole aperto, e dietro il retro con le due fotocamere
     id: "be-iphone", tipo: "simbolo", nome: "iPhone duo", rapporto: 1, totem: "IMPEGNO_BASSO_ESIGENTE",
     disegno: () => (
       <Rotonda fondo={C.verm} filo={C.crema}>
-        <g transform="rotate(-14 42 52)">
-          <rect x="29" y="25" width="27" height="52" rx="6.5" fill={C.argento} />
-          <rect x="32.5" y="28.5" width="12" height="12" rx="3.4" fill={C.grigio} />
-          <circle cx="36" cy="32" r="2.2" fill={C.ink} />
-          <circle cx="41" cy="37" r="2.2" fill={C.ink} />
-          <circle cx="41" cy="32" r="1" fill={C.bianco} />
+        <g transform="rotate(-10 30 50)">
+          <rect x="17" y="27" width="22" height="44" rx="5" fill="#eef0f2" />
+          <rect x="19.5" y="29.5" width="10" height="16" rx="5" fill="#d3d6da" />
+          <circle cx="24.5" cy="34" r="3.2" fill="#2a2f35" />
+          <circle cx="24.5" cy="41" r="3.2" fill="#2a2f35" />
         </g>
-        <g transform="rotate(10 60 54)">
-          <rect x="46" y="28" width="27" height="52" rx="6.5" fill={C.ink} />
-          <rect x="49.5" y="31.5" width="12" height="12" rx="3.4" fill="#3a3f45" />
-          <circle cx="53" cy="35" r="2.2" fill={C.grigio} />
-          <circle cx="58" cy="40" r="2.2" fill={C.grigio} />
-          <circle cx="58" cy="35" r="1" fill={C.senape} />
-          <rect x="46" y="28" width="27" height="52" rx="6.5" fill="none" stroke="#3a3f45" strokeWidth="1.2" />
-        </g>
+        {/* aperto come un libro: due metà con la piega al centro */}
+        <rect x="32" y="30" width="52" height="40" rx="4.4" fill="#2a2f35" />
+        <rect x="34" y="32" width="48" height="36" rx="2.6" fill={C.ghiaccio} />
+        <path d="M34 54c8-5 14-6 22-3 8 3 16 1 26-4v18a2.6 2.6 0 0 1-2.6 2.6H36.6A2.6 2.6 0 0 1 34 65z" fill="#dcc596" />
+        <path d="M34 60c10-4 18-3 26 0s14 2 22-2v5a2.6 2.6 0 0 1-2.6 2.6H36.6A2.6 2.6 0 0 1 34 63z" fill="#c9ab76" />
+        <path d="M58 32v36" stroke="#000" strokeOpacity=".22" strokeWidth="1.4" />
+        <path d="M57 32v36" stroke="#fff" strokeOpacity=".35" strokeWidth=".8" />
       </Rotonda>
     ),
   },
 
   // Bonus (So cooked)
   {
-    id: "bo-caricamento", tipo: "simbolo", nome: "Rotellina di caricamento", rapporto: 1, totem: "BONUS",
+    id: "bo-caricamento", tipo: "simbolo", nome: "buffering", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.crema} filo={C.abete}>
         {Array.from({ length: 8 }, (_, i) => (
@@ -659,7 +767,7 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "bo-zuppa", tipo: "simbolo", nome: "Zuppa fumante", rapporto: 1, totem: "BONUS",
+    id: "bo-zuppa", tipo: "simbolo", nome: "sei cucinato", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.senape} filo={C.abete}>
         <path d="M38 42c-4-6 4-8 0-15M50 42c-4-6 4-8 0-15M62 42c-4-6 4-8 0-15" stroke={C.abete} strokeWidth="3" fill="none" strokeLinecap="round" />
@@ -676,24 +784,53 @@ export const CATALOGO: Toppa[] = [
     ),
   },
   {
-    id: "bo-lupi", tipo: "simbolo", nome: "Due lupi che ululano", rapporto: 1, totem: "BONUS",
+    // dalla reference di Marzia: due lupi, uno nero e uno bianco, muso contro muso davanti alla luna piena
+    id: "bo-lupi", tipo: "simbolo", nome: "i due lupi", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.notte} filo={C.senape}>
-        <circle cx="50" cy="24" r="8" fill={C.senape} />
-        <circle cx="47" cy="22" r="1.6" fill="#d4931a" />
-        <circle cx="53" cy="27" r="1.2" fill="#d4931a" />
-        <path d="M18 77q32-6 64 0" stroke={C.abete} strokeWidth="5" fill="none" strokeLinecap="round" />
-        <g transform="translate(-7 17) scale(.7)">
-          <Lupo {...LUPO_BIANCO} />
-        </g>
-        <g transform="translate(107 17) scale(-.7 .7)">
-          <Lupo {...LUPO_GRIGIO} />
-        </g>
+        <Ritaglio id="due-lupi">
+          <circle cx="50" cy="48" r="27" fill="#e9e5db" />
+          <circle cx="42" cy="40" r="4" fill="#d6d1c4" />
+          <circle cx="58" cy="56" r="3" fill="#d6d1c4" />
+          <circle cx="60" cy="36" r="2" fill="#d6d1c4" />
+          <path d={TESTA_LUPO} fill="#1c1f24" />
+          <circle cx="33.6" cy="48.6" r="1.3" fill="#c9ccd1" />
+          <g transform="translate(100 0) scale(-1 1)">
+            <path d={TESTA_LUPO} fill={C.bianco} />
+            <path d="M24 49c4 2 6 6 8 12M28 43l2 4" stroke="#b9bcc1" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+            <circle cx="33.6" cy="48.6" r="1.3" fill={C.ink} />
+            <circle cx="47.4" cy="53.6" r="1.4" fill={C.ink} />
+          </g>
+        </Ritaglio>
       </Rotonda>
     ),
   },
   {
-    id: "bo-uovo", tipo: "simbolo", nome: "Uovo sodo", rapporto: 1, totem: "BONUS",
+    id: "bo-pandoro", tipo: "simbolo", nome: "quello che succede quando", rapporto: 1, totem: "BONUS",
+    disegno: () => (
+      <Rotonda fondo={C.bordeaux} filo={C.senape}>
+        <ellipse cx="50" cy="76" rx="32" ry="6" fill="#000" opacity=".2" />
+        {/* il pezzo grande con la punta a stella, rovesciato */}
+        <path d="M28 70l6-20 7 5 6-12 6 10 6-4 1 14-6 9H33z" fill="#e9b44c" />
+        <path d="M34 50l7 5 6-12 6 10" fill="none" stroke="#c98a2a" strokeWidth="1.4" />
+        <path d="M33 74l26-1-6 4H36z" fill="#c98a2a" />
+        {/* pezzi sparsi */}
+        <path d="M62 66l9-4 6 6-4 8-10-2z" fill="#e9b44c" />
+        <path d="M62 66l9-4 1 5-9 3z" fill="#c98a2a" />
+        <path d="M20 72l6-5 5 6-5 5z" fill="#e9b44c" />
+        <path d="M66 52l6-2 2 6-6 2z" fill="#e9b44c" />
+        <path d="M45 78l5-3 4 3-4 3z" fill="#e9b44c" />
+        {/* zucchero a velo dappertutto */}
+        <path d="M30 56c3-3 7-2 9 0 2-3 7-3 9 0 2-2 5-1 6 1" stroke={C.bianco} strokeWidth="3" fill="none" strokeLinecap="round" />
+        {[[24, 64], [38, 80], [58, 80], [72, 72], [78, 60], [56, 46], [44, 38], [68, 44], [26, 80], [50, 64]].map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={i % 3 ? 1 : 1.6} fill={C.bianco} />
+        ))}
+        <path d="M60 34c1 3 3 4 3 6M70 30c-1 3 0 5 1 7" stroke={C.bianco} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".7" />
+      </Rotonda>
+    ),
+  },
+  {
+    id: "bo-uovo", tipo: "simbolo", ritirata: true, nome: "Uovo sodo", rapporto: 1, totem: "BONUS",
     disegno: () => (
       <Rotonda fondo={C.abete} filo={C.crema}>
         <path d="M28 34c-4-5 3-7 0-12M72 34c-4-5 3-7 0-12" stroke={C.crema} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity=".7" />
@@ -717,7 +854,7 @@ export const CATALOGO: Toppa[] = [
       // per tutti
       ["fatto-a-mano", "fatto a mano", "kraft"],
       ["sorpresa", "sorprendimi", "vermiglio"],
-      ["chronically", "chronically online", "notte"],
+      ["chronically", "chronically online", "notte", undefined, true],
       ["crazy", "crazy", "rosa"],
       ["no-way", "no way", "senape"],
       ["nerdy", "nerdy stuffs", "verde"],
@@ -732,15 +869,18 @@ export const CATALOGO: Toppa[] = [
       // totem: impegno alto · va bene tutto
       ["aa-hot", [{ testo: "hot", icona: "fiamma" }], "vermiglio", "IMPEGNO_ALTO_RICEVE_TUTTO"],
       ["aa-at-work", "at work", "notte", "IMPEGNO_ALTO_RICEVE_TUTTO"],
-      ["aa-goat", "goat", "crema", "IMPEGNO_ALTO_RICEVE_TUTTO"],
+      ["aa-goat", "goat", "crema", "IMPEGNO_ALTO_RICEVE_TUTTO", true],
+      ["aa-carry-p", "carry", "crema", "IMPEGNO_ALTO_RICEVE_TUTTO"],
       ["aa-overthinker", "overthinker", "senape", "IMPEGNO_ALTO_RICEVE_TUTTO"],
       // impegno alto · esigente
       ["ae-legge", "questa è\nla legge", "bordeaux", "IMPEGNO_ALTO_ESIGENTE"],
       ["ae-diva", [{ testo: "diva", icona: "stellina" }], "rosa", "IMPEGNO_ALTO_ESIGENTE"],
       ["ae-grindset", "grindset", "nero", "IMPEGNO_ALTO_ESIGENTE"],
-      ["ae-no-pain", "no pain no gain", "vermiglio", "IMPEGNO_ALTO_ESIGENTE"],
+      ["ae-no-pain", "no pain no gain", "vermiglio", "IMPEGNO_ALTO_ESIGENTE", true],
+      ["ae-obbligandoti", "😊 obbligandoti a farmi\nil regalo perfetto 😊", "vermiglio", "IMPEGNO_ALTO_ESIGENTE"],
       // impegno basso · va bene tutto
-      ["ba-non-mi-va", "non mi va", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO"],
+      ["ba-non-mi-va", "non mi va", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO", true],
+      ["ba-tiger-p", "preso da tiger,\nti piace????", "kraft", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-amo-noi", [{ testo: "amo noi", icona: "cuore" }], "bordeaux", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-zero-effort", "zero effort", "verde", "IMPEGNO_BASSO_RICEVE_TUTTO"],
       ["ba-chills", "nel chills", "ghiaccio", "IMPEGNO_BASSO_RICEVE_TUTTO"],
@@ -748,7 +888,7 @@ export const CATALOGO: Toppa[] = [
       ["be-tenuto", "hai tenuto\nlo scontrino?", "crema", "IMPEGNO_BASSO_ESIGENTE"],
       [
         "be-spero",
-        [{ testo: "spero ti piaccia 😊👍" }, { testo: "(con l'intenzione di ucciderti se non ti piace)", piccola: true }],
+        [{ testo: "👍😊 spero ti piaccia 😊👍" }, { testo: "(con l'intenzione di ucciderti in caso contrario)", piccola: true }],
         "senape",
         "IMPEGNO_BASSO_ESIGENTE",
       ],
@@ -875,7 +1015,7 @@ export const NOMI_TIPI: Record<TipoToppa, string> = { simbolo: "Simboli", parola
 export const LATO = 28;
 export const MAX_PERSONALIZZATE = 4; // per tipo
 export type ContenutoPersonalizzato = { foto?: string; celle?: string; testo?: string; stoffa?: Stoffa };
-export type RigaPersonalizzata = { id: string; tipo: "simbolo" | "parola"; ordine: number; contenuto: ContenutoPersonalizzato };
+export type RigaPersonalizzata = { id: string; tipo: "simbolo" | "parola"; ordine: number; contenuto: ContenutoPersonalizzato; member_id?: string | null }; // member_id pieno = toppa personale
 
 const PASSO = 78 / LATO; // la griglia sta dentro il cerchio della cucitura
 export const dentroCerchio = (c: number, r: number) => Math.hypot(11 + (c + 0.5) * PASSO - 50, 11 + (r + 0.5) * PASSO - 50) <= 38.5;
@@ -942,7 +1082,7 @@ export function toppaPersonalizzata(riga: RigaPersonalizzata): Toppa {
 
 // ---------- la "vibe" di un totem: i suoi 4 simboli e le sue 4 parole (non cliccabili) ----------
 export function VibeTotem({ profilo }: { profilo: Profilo }) {
-  const sue = CATALOGO.filter((t) => t.totem === profilo);
+  const sue = CATALOGO.filter((t) => t.totem === profilo && !t.ritirata);
   return (
     <div className="flex flex-col gap-3" aria-label="Toppe di questo totem">
       <div className="grid grid-cols-4 gap-3">

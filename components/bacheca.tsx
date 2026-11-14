@@ -338,7 +338,7 @@ export function Bacheca({
   // cosa c'è in un cassetto: prima le toppe del mio totem, poi quelle del gruppo, poi quelle per tutti
   function cassetto(tipo: TipoToppa) {
     const toppe = [
-      ...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && t.tipo === tipo) : []),
+      ...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []),
       ...delGruppo.filter((t) => t.tipo === tipo),
       ...CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo),
     ];

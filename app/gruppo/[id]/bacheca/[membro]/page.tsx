@@ -18,7 +18,7 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("display_name, user_id, quiz_rifiutato_at").eq("id", membro).eq("group_id", id).maybeSingle(),
     supabase.from("moodboard_items").select("id, kind, content, x, y, width, rotation, z").eq("member_id", membro),
-    supabase.from("group_toppe").select("id, tipo, ordine, contenuto").eq("group_id", id).order("ordine"),
+    supabase.from("group_toppe").select("id, tipo, ordine, contenuto, member_id").eq("group_id", id).order("ordine"),
   ]);
   if (!gruppo || !persona) notFound();
   const mia = persona.user_id === userId;

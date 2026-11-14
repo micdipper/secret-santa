@@ -269,7 +269,8 @@ export function EditorToppeGruppo({ groupId, prova = false, dopo }: { groupId: s
         iniziali.current = t.map((x) => x.id);
         return setToppe(t);
       }
-      const { data } = await supabase.from("group_toppe").select("id, tipo, ordine, contenuto").eq("group_id", groupId).order("ordine");
+      // solo le toppe del gruppo (quelle personali dei membri non si toccano da qui)
+      const { data } = await supabase.from("group_toppe").select("id, tipo, ordine, contenuto").eq("group_id", groupId).is("member_id", null).order("ordine");
       iniziali.current = (data ?? []).map((x) => x.id);
       setToppe((data as RigaPersonalizzata[]) ?? []);
     })();
