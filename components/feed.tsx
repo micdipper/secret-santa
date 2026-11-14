@@ -202,20 +202,27 @@ export function VoceFeed({
         </div>
       )}
 
-      {/* reazioni: solo un riassunto piccolo e piatto (si reagisce tenendo premuto) */}
+      {/* reazioni già fatte: piccole pillole; toccandone una reagisci anche tu con la stessa (ritoccandola la togli).
+          Per scegliere un'altra emoji: tieni premuto il post. */}
       {conteggi.length > 0 && (
-        <p className="relative mt-3 flex flex-wrap gap-1.5" aria-label="Reazioni">
+        <div className="relative mt-3 flex flex-wrap gap-2" aria-label="Reazioni">
           {conteggi.map(({ e, n }) => (
-            <span
+            <button
               key={e}
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm tabular-nums ${mia === e ? "bg-black/15 font-semibold ring-2 ring-current" : "bg-black/10"}`}
-              title={mia === e ? "C'è anche la tua" : undefined}
+              type="button"
+              onClick={() => reagisci(e)}
+              aria-pressed={mia === e}
+              aria-label={mia === e ? `${e} ${n}: c'è anche la tua, tocca per toglierla` : `${e} ${n}: tocca per reagire anche tu`}
+              className={`cliccabile relative inline-flex h-10 items-center gap-1 rounded-full px-3 text-sm font-semibold tabular-nums ${
+                mia === e ? "stoffa-vermiglio" : "stoffa-chiara text-inchiostro"
+              }`}
+              style={{ ["--spessore" as string]: mia === e ? "#9e2a0b" : "#c9b48a" }}
             >
-              <span className="leading-none">{e}</span>
+              <span className="text-base leading-none">{e}</span>
               {n}
-            </span>
+            </button>
           ))}
-        </p>
+        </div>
       )}
 
       <AnimatePresence>

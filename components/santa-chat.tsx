@@ -17,7 +17,8 @@ import { suoni } from "@/lib/suoni";
 export type Ruolo = "babbo" | "pescato"; // chi sono IO in questa conversazione
 export type Messaggio = { id: string; dal_babbo: boolean; testo: string; created_at: string; inAttesa?: boolean };
 
-export const MAX_CARATTERI = 500;
+export const MAX_CARATTERI = 50; // spazi compresi (lo controlla anche il database)
+export const MESSAGGI_AL_GIORNO = 5; // a testa, per conversazione
 
 // Chiave del telefono che ricorda l'ultimo messaggio letto (per il pallino "nuovi")
 export const chiaveLetto = (receiverId: string, ruolo: Ruolo) => `santa-chat-letto:${receiverId}:${ruolo}`;
@@ -95,9 +96,14 @@ export function SantaChat({
 
   const pulito = testo.trim();
   const troppo = pulito.length > MAX_CARATTERI;
+  // quanti messaggi ho ancora oggi
+  const oggi = new Date().toDateString();
+  const mieiOggi = messaggi.filter((m) => m.dal_babbo === sonoBabbo && new Date(m.created_at).toDateString() === oggi).length;
+  const rimasti = Math.max(0, MESSAGGI_AL_GIORNO - mieiOggi);
+  const finiti = rimasti === 0;
 
   async function invia() {
-    if (!pulito || troppo) return;
+    if (!pulito || troppo || finiti) return;
     setErrore("");
     setNota("");
     const daInviare = pulito;
@@ -210,8 +216,10 @@ export function SantaChat({
               ref={campo}
               rows={1}
               value={testo}
+              maxLength={MAX_CARATTERI}
+              disabled={finiti}
               enterKeyHint="send"
-              placeholder={sonoBabbo ? `Scrivi a ${nomeAltro}…` : "Scrivi al tuo Babbo Natale…"}
+              placeholder={finiti ? "Per oggi hai finito: a domani!" : sonoBabbo ? `Scrivi a ${nomeAltro}…` : "Scrivi al tuo Babbo Natale…"}
               className="placeholder:text-inchiostro/40"
               onChange={(e) => setTesto(e.target.value)}
               onKeyDown={(e) => {
@@ -223,13 +231,15 @@ export function SantaChat({
               }}
             />
           </div>
-          <TastoTondo type="submit" etichetta="Invia" icona={Icone.invia} disabled={!pulito || troppo} />
+          <TastoTondo type="submit" etichetta="Invia" icona={Icone.invia} disabled={!pulito || troppo || finiti} />
         </div>
-        {pulito.length > MAX_CARATTERI - 100 && (
-          <p className={`mt-2 text-right text-sm ${troppo ? "text-senape" : "text-crema/70"}`}>
-            {pulito.length}/{MAX_CARATTERI}
-          </p>
-        )}
+        {/* caratteri e messaggi rimasti: 5 messaggi a testa al giorno, 50 caratteri l'uno */}
+        <p className="mt-2 flex justify-between text-sm text-crema/75" aria-live="polite">
+          <span>{finiti ? "Per oggi hai finito i tuoi 5 messaggi: domani ne avrai altri 5." : `Ti ${rimasti === 1 ? "resta 1 messaggio" : `restano ${rimasti} messaggi`} oggi`}</span>
+          <span className={`tabular-nums ${troppo ? "text-senape" : ""}`}>
+            {testo.length}/{MAX_CARATTERI}
+          </span>
+        </p>
       </form>
     </main>
   );
