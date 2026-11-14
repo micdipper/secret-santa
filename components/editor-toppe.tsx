@@ -40,7 +40,7 @@ async function fotoPerToppa(file: File) {
 }
 
 // ---------- simbolo: ricamo a punto croce dentro il cerchio, oppure foto ----------
-function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; id: string }) {
+export function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; id: string }) {
   const [celle, setCelle] = useState(valore.celle || VUOTO.repeat(LATO * LATO));
   const [storia, setStoria] = useState<string[]>([]);
   const lavoro = useRef<string[] | null>(null); // le celle mentre il dito ricama
@@ -212,7 +212,7 @@ function SceltaStoffa({ valore, onScegli }: { valore: Stoffa; onScegli: (s: Stof
 const SCALA = 0.72; // px per unità della toppa
 const MAX_RIGHE = 3;
 
-function EditorParola({ valore, onCambia, n }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; n: number }) {
+export function EditorParola({ valore, onCambia, n }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; n: number }) {
   const testo = valore.testo ?? "";
   const stoffa: Stoffa = valore.stoffa ?? "vermiglio";
   const righe = righeDa(testo || " ");

@@ -24,7 +24,7 @@ export type Persona = { nome: string; look: Look | null };
 export type Voce = {
   id: string;
   member_id: string | null;
-  tipo: "creato" | "entrato" | "estrazione" | "busta" | "bacheca" | "totem" | "post";
+  tipo: "creato" | "entrato" | "estrazione" | "busta" | "bacheca" | "totem" | "post" | "toppe";
   dati: { testo?: string; foto?: string; profilo?: Profilo };
   quando: string;
 };
@@ -48,6 +48,8 @@ function frase(v: Voce, totem: TotemNomi) {
       return " è nel gruppo!";
     case "busta":
       return " ha aperto la busta";
+    case "toppe":
+      return " ha aggiunto nuove toppe del gruppo: cercale nel doppio fondo dei cassetti della tua bacheca!";
     case "bacheca":
       return " ha aggiornato la bacheca";
     case "totem":
@@ -68,6 +70,7 @@ const STOFFA_TIPO: Record<Voce["tipo"], Stoffa | null> = {
   bacheca: "ghiaccio",
   totem: "rosa",
   post: null,
+  toppe: "bordeaux",
 };
 const STOFFE_POST: Stoffa[] = ["crema", "vermiglio", "rosa", "senape", "ghiaccio", "bordeaux", "verde"];
 function stoffaDi(v: Voce): Stoffa {

@@ -2,14 +2,19 @@
 
 // La cassettiera della bacheca (sostituisce il vecchio cassetto col "+" e il tasto del ricamo).
 // Sul piano, visto un po' dall'alto, è appoggiato il kit da ricamo: toccandolo si ricama sulla tela.
-// Sotto, quattro cassetti (Simboli, Parole, Texture, Foto) che si aprono al tocco o con uno swipe
-// (giù apre, su chiude). Dentro, le toppe si trascinano e si sparpagliano; un tocco senza trascinare = la attacchi.
+// Sotto, quattro cassetti (Simboli, Parole, Texture, Foto). Si aprono con un tocco, oppure trascinando
+// il frontale: il cassetto segue il dito (giù apre, su chiude).
+// Dentro, le toppe si trascinano e si sparpagliano; un tocco senza trascinare = la attacchi alla tela.
+// DOPPIO FONDO: le toppe del mio totem e quelle del gruppo stanno sotto un fondo finto; si scopre toccando
+// fino a 3 volte l'angolo sollevato in basso a destra (il cassetto trema a ogni tocco). Scoperto una volta,
+// non si nasconde più (lo ricorda il telefono).
 // Le targhette di stoffa appese ai pomelli dondolano col giroscopio del telefono.
 
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Toppa } from "@/components/toppe";
 import { STOFFE, type Stoffa } from "@/lib/parole";
+import { suoni } from "@/lib/suoni";
 
 export type Cassetto = "simbolo" | "parola" | "palette" | "foto";
 export type OggettoCassetto = {
@@ -18,11 +23,12 @@ export type OggettoCassetto = {
   rapporto: number;
   larghezza: number; // in % della larghezza del fondo
   disegno: () => React.ReactNode;
-  conNome: boolean;
-  segno?: "totem" | "gruppo"; // toppa del mio totem (preziosa) o creata dall'organizzatore
+  conNome: boolean; // il nome compare (in una pillola) solo mentre la trascini
+  segno?: "totem" | "gruppo" | "mio"; // toppa del mio totem, del gruppo o creata da me
   nota?: string; // es. "2/5" copie già attaccate
   spento?: boolean;
 };
+export type ContenutoCassetto = { visibili: OggettoCassetto[]; nascosti: OggettoCassetto[] };
 
 const CASSETTI: { id: Cassetto; nome: string; stoffa: Stoffa }[] = [
   { id: "simbolo", nome: "Simboli", stoffa: "vermiglio" },
@@ -31,30 +37,37 @@ const CASSETTI: { id: Cassetto; nome: string; stoffa: Stoffa }[] = [
   { id: "foto", nome: "Foto", stoffa: "ghiaccio" },
 ];
 
-// inclinazione "a mano", sempre uguale per lo stesso oggetto
-function inclinazione(id: string) {
+function hash(t: string) {
   let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return (h % 13) - 6;
+  for (const c of t) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h;
+}
+// inclinazione "a mano", sempre uguale per lo stesso oggetto
+const inclinazione = (id: string) => (hash(id) % 13) - 6;
+
+// mescola sempre allo stesso modo (così le toppe non saltano a ogni visita)
+export function mescola<T extends { id: string }>(lista: T[]) {
+  return [...lista].sort((a, b) => hash(a.id + "~") - hash(b.id + "~"));
 }
 
-// Posizione iniziale ordinata (x, y in % della larghezza del fondo, angolo in alto a sinistra) + altezza totale
-function posizioniIniziali(oggetti: OggettoCassetto[]) {
+// Posizioni (x, y in % della larghezza del fondo, angolo in alto a sinistra), a partire dalla riga "da".
+// Toppe tonde: 4 per fila, un po' sovrapposte e storte, con piccoli spostamenti; parole: file a scaglie.
+function disponi(oggetti: OggettoCassetto[], da = 3) {
   const pos: Record<string, { x: number; y: number }> = {};
-  let fine = 0;
-  if (oggetti[0]?.conNome) {
-    // toppe tonde col nome: 3 per fila, con lo spazio per il nome
+  let fine = da;
+  if (oggetti[0]?.rapporto === 1) {
     oggetti.forEach((o, i) => {
-      const fila = Math.floor(i / 3);
-      const alta = o.larghezza / o.rapporto + 13;
-      pos[o.id] = { x: 9 + (i % 3) * 31 + (fila % 2 ? 1.5 : 0), y: 5 + fila * alta };
-      fine = Math.max(fine, pos[o.id].y + alta);
+      const fila = Math.floor(i / 4);
+      const h = hash(o.id);
+      const x = 3 + (i % 4) * 23 + (fila % 2 ? 4 : 0) + ((h % 7) - 3);
+      const y = da + fila * 17 + ((h >> 3) % 5) - 2;
+      pos[o.id] = { x: Math.max(0, Math.min(100 - o.larghezza, x)), y: Math.max(0, y) };
+      fine = Math.max(fine, pos[o.id].y + o.larghezza);
     });
     return { pos, fine: fine + 3 };
   }
-  // parole: file che si sovrappongono un poco
   let x = 4;
-  let y = 6;
+  let y = da;
   let altaFila = 0;
   oggetti.forEach((o, i) => {
     if (x + o.larghezza > 98 && i > 0) {
@@ -67,85 +80,173 @@ function posizioniIniziali(oggetti: OggettoCassetto[]) {
     x += o.larghezza * 0.86;
     altaFila = Math.max(altaFila, o.larghezza / o.rapporto - 3);
   });
-  return { pos, fine: fine + 6 };
+  return { pos, fine: fine + 4 };
 }
 
-// ---------- il fondo di un cassetto aperto, con le toppe trascinabili ----------
-function FondoCassetto({ oggetti, onPrendi }: { oggetti: OggettoCassetto[]; onPrendi: (o: OggettoCassetto) => void }) {
+// ---------- pillola col nome della toppa (mentre la trascini) ----------
+export function PillolaNome({ nome }: { nome: string | null }) {
+  return (
+    <AnimatePresence>
+      {nome && (
+        <motion.p
+          key="pillola-nome"
+          role="status"
+          initial={{ opacity: 0, y: 10, scale: 0.92 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 6 }}
+          transition={{ type: "spring", stiffness: 520, damping: 32 }}
+          className="pointer-events-none fixed inset-x-0 bottom-[max(24px,env(safe-area-inset-bottom))] z-[300] mx-auto w-fit max-w-[86vw] rounded-full bg-senape px-4 py-2 text-center text-sm font-semibold text-inchiostro shadow-[0_8px_18px_-6px_rgba(0,0,0,.65)]"
+        >
+          <span className="pointer-events-none absolute inset-[3px] rounded-full border-[1.5px] border-dashed border-inchiostro/40" />
+          <span className="relative">{nome}</span>
+        </motion.p>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ---------- il fondo di un cassetto aperto, con le toppe trascinabili e il doppio fondo ----------
+function FondoCassetto({
+  visibili,
+  nascosti,
+  stoffa,
+  onPrendi,
+  onNome,
+  onScopri,
+  onTrema,
+}: {
+  visibili: OggettoCassetto[];
+  nascosti: OggettoCassetto[];
+  stoffa: Stoffa;
+  onPrendi: (o: OggettoCassetto) => void;
+  onNome: (n: string | null) => void;
+  onScopri: (ids: string[]) => void;
+  onTrema: () => void;
+}) {
+  const riduci = useReducedMotion();
   const fondo = useRef<HTMLDivElement>(null);
-  const [{ pos: iniziali, fine }] = useState(() => posizioniIniziali(oggetti));
-  const [pos, setPos] = useState(iniziali);
-  const [ordine, setOrdine] = useState<string[]>(() => oggetti.map((o) => o.id));
+  // prima quelle in vista; quelle del doppio fondo, quando si scoprono, arrivano nelle file sotto
+  const [{ pos: iniziali, fine: fineVisibili }] = useState(() => disponi(visibili));
+  const [{ pos: inizialiNascosti, fine: fineTutti }] = useState(() => disponi(nascosti, fineVisibili - 1));
+  const [pos, setPos] = useState({ ...iniziali, ...inizialiNascosti });
+  const [ordine, setOrdine] = useState<string[]>(() => [...visibili, ...nascosti].map((o) => o.id));
   const [preso, setPreso] = useState<string | null>(null);
+  const [tocchi, setTocchi] = useState(0); // tocchi sul doppio fondo (3 = si apre)
+  const scoperto = tocchi >= 3;
   const gesto = useRef<{ id: string; x0: number; y0: number; px: number; py: number; mosso: boolean } | null>(null);
   const larg = () => fondo.current?.getBoundingClientRect().width ?? 1;
+  const oggetti = scoperto ? [...visibili, ...nascosti] : visibili;
+  const fine = scoperto || nascosti.length === 0 ? Math.max(fineVisibili, fineTutti) : fineVisibili + 6;
+  const legno = STOFFE[stoffa];
+
+  function toccaDoppioFondo() {
+    if (scoperto) return;
+    const n = tocchi + 1;
+    setTocchi(n);
+    onTrema();
+    suoni.punto();
+    if (n >= 3) {
+      suoni.toppa();
+      navigator.vibrate?.(20);
+      setTimeout(() => onScopri(nascosti.map((o) => o.id)), 1400);
+    }
+  }
 
   return (
     // contenitore largo quanto il fondo: le misure in cqw (altezza e posizioni) si riferiscono alla sua larghezza
     <div style={{ containerType: "inline-size" }}>
-    <div ref={fondo} className="cassetto-fondo relative w-full overflow-hidden" style={{ height: `${fine}cqw` }}>
-      {oggetti.map((o) => {
-        const p = pos[o.id] ?? { x: 0, y: 0 };
-        const z = ordine.indexOf(o.id) + 1;
-        const profondita = 0.9 + 0.1 * Math.min(1, p.y / Math.max(1, fine - 20)); // in fondo al cassetto = un filo più piccole
-        return (
-          <motion.button
-            key={o.id}
-            type="button"
-            aria-label={`Attacca alla tela: ${o.nome}${o.spento ? " (già 5 copie)" : ""}`}
-            aria-disabled={o.spento}
-            className={`absolute flex touch-none flex-col items-center select-none ${o.spento ? "opacity-45" : ""}`}
-            style={{ left: `${p.x}%`, top: `${p.y}cqw`, width: `${o.larghezza}%`, zIndex: z }}
-            animate={{ scale: (preso === o.id ? 1.12 : 1) * profondita, rotate: inclinazione(o.id) + (preso === o.id ? -4 : 0) }}
-            transition={{ type: "spring", stiffness: 600, damping: 26 }}
-            onPointerDown={(e) => {
-              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-              gesto.current = { id: o.id, x0: e.clientX, y0: e.clientY, px: p.x, py: p.y, mosso: false };
-              setOrdine((l) => [...l.filter((x) => x !== o.id), o.id]); // passa sopra alle altre
-            }}
-            onPointerMove={(e) => {
-              const g = gesto.current;
-              if (!g || g.id !== o.id) return;
-              const dx = e.clientX - g.x0;
-              const dy = e.clientY - g.y0;
-              if (!g.mosso && Math.hypot(dx, dy) < 6) return;
-              g.mosso = true;
-              setPreso(o.id);
-              const w = larg();
-              setPos((s) => ({
-                ...s,
-                [o.id]: {
-                  x: Math.max(-4, Math.min(104 - o.larghezza, g.px + (dx / w) * 100)),
-                  y: Math.max(0, Math.min(fine - o.larghezza / o.rapporto - (o.conNome ? 10 : 2), g.py + (dy / w) * 100)),
-                },
-              }));
-            }}
-            onPointerUp={() => {
-              const g = gesto.current;
-              gesto.current = null;
-              setPreso(null);
-              if (g && !g.mosso && !o.spento) onPrendi(o);
-            }}
-            onPointerCancel={() => {
-              gesto.current = null;
-              setPreso(null);
-            }}
-          >
-            <span className="relative block w-full" style={{ aspectRatio: String(o.rapporto), filter: `drop-shadow(0 ${preso === o.id ? 8 : 3}px ${preso === o.id ? 6 : 2}px rgba(0,0,0,.45))` }}>
-              {o.disegno()}
-              {o.segno === "totem" && (
-                <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-senape text-[11px] text-inchiostro shadow" title="Dal tuo totem">
-                  ✦
-                </span>
-              )}
-              {o.segno === "gruppo" && <span className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full border-2 border-crema bg-rosa shadow" title="Del gruppo" />}
-              {o.nota && <span className="absolute -bottom-1 -left-1 rounded-full bg-crema px-1.5 text-[11px] leading-4 text-abete shadow">{o.nota}</span>}
-            </span>
-            {o.conNome && <span className="mt-1 line-clamp-2 w-[125%] text-center text-xs leading-tight text-crema/90">{o.nome}</span>}
-          </motion.button>
-        );
-      })}
-    </div>
+      <motion.div ref={fondo} className="cassetto-fondo relative w-full overflow-hidden" animate={{ height: `${fine}cqw` }} transition={{ type: "spring", stiffness: 300, damping: 34 }}>
+        {oggetti.map((o) => {
+          const p = pos[o.id] ?? { x: 0, y: 0 };
+          const z = ordine.indexOf(o.id) + 1;
+          const daSotto = scoperto && nascosti.some((n) => n.id === o.id);
+          return (
+            <motion.button
+              key={o.id}
+              type="button"
+              aria-label={`Attacca alla tela: ${o.nome}${o.spento ? " (già 5 copie)" : ""}`}
+              aria-disabled={o.spento}
+              className={`absolute block touch-none select-none ${o.spento ? "opacity-45" : ""}`}
+              style={{ left: `${p.x}%`, top: `${p.y}cqw`, width: `${o.larghezza}%`, zIndex: z, aspectRatio: String(o.rapporto) }}
+              // quelle del doppio fondo saltano fuori dall'angolo in basso a destra
+              initial={daSotto && !riduci ? { opacity: 0, scale: 0.3, x: 120, y: 40 } : false}
+              animate={{ opacity: 1, x: 0, y: 0, scale: preso === o.id ? 1.12 : 1, rotate: inclinazione(o.id) + (preso === o.id ? -4 : 0) }}
+              transition={{ type: "spring", stiffness: daSotto ? 260 : 600, damping: daSotto ? 18 : 26, delay: daSotto ? 0.25 + (hash(o.id) % 6) * 0.06 : 0 }}
+              onPointerDown={(e) => {
+                (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                gesto.current = { id: o.id, x0: e.clientX, y0: e.clientY, px: p.x, py: p.y, mosso: false };
+                setOrdine((l) => [...l.filter((x) => x !== o.id), o.id]); // passa sopra alle altre
+              }}
+              onPointerMove={(e) => {
+                const g = gesto.current;
+                if (!g || g.id !== o.id) return;
+                const dx = e.clientX - g.x0;
+                const dy = e.clientY - g.y0;
+                if (!g.mosso && Math.hypot(dx, dy) < 6) return;
+                if (!g.mosso && o.conNome) onNome(o.nome);
+                g.mosso = true;
+                setPreso(o.id);
+                const w = larg();
+                setPos((s) => ({
+                  ...s,
+                  [o.id]: {
+                    x: Math.max(-4, Math.min(104 - o.larghezza, g.px + (dx / w) * 100)),
+                    y: Math.max(0, Math.min(fine - o.larghezza / o.rapporto - 1, g.py + (dy / w) * 100)),
+                  },
+                }));
+              }}
+              onPointerUp={() => {
+                const g = gesto.current;
+                gesto.current = null;
+                setPreso(null);
+                onNome(null);
+                if (g && !g.mosso && !o.spento) onPrendi(o);
+              }}
+              onPointerCancel={() => {
+                gesto.current = null;
+                setPreso(null);
+                onNome(null);
+              }}
+            >
+              <span className="relative block h-full w-full" style={{ filter: `drop-shadow(0 ${preso === o.id ? 8 : 3}px ${preso === o.id ? 6 : 2}px rgba(0,0,0,.45))` }}>
+                {o.disegno()}
+                {o.segno === "totem" && (
+                  <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-senape text-[11px] text-inchiostro shadow" title="Dal tuo totem">
+                    ✦
+                  </span>
+                )}
+                {o.segno === "gruppo" && <span className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full border-2 border-crema bg-rosa shadow" title="Del gruppo" />}
+                {o.segno === "mio" && <span className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full border-2 border-crema bg-ghiaccio shadow" title="Creata da te" />}
+                {o.nota && <span className="absolute -bottom-1 -left-1 rounded-full bg-crema px-1.5 text-[11px] leading-4 text-abete shadow">{o.nota}</span>}
+              </span>
+            </motion.button>
+          );
+        })}
+
+        {/* il doppio fondo: angolo sollevato in basso a destra (si vede che sotto c'è dell'altro) */}
+        {nascosti.length > 0 && (
+          <AnimatePresence>
+            {!scoperto ? (
+              <motion.button
+                key="doppio-fondo"
+                type="button"
+                onClick={toccaDoppioFondo}
+                aria-label={`C'è un doppio fondo: toccalo ancora ${3 - tocchi} ${3 - tocchi === 1 ? "volta" : "volte"} per aprirlo`}
+                className="absolute right-0 bottom-0 z-[500] h-12 w-28"
+                exit={{ opacity: 0, x: 40, y: 20, rotate: 12 }}
+                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              >
+                {/* fessura scura + bordo del pannello, che si solleva un po' di più a ogni tocco */}
+                <svg viewBox="0 0 112 48" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden>
+                  <path d={`M4 48L112 ${26 - tocchi * 5}V48Z`} fill="#000" opacity={0.4 + tocchi * 0.1} />
+                  <path d={`M4 48L112 ${26 - tocchi * 5}`} stroke={legno.fondo} strokeWidth="4.4" strokeLinecap="round" />
+                  <path d={`M10 47L112 ${32 - tocchi * 5}`} stroke="#000" strokeOpacity=".25" strokeWidth="1" />
+                </svg>
+              </motion.button>
+            ) : null}
+          </AnimatePresence>
+        )}
+      </motion.div>
     </div>
   );
 }
@@ -355,21 +456,135 @@ function PianoConKit({ onKit }: { onKit: () => void }) {
   );
 }
 
+
+// ---------- un cassetto: interno che segue il dito + frontale col pomello ----------
+function UnCassetto({
+  c,
+  aperto,
+  onApri,
+  onChiudi,
+  gravita,
+  interno: disegnaInterno,
+}: {
+  c: (typeof CASSETTI)[number];
+  aperto: boolean;
+  onApri: () => void;
+  onChiudi: () => void;
+  gravita: MotionValue<number>;
+  interno: (trema: () => void) => React.ReactNode; // il fondo del cassetto (riceve "fai tremare il cassetto")
+}) {
+  const riduci = useReducedMotion();
+  const interno = useRef<HTMLDivElement>(null);
+  const altezza = useMotionValue(0); // quanto è tirato fuori (px)
+  const [piena, setPiena] = useState(0); // altezza dell'interno tutto aperto
+  const trascina = useRef<{ y0: number; h0: number; mosso: boolean } | null>(null);
+  const scossa = useMotionValue(0); // il cassetto trema quando si tocca il doppio fondo
+  function trema() {
+    if (riduci) return;
+    animate(scossa, [0, -4, 4, -3, 3, -1, 0], { duration: 0.36, ease: [0.36, 0, 0.64, 1] });
+  }
+
+  // misura l'interno (cambia quando si scopre il doppio fondo o si aggiungono toppe)
+  useLayoutEffect(() => {
+    const el = interno.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setPiena(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // aperto/chiuso dall'esterno (tocco, o un altro cassetto che si apre) e misura che cambia
+  useEffect(() => {
+    if (trascina.current) return;
+    const verso = aperto ? piena : 0;
+    if (riduci) altezza.set(verso);
+    else animate(altezza, verso, { type: "spring", stiffness: 420, damping: 40 });
+  }, [aperto, piena, altezza, riduci]);
+
+  function molla(apri: boolean) {
+    if (riduci) altezza.set(apri ? piena : 0);
+    else animate(altezza, apri ? piena : 0, { type: "spring", stiffness: 420, damping: 40 });
+  }
+
+  return (
+    <div className="relative">
+      <motion.div style={{ height: altezza }} className="relative overflow-hidden">
+        <motion.div ref={interno} style={{ x: scossa }}>
+          <div className="cassetto-parete-fondo h-5" />
+          <div className="cassetto-pareti px-[2%] pb-1">{disegnaInterno(trema)}</div>
+        </motion.div>
+      </motion.div>
+      {/* frontale: tocco = apri/chiudi; trascinando, il cassetto segue il dito */}
+      <button
+        type="button"
+        aria-expanded={aperto}
+        aria-label={`${aperto ? "Chiudi" : "Apri"} il cassetto ${c.nome}`}
+        className={`cassetto-frontale relative flex h-[92px] w-full touch-none items-start justify-center rounded-[10px] pt-3 select-none ${aperto ? "cassetto-frontale-aperto" : ""}`}
+        onPointerDown={(e) => {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          altezza.stop();
+          trascina.current = { y0: e.clientY, h0: altezza.get(), mosso: false };
+        }}
+        onPointerMove={(e) => {
+          const t = trascina.current;
+          if (!t) return;
+          const dy = e.clientY - t.y0;
+          if (!t.mosso && Math.abs(dy) < 6) return;
+          t.mosso = true;
+          // segue il dito (con un po' di resistenza oltre il tutto aperto)
+          const h = t.h0 + dy;
+          altezza.set(h < 0 ? 0 : h > piena ? piena + (h - piena) * 0.15 : h);
+        }}
+        onPointerUp={() => {
+          const t = trascina.current;
+          trascina.current = null;
+          if (!t) return;
+          if (!t.mosso) return aperto ? onChiudi() : onApri();
+          const h = altezza.get();
+          // basta tirarlo un po' per aprirlo (o spingerlo un po' per chiuderlo)
+          const apri = t.h0 < piena / 2 ? h > piena * 0.2 : h > piena * 0.8;
+          if (apri) onApri();
+          else onChiudi();
+          molla(apri);
+        }}
+        onPointerCancel={() => {
+          trascina.current = null;
+          molla(aperto);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (aperto) onChiudi();
+            else onApri();
+          }
+        }}
+      >
+        <span className="cassetto-bordo-frontale pointer-events-none absolute inset-[6px] rounded-[6px]" />
+        <Pomello nome={c.nome} stoffa={c.stoffa} gravita={gravita} aperta={aperto} />
+      </button>
+    </div>
+  );
+}
+
 // ---------- la cassettiera ----------
 export function Cassettiera({
   contenuto,
+  azioni,
   foto,
   onPrendi,
   onKit,
+  onScopri,
 }: {
-  contenuto: Record<Exclude<Cassetto, "foto">, OggettoCassetto[]>;
+  contenuto: Record<Exclude<Cassetto, "foto">, ContenutoCassetto>;
+  azioni?: Partial<Record<Cassetto, React.ReactNode>>; // es. "crea il tuo simbolo", in cima al cassetto
   foto: React.ReactNode; // cosa c'è nel cassetto delle foto (scegli una foto, link)
   onPrendi: (o: OggettoCassetto) => void;
   onKit: () => void;
+  onScopri: (ids: string[]) => void; // doppio fondo aperto: queste toppe ora sono scoperte
 }) {
   const riduci = useReducedMotion();
   const [aperto, setAperto] = useState<Cassetto | null>(null);
-  const swipe = useRef<{ y: number } | null>(null);
+  const [nome, setNome] = useState<string | null>(null);
 
   // gravità per le targhette: col telefono inclinato a destra pendono verso sinistra (e viceversa)
   const gravita = useMotionValue(0);
@@ -391,14 +606,8 @@ export function Cassettiera({
     if (typeof D?.requestPermission === "function") D.requestPermission().catch(() => {});
   }
 
-  function tocca(id: Cassetto, dy: number) {
-    if (dy > 24) setAperto(id); // giù = tira fuori
-    else if (dy < -24) setAperto((a) => (a === id ? null : a)); // su = richiudi
-    else setAperto((a) => (a === id ? null : id));
-  }
-
   return (
-    <div className="relative mx-auto w-full" onPointerDownCapture={chiediGiroscopio}>
+    <div className="relative mx-auto w-full select-none" onPointerDownCapture={chiediGiroscopio}>
       {/* suggerimento: il kit si tocca */}
       <div className="pointer-events-none relative flex items-end gap-1 pl-1">
         <p className="max-w-[40%] font-titolo text-sm leading-tight text-senape">Tocca il kit per cominciare a ricamare</p>
@@ -418,63 +627,35 @@ export function Cassettiera({
 
       {/* corpo del mobile: i fianchi più scuri danno lo spessore */}
       <div className="cassettiera-corpo -mt-px flex flex-col gap-2 px-3 py-3">
-        {CASSETTI.map((c) => {
-          const aperta = aperto === c.id;
-          return (
-            <div key={c.id} className="relative">
-              {/* interno del cassetto tirato fuori: dall'alto, con la parete di fondo e i fianchi */}
-              <AnimatePresence initial={false}>
-                {aperta && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0.6 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0.6 }}
-                    transition={riduci ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 44 }}
-                    className="relative overflow-hidden"
-                  >
-                    <div className="cassetto-parete-fondo h-5" />
-                    <div className="cassetto-pareti px-[2%] pb-1">
-                      {c.id === "foto" ? (
-                        <div className="cassetto-fondo p-4">{foto}</div>
-                      ) : (
-                        <FondoCassetto key={contenuto[c.id].map((o) => o.id).join()} oggetti={contenuto[c.id]} onPrendi={onPrendi} />
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              {/* frontale: tocco o swipe (giù apre, su chiude) */}
-              <motion.button
-                type="button"
-                aria-expanded={aperta}
-                aria-label={`${aperta ? "Chiudi" : "Apri"} il cassetto ${c.nome}`}
-                animate={{ y: aperta ? 2 : 0 }}
-                transition={{ type: "spring", stiffness: 600, damping: 30 }}
-                className={`cassetto-frontale relative flex h-[92px] w-full touch-none items-start justify-center rounded-[10px] pt-3 select-none ${aperta ? "cassetto-frontale-aperto" : ""}`}
-                onPointerDown={(e) => {
-                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                  swipe.current = { y: e.clientY };
-                }}
-                onPointerUp={(e) => {
-                  if (!swipe.current) return;
-                  const dy = e.clientY - swipe.current.y;
-                  swipe.current = null;
-                  tocca(c.id, dy);
-                }}
-                onPointerCancel={() => (swipe.current = null)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    tocca(c.id, 0);
-                  }
-                }}
-              >
-                <span className="cassetto-bordo-frontale pointer-events-none absolute inset-[6px] rounded-[6px]" />
-                <Pomello nome={c.nome} stoffa={c.stoffa} gravita={gravita} aperta={aperta} />
-              </motion.button>
-            </div>
-          );
-        })}
+        {CASSETTI.map((c) => (
+          <UnCassetto
+            key={c.id}
+            c={c}
+            aperto={aperto === c.id}
+            onApri={() => setAperto(c.id)}
+            onChiudi={() => setAperto((a) => (a === c.id ? null : a))}
+            gravita={gravita}
+            interno={(trema) =>
+              c.id === "foto" ? (
+                <div className="cassetto-fondo p-4">{foto}</div>
+              ) : (
+                <>
+                  {azioni?.[c.id] && <div className="cassetto-fondo px-3 pt-3">{azioni[c.id]}</div>}
+                  <FondoCassetto
+                    key={[...contenuto[c.id].visibili, ...contenuto[c.id].nascosti].map((o) => o.id).sort().join()}
+                    visibili={contenuto[c.id].visibili}
+                    nascosti={contenuto[c.id].nascosti}
+                    stoffa={c.stoffa}
+                    onPrendi={onPrendi}
+                    onNome={setNome}
+                    onScopri={onScopri}
+                    onTrema={trema}
+                  />
+                </>
+              )
+            }
+          />
+        ))}
       </div>
       <div className="flex justify-between px-4">
         <span className="cassettiera-piede h-4 w-8 rounded-b-md" />
@@ -483,16 +664,19 @@ export function Cassettiera({
       <p className="mt-3 text-center text-xs text-crema/75">
         <span className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-senape text-[10px] text-inchiostro">✦</span>
         dal tuo totem
-        <span className="mr-1 ml-4 inline-block size-3 rounded-full border-2 border-crema bg-rosa align-[-1px]" />
+        <span className="mr-1 ml-3 inline-block size-3 rounded-full border-2 border-crema bg-rosa align-[-1px]" />
         del gruppo
+        <span className="mr-1 ml-3 inline-block size-3 rounded-full border-2 border-crema bg-ghiaccio align-[-1px]" />
+        tua
       </p>
+      <PillolaNome nome={nome} />
     </div>
   );
 }
 
 export function oggettoDaToppa(t: Toppa, extra: Partial<OggettoCassetto> = {}): OggettoCassetto {
   const parola = t.tipo === "parola";
-  const larghezza = parola ? Math.min(90, (t.larghezza ?? 46) * 0.95) : 24;
+  const larghezza = parola ? Math.min(90, (t.larghezza ?? 46) * 0.95) : 23;
   return {
     id: t.id,
     nome: t.nome,

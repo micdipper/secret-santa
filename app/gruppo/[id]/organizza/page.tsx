@@ -321,7 +321,7 @@ function Organizza() {
       <Feltro className="mt-4">
         <TitoloRiquadro>Toppe del gruppo</TitoloRiquadro>
         <p className="mt-2">
-          Oltre alle toppe di base e a quelle dei totem, puoi aggiungere fino a 4 simboli e 4 parole solo vostri: li avranno tutti nel cassetto della bacheca.
+          Oltre alle toppe di base e a quelle dei totem, puoi aggiungere fino a 4 simboli e 4 parole solo vostri, anche più avanti: li troveranno tutti nel doppio fondo dei cassetti, e nelle Novità comparirà un avviso.
         </p>
         <TastoLink href={`/gruppo/${id}/toppe`} tipo="secondario" className="mt-5">
           Crea le toppe del gruppo

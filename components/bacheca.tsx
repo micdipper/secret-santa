@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CATALOGO, toppaPersonalizzata, trovaToppa, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
-import { Cassettiera, oggettoDaToppa } from "@/components/cassettiera";
+import { CATALOGO, toppaPersonalizzata, trovaToppa, type ContenutoPersonalizzato, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
+import { Cassettiera, PillolaNome, mescola, oggettoDaToppa, type ContenutoCassetto, type OggettoCassetto } from "@/components/cassettiera";
+import { EditorParola, EditorSimbolo } from "@/components/editor-toppe";
 import { AnimatePresence, motion } from "framer-motion";
 import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
 import { STOFFE, STOFFE_PERSONALIZZABILI, type Stoffa } from "@/lib/parole";
 import type { Profilo } from "@/lib/totem";
 import { useRouter } from "next/navigation";
-import { Errore, Icone, Tasto, TastoTondo } from "@/components/ui";
+import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
@@ -74,9 +75,12 @@ export function Bacheca({
   totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il MIO totem: le sue toppe compaiono nel cassetto
   personalizzate?: RigaPersonalizzata[]; // toppe create dall'organizzatore per il gruppo
 }) {
-  // toppe del gruppo (dall'organizzatore) + catalogo fisso
-  const delGruppo = personalizzate.map(toppaPersonalizzata);
-  const toppaDi = (id: string): Toppa | undefined => trovaToppa(id) ?? delGruppo.find((t) => t.id === id);
+  // toppe create a mano: quelle del gruppo (dall'organizzatore, member_id vuoto) e quelle personali di ognuno
+  const [righe, setRighe] = useState<RigaPersonalizzata[]>(personalizzate);
+  const create = righe.map((r) => ({ r, t: toppaPersonalizzata(r) }));
+  const delGruppo = create.filter((x) => !x.r.member_id).map((x) => x.t);
+  const mie = create.filter((x) => x.r.member_id === memberId);
+  const toppaDi = (id: string): Toppa | undefined => trovaToppa(id) ?? create.find((x) => x.t.id === id)?.t;
   const rapportoDi = (e: Elemento) => (e.kind === "toppa" ? (toppaDi(e.content.toppa ?? "")?.rapporto ?? 1) : (e.content.rapporto ?? 1));
 
   const supabase = clientSoloBrowser();
@@ -94,6 +98,66 @@ export function Bacheca({
     return () => clearTimeout(t);
   }, [attaccata, elementi.length]);
   const [modoRicamo, setModoRicamo] = useState(iniziaRicamando);
+  const [nomeTela, setNomeTela] = useState<string | null>(null); // nome della toppa che sto trascinando sulla tela
+
+  // DOPPIO FONDO: le toppe del mio totem e del gruppo, una volta scoperte, restano scoperte (lo ricorda il telefono)
+  const chiaveScoperte = `doppio-fondo:${prova ? "prova" : memberId}`;
+  const [scoperte, setScoperte] = useState<string[] | null>(null);
+  useEffect(() => {
+    let lette: string[] = [];
+    try {
+      lette = JSON.parse(localStorage.getItem(chiaveScoperte) ?? "[]");
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- memoria del telefono, letta dopo il primo disegno
+    setScoperte(lette);
+  }, [chiaveScoperte]);
+  function scopri(ids: string[]) {
+    setScoperte((s) => {
+      const nuove = [...new Set([...(s ?? []), ...ids])];
+      try {
+        localStorage.setItem(chiaveScoperte, JSON.stringify(nuove));
+      } catch {}
+      return nuove;
+    });
+  }
+
+  // la MIA toppa (un simbolo e una parola creati da me)
+  const [editor, setEditor] = useState<{ tipo: "simbolo" | "parola"; id: string; contenuto: ContenutoPersonalizzato; esiste: boolean } | null>(null);
+  const [erroreEditor, setErroreEditor] = useState("");
+  const [salvoMia, setSalvoMia] = useState(false);
+  async function salvaMia() {
+    if (!editor) return;
+    const k = editor.contenuto;
+    if (editor.tipo === "parola" && !k.testo?.trim()) return setErroreEditor("Scrivi la tua parola sulla toppa.");
+    const riga: RigaPersonalizzata = {
+      id: editor.id,
+      tipo: editor.tipo,
+      ordine: 0,
+      member_id: memberId,
+      contenuto: editor.tipo === "parola" ? { testo: k.testo!.trim(), stoffa: k.stoffa ?? "vermiglio" } : k.foto ? { foto: k.foto } : { celle: k.celle ?? "", stoffa: k.stoffa ?? "crema" },
+    };
+    setSalvoMia(true);
+    if (!prova) {
+      const { error } = await traccia(supabase.from("group_toppe").upsert({ ...riga, group_id: groupId }));
+      if (error) {
+        setSalvoMia(false);
+        return setErroreEditor("Non sono riuscito a salvarla. Riprova.");
+      }
+    }
+    setRighe((l) => [...l.filter((x) => x.id !== riga.id), riga]);
+    setSalvoMia(false);
+    setEditor(null);
+    suoni.toppa();
+  }
+  async function togliMia() {
+    if (!editor) return;
+    const id = editor.id;
+    setEditor(null);
+    // via anche dalla tela
+    for (const e of elementi.filter((x) => x.content.toppa === `g:${id}`)) await togli(e.id);
+    setRighe((l) => l.filter((x) => x.id !== id));
+    if (!prova) await traccia(supabase.from("group_toppe").delete().eq("id", id));
+  }
   const [urlFoto, setUrlFoto] = useState<Record<string, string>>({});
   const [errore, setErrore] = useState("");
   const [linkImmagine, setLinkImmagine] = useState("");
@@ -303,6 +367,8 @@ export function Bacheca({
     x = Math.max(0, Math.min(100, x));
     y = Math.max(0, Math.min(ALTEZZA, y));
     setElementi((l) => l.map((el) => (el.id === id ? { ...el, x, y, width, rotation } : el)));
+    // mentre trascino un simbolo o una texture, il nome compare in basso
+    if (e.kind === "toppa" && e.content.tipo !== "parola") setNomeTela(toppaDi(e.content.toppa ?? "")?.nome ?? null);
   }
 
   function fineGesto(ev: React.PointerEvent, id: string) {
@@ -312,6 +378,7 @@ export function Bacheca({
     const corrente = elementi.find((x) => x.id === id);
     if (tocchi.current.size === 0) {
       partenza.current = null;
+      setNomeTela(null);
       if (corrente) salvaPosizione(corrente);
     } else if (corrente) {
       // un dito alzato su due: riparto dalla posizione attuale
@@ -335,17 +402,43 @@ export function Bacheca({
     );
   }
 
-  // cosa c'è in un cassetto: prima le toppe del mio totem, poi quelle del gruppo, poi quelle per tutti
-  function cassetto(tipo: TipoToppa) {
-    const toppe = [
-      ...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []),
-      ...delGruppo.filter((t) => t.tipo === tipo),
-      ...CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo),
-    ];
-    return toppe.map((t) => {
+  // cosa c'è in un cassetto: tutte le toppe mescolate; quelle del mio totem e del gruppo non ancora scoperte
+  // stanno nel doppio fondo
+  function cassetto(tipo: TipoToppa): ContenutoCassetto {
+    const conNota = (t: Toppa, extra: Partial<OggettoCassetto> = {}) => {
       const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length; // massimo 5 copie per toppa
-      return oggettoDaToppa(t, { nota: usate ? `${usate}/${MAX_COPIE}` : undefined, spento: usate >= MAX_COPIE });
-    });
+      return oggettoDaToppa(t, { nota: usate ? `${usate}/${MAX_COPIE}` : undefined, spento: usate >= MAX_COPIE, ...extra });
+    };
+    const speciali = [...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []), ...delGruppo.filter((t) => t.tipo === tipo)];
+    const base = CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo);
+    const mia = mie.filter((x) => x.r.tipo === tipo).map((x) => conNota(x.t, { segno: "mio", nome: tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola" }));
+    const giaScoperte = speciali.filter((t) => scoperte?.includes(t.id));
+    return {
+      visibili: mescola([...base, ...giaScoperte].map((t) => conNota(t))).concat(mia),
+      nascosti: speciali.filter((t) => !scoperte?.includes(t.id)).map((t) => conNota(t)),
+    };
+  }
+
+  // in cima ai cassetti Simboli e Parole: crea (o cambia) la tua toppa
+  function azioneMia(tipo: "simbolo" | "parola") {
+    const m = mie.find((x) => x.r.tipo === tipo);
+    const parola = tipo === "parola";
+    return (
+      <Tasto
+        tipo="secondario"
+        onClick={() => {
+          setErroreEditor("");
+          setEditor({
+            tipo,
+            id: m?.r.id ?? crypto.randomUUID(),
+            contenuto: m?.r.contenuto ?? (parola ? { testo: "", stoffa: "vermiglio" } : { celle: "", stoffa: "crema" }),
+            esiste: !!m,
+          });
+        }}
+      >
+        {m ? (parola ? "Cambia la tua parola" : "Cambia il tuo simbolo") : parola ? "+ Crea la tua parola" : "+ Crea il tuo simbolo"}
+      </Tasto>
+    );
   }
 
   const ordinati = [...elementi].sort((a, b) => a.z - b.z);
@@ -440,10 +533,12 @@ export function Bacheca({
             </div>
           )}
 
-          {!modoRicamo && (
+          {!modoRicamo && scoperte && (
             <div className="mt-6">
               <Cassettiera
                 contenuto={{ simbolo: cassetto("simbolo"), parola: cassetto("parola"), palette: cassetto("palette") }}
+                azioni={{ simbolo: azioneMia("simbolo"), parola: azioneMia("parola") }}
+                onScopri={scopri}
                 onPrendi={(o) => {
                   suoni.toppa();
                   const t = toppaDi(o.id);
@@ -501,6 +596,56 @@ export function Bacheca({
               </AnimatePresence>
             </div>
           )}
+
+          <PillolaNome nome={nomeTela} />
+
+          {/* la mia toppa: editor in un foglio che sale dal basso */}
+          <AnimatePresence>
+            {editor && (
+              <motion.div
+                key="foglio-mia-toppa"
+                className="fixed inset-0 z-[400] flex items-end justify-center bg-black/55"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={editor.tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola"}
+                  className="feltro max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-b-none p-6 pb-[max(24px,env(safe-area-inset-bottom))]"
+                  initial={{ y: 60 }}
+                  animate={{ y: 0 }}
+                  exit={{ y: 80 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                >
+                  <div className="relative mb-4 flex items-center gap-3">
+                    <TitoloRiquadro className="flex-1">{editor.tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola"}</TitoloRiquadro>
+                    <TastoTondo etichetta="Chiudi senza salvare" icona={Icone.chiudi} onClick={() => setEditor(null)} />
+                  </div>
+                  <div className="relative">
+                    {editor.tipo === "simbolo" ? (
+                      <EditorSimbolo id={editor.id} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
+                    ) : (
+                      <EditorParola n={1} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
+                    )}
+                    <p className="mt-4 text-sm text-inchiostro/70">Ne puoi avere uno solo: lo trovi nel cassetto con il pallino azzurro. Lo vede solo chi guarda la tua bacheca.</p>
+                    <div className="mt-4 flex flex-col gap-3">
+                      <Errore>{erroreEditor}</Errore>
+                      <Tasto onClick={salvaMia} disabled={salvoMia}>
+                        {salvoMia ? "Salvo…" : "Salva"}
+                      </Tasto>
+                      {editor.esiste && (
+                        <Tasto tipo="secondario" onClick={togliMia}>
+                          {editor.tipo === "simbolo" ? "Togli il tuo simbolo" : "Togli la tua parola"}
+                        </Tasto>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Si salva da sola, ma serve un modo chiaro per dire "ho finito" */}
           {!modoRicamo && (

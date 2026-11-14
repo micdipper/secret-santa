@@ -221,6 +221,11 @@ export const Icone = {
       <path d="M5 12l5 5 9-10" />
     </svg>
   ),
+  chiudi: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  ),
   secchiello: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 10l7-7 8 8-7 7z" />
