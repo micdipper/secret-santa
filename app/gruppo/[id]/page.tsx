@@ -7,7 +7,7 @@ import { FeedGruppo } from "@/components/feed-gruppo";
 import { RiquadroGiochi } from "@/components/giochi/riquadro-giochi";
 import { MenuGruppo } from "@/components/menu-gruppo";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giorniMancanti } from "@/lib/date";
 import { utenteCollegato } from "@/lib/supabase/server";
 
@@ -48,9 +48,9 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const organizzatore = gruppo.organizer_id === userId;
   const entrati = membri.filter((m) => m.user_id).length;
   const giorni = giorniMancanti(gruppo.exchange_date);
-  // Santa Chat: si apre quando TUTTI hanno aperto la busta. Giochi: dal giorno T−4, se il gruppo li ha.
+  // Santa Chat: si apre quando TUTTI hanno aperto la busta. Giochi: il calendario si apre a T−5, se il gruppo li ha.
   const chatAperta = gruppo.status !== "aperto" && membri.every((m) => m.envelope_opened_at);
-  const giochiAperti = gruppo.giochi_attivi && giorni !== null && giorni <= 4 && giorni >= -1;
+  const giochiAperti = gruppo.giochi_attivi && giorni !== null && giorni <= 5 && giorni >= -1; // il calendario si apre a T−5
 
   // A che punto è il gruppo (riquadro dell'organizzatore, in alto)
   const mancanti = membri.filter((m) => !m.user_id);
@@ -142,6 +142,30 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         </Feltro>
       )}
 
+      {io && (
+        // Bacheca e Guardaroba: le due cose "tue", in evidenza (prima la bacheca, che è il cuore del sito)
+        <section className="mt-8">
+          <h2 className="font-titolo text-2xl">Le tue cose</h2>
+          <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex flex-col gap-4 p-6">
+            <span className="relative flex items-center gap-4">
+              <span className="toppa tela-aida size-16 flex-none text-vermiglio [&_svg]:relative [&_svg]:size-8 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.2]">{Icone.ago}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-titolo text-2xl leading-tight text-abete">La tua bacheca</span>
+                <span className="block text-inchiostro/70">Toppe, ricami e foto: fai capire al tuo Babbo Natale cosa ti piace</span>
+              </span>
+            </span>
+          </Link>
+          <Link href={`/gruppo/${id}/guardaroba`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+            <ToppaAvatar look={look(io)} dimensione={48} totem={totemDi(io)} />
+            <span className="relative min-w-0 flex-1">
+              <span className="block font-titolo text-lg leading-tight text-abete">Guardaroba</span>
+              <span className="block text-sm text-inchiostro/70">Vesti il tuo personaggio e guarda i premi</span>
+            </span>
+            <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
+          </Link>
+        </section>
+      )}
+
       {io && <RiquadroGiochi groupId={id} />}
 
       {io && (
@@ -184,7 +208,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Chi non è ancora entrato ha la toppa vuota.</p>
       </section>
 
-      {io && <MenuGruppo groupId={id} mioMembro={io.id} chatBloccata={!chatAperta} giochiBloccati={!giochiAperti} />}
+      {io && <MenuGruppo groupId={id} chatBloccata={!chatAperta} giochiBloccati={!giochiAperti} />}
     </main>
   );
 }
