@@ -4,6 +4,9 @@ import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { PallinoChat } from "@/components/pallino-chat";
+import { FeedGruppo } from "@/components/feed-gruppo";
+import { ToppaBabbo } from "@/components/santa-chat";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giorniMancanti } from "@/lib/date";
@@ -95,6 +98,9 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           <TastoLink href={`/gruppo/${id}/bacheca/${destinatario.id}`} className="mt-5">
             Guarda la sua bacheca
           </TastoLink>
+          <TastoLink href={`/gruppo/${id}/biglietto`} tipo="secondario" className="mt-3">
+            Ricorda chi hai pescato
+          </TastoLink>
         </Feltro>
       ) : (
         <Feltro className="mt-6">
@@ -127,6 +133,48 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           </span>
           <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
         </Link>
+      )}
+
+      {io && gruppo.status !== "aperto" && (
+        <section className="mt-8">
+          <h2 className="font-titolo text-2xl">Santa Chat</h2>
+          <p className="mt-1 text-sm text-crema/75">Messaggi segreti: chi regala non si rivela mai.</p>
+          {destinatario && (
+            <Link href={`/gruppo/${id}/chat?con=pescato`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+              <ToppaAvatar look={look(destinatario)} dimensione={44} />
+              <span className="relative min-w-0 flex-1">
+                <span className="block font-titolo text-lg leading-tight text-abete">Scrivi a {destinatario.display_name.split(" ")[0]}</span>
+                <span className="block text-sm text-inchiostro/70">Non saprà che sei tu</span>
+              </span>
+              <PallinoChat receiverId={destinatario.id} ruolo="babbo" />
+              <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
+            </Link>
+          )}
+          <Link href={`/gruppo/${id}/chat?con=babbo`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+            <ToppaBabbo dimensione={44} />
+            <span className="relative min-w-0 flex-1">
+              <span className="block font-titolo text-lg leading-tight text-abete">Il tuo Babbo Natale</span>
+              <span className="block text-sm text-inchiostro/70">Lui sa chi sei, tu no</span>
+            </span>
+            <PallinoChat receiverId={io.id} ruolo="pescato" />
+            <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
+          </Link>
+        </section>
+      )}
+
+      {io && (
+        <section className="mt-8">
+          <h2 className="font-titolo text-2xl">Novità</h2>
+          <div className="mt-4">
+            <FeedGruppo
+              groupId={id}
+              io={io.id}
+              persone={Object.fromEntries(membri.map((m) => [m.id, { nome: m.display_name, look: look(m) }]))}
+              totem={Object.fromEntries((nomiTotem ?? []).map((t) => [t.profilo, { nome: t.nome, immagine: t.immagine }]))}
+              limite={3}
+            />
+          </div>
+        </section>
       )}
 
       <section className="mt-8">

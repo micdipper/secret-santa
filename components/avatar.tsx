@@ -1,4 +1,5 @@
 // Avatar originale a mezzobusto, stile feltro, disegnato da noi in SVG.
+import type { ReactNode } from "react";
 import { BadgeTotem } from "@/components/totem";
 import type { Profilo } from "@/lib/totem";
 
@@ -10,6 +11,7 @@ export type Look = {
   occhiali: number;
   maglione: number;
   accessori: string[];
+  cucitura?: number; // cucitura intorno alla toppa (0 = filza, le altre si sbloccano col premio "cuciture")
 };
 
 export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
@@ -27,7 +29,7 @@ export const COLORE_OLOGRAFICO = 7;
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
   { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Completa il sondaggio totem." },
   { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Almeno 10 cose sulla bacheca, tra cui una foto, un ricamo, un simbolo, una parola e una texture." },
-  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Almeno una copia di ogni toppa del cassetto, più una foto e un ricamo." },
+  { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Tutte le 8 toppe del tuo totem sulla bacheca, più il tuo simbolo o la tua parola." },
   { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri premi." },
 ];
@@ -35,6 +37,11 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
 export const OCCHIALI_VELOCI = ["occhiali", "occhiali_olo"];
+
+// Cuciture intorno alla toppa del personaggio: 0 filza (per tutti) · 1 catenella = premio "cuciture"
+// (un post nelle Novità + 5 reazioni) · 2 tulipano, 3 felce, 4 punto croce = "cornici", premio del gioco 4 (PIANO-GIOCHI.md)
+export const NOMI_CUCITURE = ["Filza", "Catenella", "Tulipano", "Felce", "Punto croce"];
+export const premioCucitura = (i: number) => (i === 0 ? null : i === 1 ? "cuciture" : "cornici");
 
 export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
@@ -65,6 +72,7 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
     occhiali: n(x.occhiali, NOMI_OCCHIALI.length, 0),
     maglione: n(x.maglione, MAGLIONI.length, base.maglione),
     accessori: soloUnoEsclusivo(Array.isArray(x.accessori) ? x.accessori.filter((a) => typeof a === "string") : []),
+    cucitura: n(x.cucitura, NOMI_CUCITURE.length, 0),
   };
 }
 
@@ -391,7 +399,8 @@ export function ToppaAvatar({
   totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il badge del totem accanto al personaggio
 }) {
   const toppa = (
-    <span className={`toppa overflow-hidden ${cliccabile ? "cliccabile stoffa-chiara" : ""}`} style={{ width: dimensione, height: dimensione }}>
+    <span className={`toppa overflow-hidden ${look?.cucitura ? "toppa-senza-cucitura" : ""} ${cliccabile ? "cliccabile stoffa-chiara" : ""}`} style={{ width: dimensione, height: dimensione }}>
+      {look?.cucitura ? <Cucitura tipo={look.cucitura} /> : null}
       {look ? (
         <Avatar look={look} titolo={nome} className="relative top-[8%] h-full w-full" />
       ) : (
@@ -415,4 +424,69 @@ export function ToppaAvatar({
 export function lookDi(profili: { user_id: string; look: unknown }[] | null, userId: string | null): Look | null {
   if (!userId) return null;
   return normalizzaLook(profili?.find((p) => p.user_id === userId)?.look, userId);
+}
+
+// Le cuciture "di lusso" intorno alla toppa, in filo dorato: catenella, tulipano, felce, punto croce.
+// (la filza normale è il tratteggio della classe .toppa)
+export function Cucitura({ tipo }: { tipo: number }) {
+  const R = 43; // stesso cerchio della cucitura normale
+  const filo = "#c9931c";
+  const p = (a: number, r = R) => [50 + r * Math.cos(a), 50 + r * Math.sin(a)] as const;
+  const gradi = (a: number) => (a * 180) / Math.PI;
+  let segni: ReactNode = null;
+  if (tipo === 1) {
+    // catenella: anelli a goccia uno dentro l'altro
+    const N = 18;
+    segni = Array.from({ length: N }, (_, k) => {
+      const a = (k / N) * Math.PI * 2;
+      const [x, y] = p(a);
+      return <ellipse key={k} cx={x} cy={y} rx="5.2" ry="2.6" transform={`rotate(${gradi(a) + 90} ${x} ${y})`} fill="none" stroke={filo} strokeWidth="1.8" />;
+    });
+  } else if (tipo === 2) {
+    // tulipano: una coppa (punto lanciato) con un punto dritto che la attraversa
+    const N = 12;
+    segni = Array.from({ length: N }, (_, k) => {
+      const a = (k / N) * Math.PI * 2;
+      const [x, y] = p(a);
+      return (
+        <g key={k} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} fill="none" stroke={filo} strokeWidth="1.7" strokeLinecap="round">
+          <path d={`M${x - 3.2} ${y - 3.4}c0 4 1.4 6 3.2 6s3.2-2 3.2-6`} />
+          <path d={`M${x} ${y - 4.4}v8.4`} />
+          <path d={`M${x - 2.4} ${y + 4.6}h4.8`} />
+        </g>
+      );
+    });
+  } else if (tipo === 3) {
+    // felce: una linea centrale e, a intervalli, tre punti che partono dallo stesso foro
+    const N = 16;
+    segni = (
+      <>
+        <circle cx="50" cy="50" r={R} fill="none" stroke={filo} strokeWidth="1.4" strokeDasharray="4 2.2" />
+        {Array.from({ length: N }, (_, k) => {
+          const a = (k / N) * Math.PI * 2;
+          const [x, y] = p(a);
+          return (
+            <g key={k} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} stroke={filo} strokeWidth="1.6" strokeLinecap="round">
+              <path d={`M${x} ${y}l-3.6 3.6M${x} ${y}l3.6 3.6`} />
+            </g>
+          );
+        })}
+      </>
+    );
+  } else if (tipo === 4) {
+    // punto croce: tante piccole x
+    const N = 22;
+    segni = Array.from({ length: N }, (_, k) => {
+      const a = (k / N) * Math.PI * 2;
+      const [x, y] = p(a);
+      return (
+        <path key={k} d={`M${x - 2.2} ${y - 2.2}l4.4 4.4M${x + 2.2} ${y - 2.2}l-4.4 4.4`} stroke={filo} strokeWidth="1.7" strokeLinecap="round" />
+      );
+    });
+  }
+  return (
+    <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 z-[1] h-full w-full" aria-hidden>
+      {segni}
+    </svg>
+  );
 }

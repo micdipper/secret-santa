@@ -59,16 +59,16 @@ Tutte le funzioni dei giochi usano `private.adesso()` e `private.oggi_roma()` (`
 - Trigger `before insert or update of exchange_date on groups`: blocco della data (sezione 2) + ricalcolo di `giochi_attivi`. Vale anche per `create_group`.
 - `private.unlocked_accessories`: aggiungere (lasciando invariato il resto e l'elenco delle 22 toppe):
   `neon` = vincitore del gioco 1 in un suo gruppo · `pazzo` = gioco 2 · `godo` = gioco 3 · `cornici` = gioco 4 · `cowboy` = gioco 5. **Non** contano per "tutti e 5" (capelli olografici / occhiali olografici).
-- `public.save_avatar`: rifiutare `coloreCapelli = 8` senza `neon`, `capelli = 13` senza `pazzo`, `maglione = 6` senza `godo`, `cornice > 0` senza `cornici`, `cowboy` negli accessori senza sbloccarlo (già coperto dal ciclo sugli accessori).
+- `public.save_avatar`: rifiutare `coloreCapelli = 8` senza `neon`, `capelli = 13` senza `pazzo`, `maglione = 6` senza `godo`, `cucitura` 2, 3 o 4 senza `cornici` (GIÀ FATTO il 15/11, migrazione `20261115200000_cuciture_e_cornici`), `cowboy` negli accessori senza sbloccarlo (già coperto dal ciclo sugli accessori).
 - Revoke/grant come le altre funzioni (solo `authenticated`).
 
 ## 4. Avatar e premi (`components/avatar.tsx`, `editor-personaggio.tsx`, `avviso-premi.tsx`)
-- `Look` nuovo campo `cornice: number` (0 nessuna, 1 Tulip, 2 Fern, 3 Cross); `normalizzaLook` con default 0.
+- ⚠ AGGIORNAMENTO 15/11: le cornici sono GIÀ disegnate e scelte con il campo esistente `look.cucitura` (0 filza, 1 catenella = premio `cuciture` del post con reazioni, **2 Tulipano, 3 Felce, 4 Punto croce = premio `cornici` del gioco 4**). Niente campo `cornice` nuovo: basta aggiungere `cornici` a `private.unlocked_accessories` per il vincitore del gioco 4 (l'editor le mostra da solo quando `cornici` è sbloccato; `save_avatar` già le controlla).
 - `COLORI_CAPELLI[8]` = **colore neon** (proposta: fucsia fluo `#ff2bd6` con leggero alone; deve staccarsi dal verde abete e dalla toppa crema). Costante `COLORE_NEON = 8`.
 - `NOMI_CAPELLI[13]` = **"Esplosione"** (taglio pazzo): ciocche a saetta e molle che sparano in tutte le direzioni, con un leggero ondeggiare (fermo con "riduci movimento"). Costante `CAPELLI_PAZZO = 13`. Deve funzionare con tutti i colori, compresi olografico e neon.
 - `MAGLIONI[6]` = **maglione "GODO"**: crema con scritta GODO a punto croce rossa + fila di rombi nordici. Costante `MAGLIONE_GODO = 6`.
   ⚠ `lookIniziale` oggi usa `% MAGLIONI.length`: cambiarlo in `% MAGLIONE_GODO` (altrimenti qualcuno nascerebbe col premio). Stessa attenzione per capelli e colori: restare sotto `CAPELLI_SUPER` e `COLORE_OLOGRAFICO`.
-- **Cornici**: anello ricamato attorno a `ToppaAvatar` (ovunque compare): Tulip = tulipani a punto pieno alternati; Fern = punto felce (spighe a V) continuo; Cross = crocette a punto croce. Fili ben contrastati sul verde abete. Si sceglie una cornice alla volta nel profilo (riquadro "Cornice", visibile solo se sbloccate).
+- **Cornici** (GIÀ FATTE il 15/11: `Cucitura` in components/avatar.tsx, filo dorato): anello ricamato attorno a `ToppaAvatar` (ovunque compare): Tulip = tulipani a punto pieno alternati; Fern = punto felce (spighe a V) continuo; Cross = crocette a punto croce. Fili ben contrastati sul verde abete. Si sceglie una cornice alla volta nel profilo (riquadro "Cornice", visibile solo se sbloccate).
 - **Cappello da cowboy** (accessorio `cowboy`, si somma agli altri, non esclusivo): cuoio marrone, tesa curva, fascia a punto croce con stellina d'oro, leggermente inclinato. Con il cappello i capelli vanno tagliati sotto la tesa (clipPath) e restano visibili ai lati: provarlo con **tutti i 14 tagli**.
 - Premi visibili nel profilo SOLO se sbloccati (regola esistente). `/prove/personaggio` e la galleria in `/stile` li mostrano tutti.
 - `avviso-premi.tsx`: aggiungere i nomi (`neon` "Capelli neon", `pazzo` "Taglio Esplosione", `godo` "Maglione GODO", `cornici` "Cornici ricamate", `cowboy` "Cappello da cowboy").

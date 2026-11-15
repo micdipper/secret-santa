@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CATALOGO } from "@/components/toppe";
+import { PROFILI, TOTEM_PREDEFINITI } from "@/lib/totem";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
@@ -43,6 +45,30 @@ export default function Stile() {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-5 pb-16">
       <TestataInterna indietro="/prove" etichettaIndietro="Torna alla sala prove" contesto="Sala prove" titolo="Galleria dello stile" />
       {/* Galleria dei personaggi: tutti i tagli, le barbe e i premi */}
+      {/* le toppe dei 5 totem (col nome che compare trascinandole) */}
+      <section id="toppe-totem" className="flex flex-col gap-6 pt-6">
+        {PROFILI.map((p) => (
+          <Feltro key={p}>
+            <TitoloRiquadro>{TOTEM_PREDEFINITI[p].nome}</TitoloRiquadro>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              {CATALOGO.filter((t) => t.totem === p && !t.ritirata && t.tipo === "simbolo").map((t) => (
+                <div key={t.id} className="flex flex-col items-center gap-1 text-center text-xs">
+                  <span className="block w-full">{t.disegno()}</span>
+                  {t.nome}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {CATALOGO.filter((t) => t.totem === p && !t.ritirata && t.tipo === "parola").map((t) => (
+                <span key={t.id} className="block" style={{ width: (t.larghezza ?? 46) * 2.6, aspectRatio: String(t.rapporto) }}>
+                  {t.disegno()}
+                </span>
+              ))}
+            </div>
+          </Feltro>
+        ))}
+      </section>
+
       <section id="personaggi" className="grid grid-cols-3 gap-3 pt-6">
         {NOMI_CAPELLI.map((n, i) => (
           <figure key={n} className="toppa aspect-square w-full overflow-hidden">

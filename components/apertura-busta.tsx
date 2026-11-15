@@ -142,13 +142,13 @@ export function AperturaBusta({
   const [fase, setFase] = useState<
     "leva" | "gira" | "fermo" | "crepa" | "rotta" | "scena"
   >("leva");
-  const [voci, setVoci] = useState<(Persona | "?")[]>([
-    "?",
-    ...candidati.slice(0, 2),
-  ]);
+  // si parte da un personaggio del gruppo "a caso" (sempre lo stesso per la stessa persona, così la pagina non salta)
+  const primo = candidati.length ? candidati[[...(groupId + destinatario.id)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0) % candidati.length] : null;
+  const [voci, setVoci] = useState<(Persona | "?")[]>(primo ? [primo, ...candidati.filter((c) => c !== primo).slice(0, 2)] : ["?"]);
   const [sfocato, setSfocato] = useState(false);
   const [busta3d, setBusta3d] = useState<boolean | null>(null); // null = non lo so ancora
   const [scenaPronta, setScenaPronta] = useState(false);
+  const [fotoBusta, setFotoBusta] = useState<string | null>(null); // la busta vera (senza sigillo): sfondo di ogni casella
   const [faseScena, setFaseScena] = useState<FaseBusta>("attesa");
   const [tocchi, setTocchi] = useState(0);
   const [rivelato, setRivelato] = useState(false);
@@ -252,7 +252,7 @@ export function AperturaBusta({
     const mescolati: Persona[] = [];
     while (mescolati.length < GIRI)
       mescolati.push(...[...candidati].sort(() => Math.random() - 0.5));
-    setVoci(["?", ...mescolati.slice(0, GIRI), "?", mescolati[0] ?? "?"]);
+    setVoci([primo ?? "?", ...mescolati.slice(0, GIRI), "?", mescolati[0] ?? "?"]);
     setFase("gira");
     setSfocato(true);
     animaMacchina(
@@ -450,19 +450,32 @@ export function AperturaBusta({
                   transition: "filter .6s",
                 }}
               >
-                <div className="absolute inset-x-0 -top-[120px] h-[120px] bg-crema" />
+                <div
+                  className="absolute inset-x-0 -top-[120px] h-[120px] bg-[#efe3c9]"
+                  style={fotoBusta ? { backgroundImage: `url(${fotoBusta})`, backgroundSize: "100% 100%" } : undefined}
+                />
+                {/* ogni casella è una busta: al posto del sigillo c'è il personaggio; l'ultima è la busta vera (col sigillo) */}
                 {voci.map((p, i) => (
                   <div
                     key={i}
-                    className={`flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-crema"}`}
-                    style={{ height: ALTEZZA_VOCE }}
+                    className={`relative flex items-center justify-center ${p === "?" && busta3d ? "" : "bg-[#efe3c9]"}`} // stesso colore della carta della busta
+                    // la stessa busta vera (fotografata dalla scena 3D), cambia solo il sigillo
+                    style={{ height: ALTEZZA_VOCE, ...(p !== "?" && fotoBusta ? { backgroundImage: `url(${fotoBusta})`, backgroundSize: "100% 100%" } : {}) }}
                   >
                     {p === "?" ? (
                       busta3d ? null : (
                         <Sigillo />
                       )
                     ) : (
-                      <ToppaAvatar look={p.look} dimensione={92} />
+                      <>
+                        {!fotoBusta && <svg viewBox="0 0 100 60" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
+                          <path d="M-20 -24L50 30L120 -24" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                          <path d="M-20 84L36 38M120 84L64 38" fill="none" stroke="rgba(0,0,0,.07)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+                        </svg>}
+                        <span className="relative rounded-full shadow-[0_3px_5px_rgba(0,0,0,.3)]">
+                          <ToppaAvatar look={p.look} dimensione={92} />
+                        </span>
+                      </>
                     )}
                   </div>
                 ))}
@@ -550,6 +563,7 @@ export function AperturaBusta({
             parti={fase === "rotta" || fase === "scena"}
             sigilloSulloSchermo={sigilloSulloSchermo}
             onPronta={() => setScenaPronta(true)}
+            onFotoBusta={setFotoBusta}
             postoCard={() => postoCard.current?.getBoundingClientRect() ?? null}
             onFase={(f, n) => {
               setFaseScena(f);
@@ -839,7 +853,8 @@ export function AperturaBusta({
                       ? `${faseScena}-${tocchi}`
                       : "semplice"
                 }
-                className="flex min-h-14 flex-1 items-center justify-center text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
+                // altezza fissa (due righe): se la scritta cambia numero di righe, il posto del biglietto non si sposta
+                className="flex h-[64px] flex-1 items-center justify-center text-center font-titolo text-2xl leading-tight text-balance text-crema [text-shadow:0_2px_8px_rgba(0,0,0,.35)]"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
@@ -877,12 +892,15 @@ export function AperturaBusta({
                   <BustaGrande />
                 </motion.div>
               )}
-              {rivelato && (
-                <div className="pointer-events-auto">
+              {/* la card vera è pronta fin dall'inizio (nascosta): quando prende il posto del biglietto 3D non ci sono scatti,
+                  e l'olografia si accende piano */}
+              {(rivelato || busta3d) && (
+                <div className={rivelato ? "pointer-events-auto" : "pointer-events-none"}>
                   <BigliettoOlografico
                     nome={destinatario.nome}
                     look={destinatario.look}
-                    olografiaDopo={0.3}
+                    accesa
+                    olografiaDopo={0}
                   />
                 </div>
               )}
@@ -986,7 +1004,24 @@ function Sigillo({ acceso = false }: { acceso?: boolean }) {
         strokeOpacity=".5"
         strokeWidth="3"
       />
-      <path d="M50 27l5 18 18 5-18 5-5 18-5-18-18-5 18-5z" fill="#f1d27a" />
+      {/* la S del logo impressa nella cera: bordo scuro in alto a sinistra, riflesso in basso a destra */}
+      {[
+        [1.6, "rgba(255,190,170,.55)"],
+        [0, "#3e0808"],
+        [1, "#8a1812"],
+      ].map(([d, c]) => (
+        <text
+          key={c as string}
+          x={50 + (d as number)}
+          y={53 + (d as number)}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={c as string}
+          style={{ fontFamily: "var(--font-basteleur), Georgia, serif", fontSize: 58 }}
+        >
+          S
+        </text>
+      ))}
     </motion.svg>
   );
 }

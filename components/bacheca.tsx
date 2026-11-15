@@ -1,12 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CATALOGO, NOMI_TIPI, trovaToppa, type TipoToppa } from "@/components/toppe";
+import { CATALOGO, toppaPersonalizzata, trovaToppa, type ContenutoPersonalizzato, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
+import { Cassettiera, PillolaNome, mescola, oggettoDaToppa, type ContenutoCassetto, type OggettoCassetto } from "@/components/cassettiera";
+import { EditorParola, EditorSimbolo } from "@/components/editor-toppe";
+import { AnimatePresence, motion } from "framer-motion";
+import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
+import { STOFFE, STOFFE_PERSONALIZZABILI, type Stoffa } from "@/lib/parole";
+import type { Profilo } from "@/lib/totem";
 import { useRouter } from "next/navigation";
-import { Errore, Feltro, Icone, Tasto, TastoTondo } from "@/components/ui";
+import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
+import { riduciFoto } from "@/lib/foto";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -17,7 +24,7 @@ import { controllaPremi } from "@/components/avviso-premi";
 export type Elemento = {
   id: string;
   kind: "toppa" | "ricamo" | "foto" | "immagine_link";
-  content: { toppa?: string; tipo?: string; path?: string; url?: string; rapporto?: number; celle?: string };
+  content: { toppa?: string; tipo?: string; path?: string; url?: string; rapporto?: number; celle?: string; fondo?: Stoffa };
   x: number;
   y: number;
   width: number;
@@ -28,28 +35,8 @@ export type Elemento = {
 const ALTEZZA = (100 * 4) / 3;
 const COLONNE = 60;
 const RIGHE = 80;
-// Fili ben visibili sulla tela crema (gli stessi colori dei personaggi)
-const FILI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#5a3520", "#1c241d"];
-const NOMI_FILI = ["vermiglio", "verde", "senape", "blu notte", "rosa", "bordeaux", "marrone", "nero"];
-const VUOTO = ".";
 const MAX_COPIE = 5; // copie della stessa toppa sulla bacheca
 
-function rapportoDi(e: Elemento) {
-  if (e.kind === "toppa") return trovaToppa(e.content.toppa ?? "")?.rapporto ?? 1;
-  return e.content.rapporto ?? 1;
-}
-
-// Riduce una foto del telefono (che può pesare molti MB) a max 1200px in JPEG.
-async function riduciFoto(file: File): Promise<{ blob: Blob; rapporto: number }> {
-  const img = await createImageBitmap(file);
-  const scala = Math.min(1, 1200 / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * scala);
-  c.height = Math.round(img.height * scala);
-  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-  const blob = await new Promise<Blob>((ok) => c.toBlob((b) => ok(b!), "image/jpeg", 0.82));
-  return { blob, rapporto: img.width / img.height };
-}
 
 // Ogni toppa nuova arriva un po' storta e un po' spostata dal centro, come attaccata a mano
 // (così le nuove non si nascondono una sotto l'altra).
@@ -75,13 +62,27 @@ export function Bacheca({
   modificabile,
   iniziali,
   prova = false,
+  iniziaRicamando = false,
+  totem = null,
+  personalizzate = [],
 }: {
   groupId: string;
   memberId: string;
   modificabile: boolean;
   iniziali: Elemento[];
   prova?: boolean; // sala prove: tutto funziona ma non si salva niente
+  iniziaRicamando?: boolean; // si apre già col ricamo (dal kit del punto croce)
+  totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il MIO totem: le sue toppe compaiono nel cassetto
+  personalizzate?: RigaPersonalizzata[]; // toppe create dall'organizzatore per il gruppo
 }) {
+  // toppe create a mano: quelle del gruppo (dall'organizzatore, member_id vuoto) e quelle personali di ognuno
+  const [righe, setRighe] = useState<RigaPersonalizzata[]>(personalizzate);
+  const create = righe.map((r) => ({ r, t: toppaPersonalizzata(r) }));
+  const delGruppo = create.filter((x) => !x.r.member_id).map((x) => x.t);
+  const mie = create.filter((x) => x.r.member_id === memberId);
+  const toppaDi = (id: string): Toppa | undefined => trovaToppa(id) ?? create.find((x) => x.t.id === id)?.t;
+  const rapportoDi = (e: Elemento) => (e.kind === "toppa" ? (toppaDi(e.content.toppa ?? "")?.rapporto ?? 1) : (e.content.rapporto ?? 1));
+
   const supabase = clientSoloBrowser();
   const router = useRouter();
   const telaRef = useRef<HTMLDivElement>(null);
@@ -89,8 +90,74 @@ export function Bacheca({
   const [elementi, setElementi] = useState<Elemento[]>(iniziali.filter((e) => e.kind !== "ricamo"));
   const [ricamo, setRicamo] = useState<Elemento | null>(iniziali.find((e) => e.kind === "ricamo") ?? null);
   const [selezionato, setSelezionato] = useState<string | null>(null);
-  const [cassetto, setCassetto] = useState<TipoToppa | "foto" | null>(null);
-  const [modoRicamo, setModoRicamo] = useState(false);
+  const [attaccata, setAttaccata] = useState("");
+  // la conferma "è sulla tela" sparisce da sola
+  useEffect(() => {
+    if (!attaccata) return;
+    const t = setTimeout(() => setAttaccata(""), 1800);
+    return () => clearTimeout(t);
+  }, [attaccata, elementi.length]);
+  const [modoRicamo, setModoRicamo] = useState(iniziaRicamando);
+  const [nomeTela, setNomeTela] = useState<string | null>(null); // nome della toppa che sto trascinando sulla tela
+
+  // DOPPIO FONDO: le toppe del mio totem e del gruppo, una volta scoperte, restano scoperte (lo ricorda il telefono)
+  const chiaveScoperte = `doppio-fondo:${prova ? "prova" : memberId}`;
+  const [scoperte, setScoperte] = useState<string[] | null>(null);
+  useEffect(() => {
+    let lette: string[] = [];
+    try {
+      lette = JSON.parse(localStorage.getItem(chiaveScoperte) ?? "[]");
+    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- memoria del telefono, letta dopo il primo disegno
+    setScoperte(lette);
+  }, [chiaveScoperte]);
+  function scopri(ids: string[]) {
+    setScoperte((s) => {
+      const nuove = [...new Set([...(s ?? []), ...ids])];
+      try {
+        localStorage.setItem(chiaveScoperte, JSON.stringify(nuove));
+      } catch {}
+      return nuove;
+    });
+  }
+
+  // la MIA toppa (un simbolo e una parola creati da me)
+  const [editor, setEditor] = useState<{ tipo: "simbolo" | "parola"; id: string; contenuto: ContenutoPersonalizzato; esiste: boolean } | null>(null);
+  const [erroreEditor, setErroreEditor] = useState("");
+  const [salvoMia, setSalvoMia] = useState(false);
+  async function salvaMia() {
+    if (!editor) return;
+    const k = editor.contenuto;
+    if (editor.tipo === "parola" && !k.testo?.trim()) return setErroreEditor("Scrivi la tua parola sulla toppa.");
+    const riga: RigaPersonalizzata = {
+      id: editor.id,
+      tipo: editor.tipo,
+      ordine: 0,
+      member_id: memberId,
+      contenuto: editor.tipo === "parola" ? { testo: k.testo!.trim(), stoffa: k.stoffa ?? "vermiglio" } : k.foto ? { foto: k.foto } : { celle: k.celle ?? "", stoffa: k.stoffa ?? "crema" },
+    };
+    setSalvoMia(true);
+    if (!prova) {
+      const { error } = await traccia(supabase.from("group_toppe").upsert({ ...riga, group_id: groupId }));
+      if (error) {
+        setSalvoMia(false);
+        return setErroreEditor("Non sono riuscito a salvarla. Riprova.");
+      }
+    }
+    setRighe((l) => [...l.filter((x) => x.id !== riga.id), riga]);
+    setSalvoMia(false);
+    setEditor(null);
+    suoni.toppa();
+  }
+  async function togliMia() {
+    if (!editor) return;
+    const id = editor.id;
+    setEditor(null);
+    // via anche dalla tela
+    for (const e of elementi.filter((x) => x.content.toppa === `g:${id}`)) await togli(e.id);
+    setRighe((l) => l.filter((x) => x.id !== id));
+    if (!prova) await traccia(supabase.from("group_toppe").delete().eq("id", id));
+  }
   const [urlFoto, setUrlFoto] = useState<Record<string, string>>({});
   const [errore, setErrore] = useState("");
   const [linkImmagine, setLinkImmagine] = useState("");
@@ -117,6 +184,18 @@ export function Bacheca({
     router.push(prova ? "/prove" : `/gruppo/${groupId}`);
     router.refresh();
   }
+
+  // nella mia bacheca il pinch della pagina è spento: due dita servono a ingrandire le toppe
+  // (e la pagina ingrandita spostava i punti del ricamo rispetto al dito)
+  useEffect(() => {
+    if (!modificabile) return;
+    const html = document.documentElement;
+    const prima = html.style.touchAction;
+    html.style.touchAction = "pan-x pan-y";
+    return () => {
+      html.style.touchAction = prima;
+    };
+  }, [modificabile]);
 
   // Larghezza reale della tela (per convertire pixel ↔ unità)
   useEffect(() => {
@@ -154,6 +233,7 @@ export function Bacheca({
       );
       if (error) setErrore("Non sono riuscito a salvare l'ultima modifica.");
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [supabase, traccia, prova],
   );
 
@@ -171,7 +251,7 @@ export function Bacheca({
       x: dove?.x ?? 50 + spostamentoCasuale(18),
       y: dove?.y ?? ALTEZZA / 2 + spostamentoCasuale(24),
       width,
-      height: width / (content.rapporto ?? trovaToppa(content.toppa ?? "")?.rapporto ?? 1),
+      height: width / (content.rapporto ?? toppaDi(content.toppa ?? "")?.rapporto ?? 1),
       rotation: dove?.rotation ?? inclinazioneCasuale(),
       z,
     };
@@ -223,7 +303,7 @@ export function Bacheca({
       if (prova) {
         // nella sala prove la foto resta solo nel telefono
         await aggiungi("immagine_link", { url: URL.createObjectURL(blob), rapporto }, 36);
-        setCassetto(null);
+        setAttaccata("La foto");
         setCaricamento(false);
         return;
       }
@@ -231,7 +311,7 @@ export function Bacheca({
       const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
       if (error) throw error;
       await aggiungi("foto", { path, rapporto }, 36);
-      setCassetto(null);
+      setAttaccata("La foto");
     } catch {
       setErrore("Non sono riuscito a caricare la foto. Riprova con un'altra immagine.");
     }
@@ -245,7 +325,7 @@ export function Bacheca({
       const rapporto = await caricaDimensioni(url);
       await aggiungi("immagine_link", { url, rapporto }, 36);
       setLinkImmagine("");
-      setCassetto(null);
+      setAttaccata("L'immagine");
     } catch {
       setErrore("Questa immagine non si apre: alcuni siti non permettono di mostrarle altrove. Prova a salvarla e caricarla come foto.");
     }
@@ -253,6 +333,7 @@ export function Bacheca({
 
   // ---------- gesti: un dito sposta, due dita ingrandiscono e ruotano ----------
   const tocchi = useRef(new Map<number, { x: number; y: number }>());
+  const maniglia = useRef<{ e: Elemento; cx: number; cy: number; d0: number; a0: number } | null>(null);
   const partenza = useRef<{ e: Elemento; punti: { x: number; y: number }[] } | null>(null);
 
   // Un gesto alla volta, su UN solo elemento: prima il ricordo del movimento era condiviso
@@ -261,7 +342,16 @@ export function Bacheca({
     if (!modificabile || modoRicamo) return;
     ev.stopPropagation();
     if (partenza.current && partenza.current.e.id !== el.id) {
-      // c'è già un gesto su un'altra toppa: se quei tocchi sono "appesi" li dimentico, altrimenti ignoro questo dito
+      // c'è già un gesto su un'altra toppa con un dito: questo è il secondo dito e vale per QUELLA toppa
+      if (tocchi.current.size === 1) {
+        (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+        tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+        const g = partenza.current;
+        const corrente = elementi.find((x) => x.id === g.e.id) ?? g.e;
+        partenza.current = { e: corrente, punti: [...tocchi.current.values()] };
+        return;
+      }
+      // se quei tocchi sono "appesi" li dimentico, altrimenti ignoro questo dito
       if (tocchi.current.size > 0) return;
       partenza.current = null;
     }
@@ -299,6 +389,8 @@ export function Bacheca({
     x = Math.max(0, Math.min(100, x));
     y = Math.max(0, Math.min(ALTEZZA, y));
     setElementi((l) => l.map((el) => (el.id === id ? { ...el, x, y, width, rotation } : el)));
+    // mentre trascino un simbolo o una texture, il nome compare in basso
+    if (e.kind === "toppa" && e.content.tipo !== "parola") setNomeTela(toppaDi(e.content.toppa ?? "")?.nome ?? null);
   }
 
   function fineGesto(ev: React.PointerEvent, id: string) {
@@ -308,6 +400,7 @@ export function Bacheca({
     const corrente = elementi.find((x) => x.id === id);
     if (tocchi.current.size === 0) {
       partenza.current = null;
+      setNomeTela(null);
       if (corrente) salvaPosizione(corrente);
     } else if (corrente) {
       // un dito alzato su due: riparto dalla posizione attuale
@@ -317,7 +410,7 @@ export function Bacheca({
 
   // ---------- disegno di un elemento ----------
   function contenuto(e: Elemento) {
-    if (e.kind === "toppa") return <>{trovaToppa(e.content.toppa ?? "")?.disegno()}</>;
+    if (e.kind === "toppa") return <>{toppaDi(e.content.toppa ?? "")?.disegno()}</>;
     const src = e.kind === "foto" ? urlFoto[e.content.path ?? ""] : e.content.url;
     return (
       <span className="block h-full w-full bg-white p-[6%] pb-[14%] shadow-[0_3px_6px_rgba(0,0,0,.3)]">
@@ -331,6 +424,46 @@ export function Bacheca({
     );
   }
 
+  // cosa c'è in un cassetto: tutte le toppe mescolate; quelle del mio totem e del gruppo non ancora scoperte
+  // stanno nel doppio fondo
+  function cassetto(tipo: TipoToppa): ContenutoCassetto {
+    const conNota = (t: Toppa, extra: Partial<OggettoCassetto> = {}) => {
+      const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length; // massimo 5 copie per toppa
+      return oggettoDaToppa(t, { nota: usate ? `${usate}/${MAX_COPIE}` : undefined, spento: usate >= MAX_COPIE, ...extra });
+    };
+    const speciali = [...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []), ...delGruppo.filter((t) => t.tipo === tipo)];
+    const base = CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo);
+    const mia = mie.filter((x) => x.r.tipo === tipo).map((x) => conNota(x.t, { segno: "mio", nome: tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola" }));
+    const giaScoperte = speciali.filter((t) => scoperte?.includes(t.id));
+    return {
+      visibili: mescola([...base, ...giaScoperte].map((t) => conNota(t))).concat(mia),
+      nascosti: speciali.filter((t) => !scoperte?.includes(t.id)).map((t) => conNota(t)),
+    };
+  }
+
+  // in cima ai cassetti Simboli e Parole: crea (o cambia) la tua toppa
+  function azioneMia(tipo: "simbolo" | "parola") {
+    const m = mie.find((x) => x.r.tipo === tipo);
+    const parola = tipo === "parola";
+    return (
+      <button
+        type="button"
+        className="cucitura cliccabile stoffa-chiara relative flex h-11 items-center rounded-full px-4 font-titolo text-sm text-abete"
+        onClick={() => {
+          setErroreEditor("");
+          setEditor({
+            tipo,
+            id: m?.r.id ?? crypto.randomUUID(),
+            contenuto: m?.r.contenuto ?? (parola ? { testo: "", stoffa: "vermiglio" } : { celle: "", stoffa: "crema" }),
+            esiste: !!m,
+          });
+        }}
+      >
+        <span className="pt-0.5">{m ? (parola ? "Cambia la tua parola" : "Cambia il tuo simbolo") : parola ? "+ La tua parola" : "+ Il tuo simbolo"}</span>
+      </button>
+    );
+  }
+
   const ordinati = [...elementi].sort((a, b) => a.z - b.z);
   const sel = elementi.find((e) => e.id === selezionato);
 
@@ -339,8 +472,30 @@ export function Bacheca({
       <div
         ref={telaRef}
         className="tela-aida relative w-full overflow-hidden rounded-[28px] shadow-[0_8px_16px_-10px_rgba(0,0,0,.5)]"
-        style={{ aspectRatio: "3 / 4", ["--cella" as string]: `${larghezza / COLONNE}px` }}
-        onPointerDown={() => !modoRicamo && setSelezionato(null)}
+        style={{
+          aspectRatio: "3 / 4",
+          ["--cella" as string]: `${larghezza / COLONNE}px`,
+          // la tela colorata col secchiello: tinta unita
+          backgroundColor: ricamo?.content.fondo ? STOFFE[ricamo.content.fondo].fondo : undefined,
+          transition: "background-color 400ms cubic-bezier(.4,0,.2,1)",
+          touchAction: modificabile && selezionato ? "none" : undefined,
+        }}
+        onPointerDown={(ev) => {
+          if (modoRicamo) return;
+          // secondo dito ovunque sulla tela mentre il primo tiene una toppa: ingrandisce e ruota quella toppa
+          const g = partenza.current;
+          if (modificabile && g && tocchi.current.size === 1) {
+            (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+            tocchi.current.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+            const corrente = elementi.find((x) => x.id === g.e.id) ?? g.e;
+            partenza.current = { e: corrente, punti: [...tocchi.current.values()] };
+            return;
+          }
+          setSelezionato(null);
+        }}
+        onPointerMove={(ev) => partenza.current && muoviGesto(ev, partenza.current.e.id)}
+        onPointerUp={(ev) => partenza.current && fineGesto(ev, partenza.current.e.id)}
+        onPointerCancel={(ev) => partenza.current && fineGesto(ev, partenza.current.e.id)}
       >
         {larghezza > 0 && (
           <StratoRicamo
@@ -367,10 +522,10 @@ export function Bacheca({
                 role={modificabile ? "button" : undefined}
                 aria-label={modificabile ? "Elemento della bacheca: trascina per spostarlo" : undefined}
                 onPointerDown={(ev) => inizioGesto(ev, e)}
-                onPointerMove={(ev) => muoviGesto(ev, e.id)}
-                onPointerUp={(ev) => fineGesto(ev, e.id)}
-                onPointerCancel={(ev) => fineGesto(ev, e.id)}
-                onLostPointerCapture={(ev) => fineGesto(ev, e.id)}
+                onPointerMove={(ev) => muoviGesto(ev, partenza.current?.e.id ?? e.id)}
+                onPointerUp={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
+                onPointerCancel={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
+                onLostPointerCapture={(ev) => fineGesto(ev, partenza.current?.e.id ?? e.id)}
                 className={`absolute select-none ${modificabile && !modoRicamo ? "cursor-grab touch-none" : "pointer-events-none"} ${
                   modoRicamo ? "opacity-40" : ""
                 }`}
@@ -387,12 +542,56 @@ export function Bacheca({
                 }}
               >
                 {contenuto(e)}
+                {modificabile && !modoRicamo && selezionato === e.id && (
+                  // maniglia nell'angolo: trascinandola con un dito la toppa si ingrandisce, rimpicciolisce e ruota
+                  <span
+                    role="slider"
+                    aria-label="Trascina per ingrandire o ruotare"
+                    aria-valuenow={Math.round(e.width)}
+                    className="absolute -right-6 -bottom-6 flex size-11 touch-none items-center justify-center"
+                    onPointerDown={(ev) => {
+                      ev.stopPropagation();
+                      (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+                      const box = (ev.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+                      const cx = box.left + box.width / 2;
+                      const cy = box.top + box.height / 2;
+                      maniglia.current = { e, cx, cy, d0: Math.hypot(ev.clientX - cx, ev.clientY - cy) || 1, a0: Math.atan2(ev.clientY - cy, ev.clientX - cx) };
+                    }}
+                    onPointerMove={(ev) => {
+                      const m = maniglia.current;
+                      if (!m) return;
+                      ev.stopPropagation();
+                      const d = Math.hypot(ev.clientX - m.cx, ev.clientY - m.cy);
+                      const a = Math.atan2(ev.clientY - m.cy, ev.clientX - m.cx);
+                      const width = Math.max(10, Math.min(90, (m.e.width * d) / m.d0));
+                      const rotation = m.e.rotation + ((a - m.a0) * 180) / Math.PI;
+                      setElementi((l) => l.map((x) => (x.id === m.e.id ? { ...x, width, rotation } : x)));
+                    }}
+                    onPointerUp={(ev) => {
+                      ev.stopPropagation();
+                      const m = maniglia.current;
+                      maniglia.current = null;
+                      const ora = m && elementi.find((x) => x.id === m.e.id);
+                      if (ora) salvaPosizione(ora);
+                    }}
+                    onPointerCancel={() => (maniglia.current = null)}
+                  >
+                    <span className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-vermiglio text-white shadow-[0_2px_4px_rgba(0,0,0,.4)]">
+                      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden>
+                        <path d="M7 17L17 7M11 7h6v6M7 11v6h6" />
+                      </svg>
+                    </span>
+                  </span>
+                )}
               </div>
             );
           })}
 
         {elementi.length === 0 && !/[0-9]/.test(ricamo?.content.celle ?? "") && !modoRicamo && (
-          <p className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center text-inchiostro/60">
+          <p
+            className="pointer-events-none absolute inset-x-6 top-1/2 -translate-y-1/2 text-center opacity-70"
+            style={{ color: ricamo?.content.fondo ? STOFFE[ricamo.content.fondo].testo : "#1c241d" }}
+          >
             {modificabile ? "La tela è vuota. Attacca una toppa o ricama qualcosa qui sotto." : "Questa bacheca è ancora vuota."}
           </p>
         )}
@@ -400,19 +599,9 @@ export function Bacheca({
 
       {modificabile && (
         <>
-          {/* Comandi: uno per funzione */}
+          {/* Comandi per la toppa toccata sulla tela (attaccare e ricamare si fa dalla cassettiera qui sotto) */}
           {!modoRicamo && (
             <div className="mt-4 flex items-center justify-center gap-3">
-              <TastoTondo etichetta="Apri il cassetto delle toppe" icona={Icone.piu} aria-pressed={!!cassetto} onClick={() => setCassetto(cassetto ? null : "simbolo")} />
-              <TastoTondo
-                etichetta="Ricama"
-                icona={Icone.ago}
-                onClick={() => {
-                  setModoRicamo(true);
-                  setCassetto(null);
-                  setSelezionato(null);
-                }}
-              />
               <TastoTondo etichetta="Duplica" icona={Icone.sopra} disabled={!sel} onClick={() => sel && duplica(sel)} />
               <TastoTondo etichetta="Togli dalla bacheca" icona={Icone.cestino} disabled={!sel} onClick={() => sel && togli(sel.id)} />
             </div>
@@ -424,80 +613,119 @@ export function Bacheca({
             </div>
           )}
 
-          {cassetto && !modoRicamo && (
-            <Feltro className="mt-4">
-              <div role="tablist" className="-mx-2 flex gap-2 overflow-x-auto px-2 pb-1">
-                {(["simbolo", "parola", "palette", "foto"] as const).map((t) => (
-                  <button
-                    key={t}
-                    role="tab"
-                    aria-selected={cassetto === t}
-                    onClick={() => setCassetto(t)}
-                    className={`cliccabile relative flex-none rounded-full px-4 py-2 text-sm ${cassetto === t ? "stoffa-vermiglio" : "stoffa-chiara"}`}
-                  >
-                    {t === "foto" ? "Foto" : NOMI_TIPI[t]}
-                  </button>
-                ))}
-              </div>
-
-              {cassetto === "foto" ? (
-                <div className="mt-5 flex flex-col gap-4">
-                  <label className="tasto cucitura cliccabile stoffa-vermiglio relative cursor-pointer">
-                    <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      disabled={caricamento}
-                      onChange={(ev) => {
-                        const f = ev.target.files?.[0];
-                        if (f) aggiungiFoto(f);
-                        ev.target.value = "";
-                      }}
-                    />
-                  </label>
-                  <div className="flex items-end gap-3">
-                    <label className="flex min-w-0 flex-1 flex-col gap-2">
-                      <span className="font-medium">Oppure un&apos;immagine da un link</span>
-                      <span className="campo-cucito block">
-                        <input value={linkImmagine} onChange={(ev) => setLinkImmagine(ev.target.value)} placeholder="https://…" inputMode="url" />
-                      </span>
+          {!modoRicamo && scoperte && (
+            <div className="mt-6">
+              <Cassettiera
+                contenuto={{ simbolo: cassetto("simbolo"), parola: cassetto("parola"), palette: cassetto("palette") }}
+                azioni={{ simbolo: azioneMia("simbolo"), parola: azioneMia("parola") }}
+                onScopri={scopri}
+                onPrendi={(o) => {
+                  suoni.toppa();
+                  const t = toppaDi(o.id);
+                  if (t) aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? (t.larghezza ?? 46) : 26);
+                  setAttaccata(o.nome);
+                }}
+                onKit={() => {
+                  setModoRicamo(true);
+                  setSelezionato(null);
+                  telaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                foto={
+                  <div className="flex flex-col gap-4 rounded-2xl bg-feltro p-4 text-inchiostro shadow-[0_3px_6px_rgba(0,0,0,.35)]">
+                    <label className="tasto cucitura cliccabile stoffa-vermiglio relative cursor-pointer">
+                      <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        disabled={caricamento}
+                        onChange={(ev) => {
+                          const f = ev.target.files?.[0];
+                          if (f) aggiungiFoto(f);
+                          ev.target.value = "";
+                        }}
+                      />
                     </label>
-                    <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim()} onClick={aggiungiDaLink} />
+                    <div className="flex items-end gap-3">
+                      <label className="flex min-w-0 flex-1 flex-col gap-2">
+                        <span className="text-sm font-medium">Oppure un&apos;immagine da un link</span>
+                        <span className="campo-cucito block">
+                          <input value={linkImmagine} onChange={(ev) => setLinkImmagine(ev.target.value)} placeholder="https://…" inputMode="url" />
+                        </span>
+                      </label>
+                      <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim()} onClick={aggiungiDaLink} />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <ul className="mt-5 grid grid-cols-3 gap-3">
-                  {CATALOGO.filter((t) => t.tipo === cassetto).map((t) => {
-                    // massimo 5 copie per toppa
-                    const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length;
-                    const finite = usate >= MAX_COPIE;
-                    return (
-                      <li key={t.id} className={`relative ${t.tipo === "parola" ? "col-span-3 sm:col-span-1" : ""}`}>
-                        <button
-                          aria-label={`Attacca: ${t.nome}`}
-                          disabled={finite}
-                          onClick={() => {
-                            suoni.toppa();
-                            aggiungi("toppa", { toppa: t.id, tipo: t.tipo }, t.tipo === "parola" ? 46 : 26);
-                          }}
-                          className="block w-full transition-transform active:scale-95 disabled:opacity-40"
-                          style={{ aspectRatio: String(t.rapporto) }}
-                        >
-                          {t.disegno()}
-                        </button>
-                        {usate > 0 && (
-                          <span className="pointer-events-none absolute -top-1 -right-1 rounded-full bg-abete px-1.5 text-xs leading-5 text-crema">
-                            {usate}/{MAX_COPIE}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Feltro>
+                }
+              />
+              {/* conferma breve: la toppa è finita sulla tela, qui sopra */}
+              <AnimatePresence>
+                {attaccata && (
+                  <motion.p
+                    key={attaccata + elementi.length}
+                    role="status"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                    className="fixed inset-x-0 bottom-[max(20px,env(safe-area-inset-bottom))] z-[200] mx-auto w-fit rounded-full bg-crema px-4 py-2 text-sm text-abete shadow-[0_6px_16px_-6px_rgba(0,0,0,.6)]"
+                  >
+                    ↑ «{attaccata}» è sulla tela
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           )}
+
+          <PillolaNome nome={nomeTela} />
+
+          {/* la mia toppa: editor in un foglio che sale dal basso */}
+          <AnimatePresence>
+            {editor && (
+              <motion.div
+                key="foglio-mia-toppa"
+                className="fixed inset-0 z-[400] flex items-end justify-center bg-black/55"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={editor.tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola"}
+                  className="feltro max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-b-none p-6 pb-[max(24px,env(safe-area-inset-bottom))]"
+                  initial={{ y: 60 }}
+                  animate={{ y: 0 }}
+                  exit={{ y: 80 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                >
+                  <div className="relative mb-4 flex items-center gap-3">
+                    <TitoloRiquadro className="flex-1">{editor.tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola"}</TitoloRiquadro>
+                    <TastoTondo etichetta="Chiudi senza salvare" icona={Icone.chiudi} onClick={() => setEditor(null)} />
+                  </div>
+                  <div className="relative">
+                    {editor.tipo === "simbolo" ? (
+                      <EditorSimbolo id={editor.id} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
+                    ) : (
+                      <EditorParola n={1} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
+                    )}
+                    <p className="mt-4 text-sm text-inchiostro/70">Ne puoi avere uno solo: lo trovi nel cassetto con il pallino azzurro. Lo vede solo chi guarda la tua bacheca.</p>
+                    <div className="mt-4 flex flex-col gap-3">
+                      <Errore>{erroreEditor}</Errore>
+                      <Tasto onClick={salvaMia} disabled={salvoMia}>
+                        {salvoMia ? "Salvo…" : "Salva"}
+                      </Tasto>
+                      {editor.esiste && (
+                        <Tasto tipo="secondario" onClick={togliMia}>
+                          {editor.tipo === "simbolo" ? "Togli il tuo simbolo" : "Togli la tua parola"}
+                        </Tasto>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Si salva da sola, ma serve un modo chiaro per dire "ho finito" */}
           {!modoRicamo && (
@@ -546,7 +774,11 @@ function StratoRicamo({
   const storia = useRef<string[]>([]);
   const ultima = useRef<{ c: number; r: number } | null>(null);
   const [filo, setFilo] = useState(0);
-  const [gomma, setGomma] = useState(false);
+  const [strumento, setStrumento] = useState<"ago" | "gomma" | "secchiello">("ago");
+  // colore della tela (tinta unita, scelto col secchiello); null = crema della tela
+  const [fondo, setFondoStato] = useState<Stoffa | null>(iniziale?.content.fondo ?? null);
+  const fondoRef = useRef<Stoffa | null>(fondo);
+  const gomma = strumento === "gomma";
   const [puoAnnullare, setPuoAnnullare] = useState(false);
   const idRicamo = useRef<string | null>(iniziale?.id ?? null);
   const timerSalva = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -591,11 +823,19 @@ function StratoRicamo({
     ridisegna();
   }, [ridisegna]);
 
+  const contenutoRicamo = () => (fondoRef.current ? { celle: celle.current.join(""), fondo: fondoRef.current } : { celle: celle.current.join("") });
+  function coloraTela(s: Stoffa | null) {
+    fondoRef.current = s;
+    setFondoStato(s);
+    suoni.toppa();
+    salvaPresto();
+  }
+
   // Salvo poco dopo l'ultimo punto; intanto il salvataggio risulta "in corso"
   const fineAttesa = useRef<(() => void) | null>(null);
   function salvaPresto() {
     // la bacheca deve sapere sempre se c'è almeno un punto (per la scritta "la tela è vuota")
-    const ricamoOra = { id: idRicamo.current ?? "ricamo", kind: "ricamo", content: { celle: celle.current.join("") }, x: 50, y: ALTEZZA / 2, width: 100, rotation: 0, z: 0 } as Elemento;
+    const ricamoOra = { id: idRicamo.current ?? "ricamo", kind: "ricamo", content: contenutoRicamo(), x: 50, y: ALTEZZA / 2, width: 100, rotation: 0, z: 0 } as Elemento;
     onSalvato(ricamoOra);
     if (prova) return;
     if (timerSalva.current) clearTimeout(timerSalva.current);
@@ -606,7 +846,7 @@ function StratoRicamo({
   async function salvaOra() {
     timerSalva.current = null;
     try {
-      const content = { celle: celle.current.join("") };
+      const content = contenutoRicamo();
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
         if (error) onErrore("Non sono riuscito a salvare il ricamo.");
@@ -637,8 +877,14 @@ function StratoRicamo({
   }
 
   function puntoDa(ev: React.PointerEvent) {
-    const r = canvasRef.current!.getBoundingClientRect();
-    return { c: Math.floor((ev.clientX - r.left) / cella), r: Math.floor((ev.clientY - r.top) / cella) };
+    // in proporzione alla tela com'è davvero sullo schermo (non con la misura ricordata, che può essere vecchia)
+    const cv = canvasRef.current!;
+    const n = ev.nativeEvent;
+    if (n.target === cv && cv.clientWidth > 0) {
+      return { c: Math.floor((n.offsetX / cv.clientWidth) * COLONNE), r: Math.floor((n.offsetY / cv.clientHeight) * RIGHE) };
+    }
+    const r = cv.getBoundingClientRect();
+    return { c: Math.floor(((ev.clientX - r.left) / r.width) * COLONNE), r: Math.floor(((ev.clientY - r.top) / r.height) * RIGHE) };
   }
 
   function cuci(c: number, r: number) {
@@ -676,6 +922,7 @@ function StratoRicamo({
           if (storia.current.length > 30) storia.current.shift();
           setPuoAnnullare(true);
           const p = puntoDa(ev);
+          if (strumento === "secchiello") return; // col secchiello si sceglie il colore qui sotto
           ultima.current = p;
           cuci(p.c, p.r);
           suoni.punto();
@@ -697,6 +944,27 @@ function StratoRicamo({
       {attivo && (
         <div className="fixed inset-x-0 bottom-0 z-[100001] px-4 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="feltro mx-auto flex max-w-md flex-col items-center gap-3 p-4">
+            {strumento === "secchiello" ? (
+              <div className="relative flex flex-col items-center gap-2">
+                <p className="text-sm font-medium">Colore della tela</p>
+                <div role="radiogroup" aria-label="Colore della tela" className="grid grid-cols-5 gap-3">
+                  {(["crema", ...STOFFE_PERSONALIZZABILI.filter((x) => x !== "crema")] as Stoffa[]).map((x) => {
+                    const scelto = (fondo ?? "crema") === x;
+                    return (
+                      <button
+                        key={x}
+                        role="radio"
+                        aria-checked={scelto}
+                        aria-label={`Tela ${STOFFE[x].nome}`}
+                        onClick={() => coloraTela(x === "crema" ? null : x)}
+                        className={`size-11 rounded-full border-[3px] border-white shadow ${scelto ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
+                        style={{ background: x === "crema" ? "#f6eedb" : STOFFE[x].fondo }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
             <div role="radiogroup" aria-label="Colore del filo" className="relative grid grid-cols-4 gap-3">
               {FILI.map((f, i) => (
                 <button
@@ -706,15 +974,23 @@ function StratoRicamo({
                   aria-label={`Filo ${NOMI_FILI[i]}`}
                   onClick={() => {
                     setFilo(i);
-                    setGomma(false);
+                    if (gomma) setStrumento("ago");
                   }}
                   className={`size-11 rounded-full border-[3px] border-white shadow ${!gomma && filo === i ? "outline-3 outline-offset-2 outline-inchiostro" : ""}`}
                   style={{ background: f }}
                 />
               ))}
             </div>
+            )}
             <div className="relative flex gap-3">
-              <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={gomma} className={gomma ? "!bg-senape" : ""} onClick={() => setGomma(!gomma)} />
+              <TastoTondo etichetta="Gomma" icona={Icone.gomma} aria-pressed={gomma} className={gomma ? "!bg-senape" : ""} onClick={() => setStrumento(gomma ? "ago" : "gomma")} />
+              <TastoTondo
+                etichetta="Secchiello: colora tutta la tela"
+                icona={Icone.secchiello}
+                aria-pressed={strumento === "secchiello"}
+                className={strumento === "secchiello" ? "!bg-senape" : ""}
+                onClick={() => setStrumento(strumento === "secchiello" ? "ago" : "secchiello")}
+              />
               <TastoTondo
                 etichetta="Annulla l'ultimo tratto"
                 icona={Icone.annulla}
@@ -737,3 +1013,4 @@ function StratoRicamo({
     </>
   );
 }
+

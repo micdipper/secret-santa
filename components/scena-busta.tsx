@@ -7,6 +7,7 @@
 // 4) il lembo si apre trascinando in su, curvandosi come carta;
 // 5) esce il biglietto, viene avanti e si gira mostrando il nome.
 import { useEffect, useRef } from "react";
+import { CRISTALLI } from "@/lib/olografie";
 import { fontNome } from "@/components/biglietto-olografico";
 import { suoni } from "@/lib/suoni";
 import * as THREE from "three";
@@ -28,6 +29,8 @@ const EFFETTI = {
 
 const LARGHEZZA = 3.4;
 const ALTEZZA = 2.2;
+const R_CERA = 0.36; // raggio del sigillo di ceralacca
+const SIGILLO_PX = 92; // nella slot il sigillo è grande quanto i cerchi dei personaggi
 const SUOLO = -2; // altezza della neve
 
 function tela(w: number, h: number, disegna: (c: CanvasRenderingContext2D) => void) {
@@ -113,13 +116,18 @@ function disegnaCeralacca(c: CanvasRenderingContext2D) {
     c.beginPath();
     c.arc(128, 128, 84, 0, Math.PI * 2);
     c.stroke();
-    // stellina a 4 punte dorata
-    c.fillStyle = "#f1d27a";
-    c.beginPath();
-    const p = [[128, 70], [142, 114], [186, 128], [142, 142], [128, 186], [114, 142], [70, 128], [114, 114]];
-    p.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
-    c.closePath();
-    c.fill();
+    // la S del logo impressa nella cera (scavata): bordo scuro in alto a sinistra, riflesso chiaro in basso a destra
+    c.font = `150px ${famiglia("--font-basteleur", "Georgia, serif")}`;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    const x = 128;
+    const y = 136;
+    c.fillStyle = "rgba(255,190,170,.55)";
+    c.fillText("S", x + 4, y + 4);
+    c.fillStyle = "#3e0808";
+    c.fillText("S", x, y);
+    c.fillStyle = "#8a1812";
+    c.fillText("S", x + 2.5, y + 2.5);
   }
 }
 
@@ -188,6 +196,52 @@ function disegnaFronte(c: CanvasRenderingContext2D, w: number, h: number, nome: 
   arrotonda(c, w, h, w * 0.082);
   c.fillStyle = "#f3e8cf";
   c.fillRect(0, 0, w, h);
+  // olografia "ghiaccio e argento" già stampata sul biglietto (come la card che arriva dopo, ferma):
+  // così quando si gira è olografico da subito, e il passaggio alla card vera non si vede
+  {
+    c.save();
+    c.globalCompositeOperation = "multiply";
+    c.globalAlpha = 0.32;
+    c.translate(w / 2, h / 2);
+    c.rotate((25 * Math.PI) / 180); // bande a 115°
+    const colori = ["#6fb8f2", "#e9f4ff", "#b9c6d6", "#ffffff", "#4fa3e8", "#d9e8f7", "#c7b8f0", "#6fb8f2"];
+    const tappe = [0, 7, 12, 16, 23, 29, 34, 40];
+    const periodo = w * 1.2;
+    for (let x0 = -2 * w; x0 < 2 * w; x0 += periodo) {
+      const g = c.createLinearGradient(x0, 0, x0 + periodo, 0);
+      tappe.forEach((t, i) => g.addColorStop(t / 40, colori[i]));
+      c.fillStyle = g;
+      c.fillRect(x0, -2 * h, periodo + 1, 4 * h);
+    }
+    c.restore();
+    // brina: cristalli bianchi
+    c.save();
+    c.globalAlpha = 0.35;
+    c.strokeStyle = "#ffffff";
+    c.lineWidth = 1.1;
+    c.lineCap = "round";
+    const lato = w * 0.34;
+    const cristalli = new Path2D(CRISTALLI);
+    for (let y = 0; y < h; y += lato)
+      for (let x = 0; x < w; x += lato) {
+        c.save();
+        c.translate(x, y);
+        c.scale(lato / 200, lato / 200);
+        c.stroke(cristalli);
+        c.restore();
+      }
+    c.restore();
+    // bordi gelati
+    c.save();
+    c.translate(w / 2, h / 2);
+    c.scale(1.2, 0.9 * (h / w));
+    const bordo = c.createRadialGradient(0, 0, 0, 0, 0, w * 0.7);
+    bordo.addColorStop(0.62, "rgba(225,240,255,0)");
+    bordo.addColorStop(1, "rgba(225,240,255,.75)");
+    c.fillStyle = bordo;
+    c.fillRect(-w, -w, 2 * w, 2 * w);
+    c.restore();
+  }
   // cucitura
   c.setLineDash([w * 0.024, w * 0.016]);
   c.strokeStyle = "rgba(229,72,30,.75)";
@@ -303,6 +357,7 @@ export default function ScenaBusta({
   onFase,
   onPrimoTocco,
   onPronta,
+  onFotoBusta,
   onAperta,
   parti,
   sigilloSulloSchermo,
@@ -313,13 +368,14 @@ export default function ScenaBusta({
   onFase: (f: FaseBusta, tocchi?: number) => void;
   onPrimoTocco: () => void;
   onPronta?: () => void; // la scena è pronta (si può mostrare la pagina senza scatti)
+  onFotoBusta?: (url: string) => void; // "foto" della busta senza sigillo, com'è dietro la finestrella (per le caselle della slot)
   parti: boolean; // la slot si è rotta: la busta comincia a cadere
   sigilloSulloSchermo: () => DOMRect | null; // dov'era il sigillo nella slot (la busta parte da lì)
   postoCard: () => DOMRect | null; // dove sta la card finale (il biglietto 3D ci vola esattamente sopra)
   onAperta: () => void;
 }) {
   const contenitore = useRef<HTMLDivElement>(null);
-  const callback = useRef({ onFase, onPrimoTocco, onAperta, onPronta });
+  const callback = useRef({ onFase, onPrimoTocco, onAperta, onPronta, onFotoBusta });
   const dati = useRef({ nome, avatarSvg, sigilloSulloSchermo, postoCard }); // letti dalla scena quando servono
   const partiRef = useRef(parti);
   useEffect(() => {
@@ -327,8 +383,8 @@ export default function ScenaBusta({
   }, [parti]);
 
   useEffect(() => {
-    callback.current = { onFase, onPrimoTocco, onAperta, onPronta };
-  }, [onFase, onPrimoTocco, onAperta, onPronta]);
+    callback.current = { onFase, onPrimoTocco, onAperta, onPronta, onFotoBusta };
+  }, [onFase, onPrimoTocco, onAperta, onPronta, onFotoBusta]);
 
   useEffect(() => {
     const box = contenitore.current!;
@@ -337,6 +393,7 @@ export default function ScenaBusta({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // un po' meno pixel: molto più leggero, a occhio uguale
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.localClippingEnabled = true; // la busta nella slot si vede solo dalla finestrella (vedi "attesa")
     renderer.localClippingEnabled = true; // per nascondere il biglietto finché è dentro la busta
     renderer.domElement.style.touchAction = "none";
     box.appendChild(renderer.domElement);
@@ -482,7 +539,6 @@ export default function ScenaBusta({
     const texCera = new THREE.CanvasTexture(telaCera);
     texCera.colorSpace = THREE.SRGBColorSpace;
     const matCera = new THREE.MeshStandardMaterial({ map: texCera, roughness: 0.35, metalness: 0.1, transparent: true, alphaTest: 0.1, emissive: new THREE.Color(0xffb86b), emissiveIntensity: 0 });
-    const R_CERA = 0.36;
     const cera = new THREE.Mesh(new THREE.CircleGeometry(R_CERA, 48), matCera);
     cera.position.set(0, ALTEZZA / 2 - ALTO_LEMBO + 0.3, 0.03);
     busta.add(cera);
@@ -659,6 +715,20 @@ export default function ScenaBusta({
     let fase: FaseBusta = "attesa";
     let partenzaBusta: { pos: THREE.Vector3; quat: THREE.Quaternion; scala: number } | null = null;
     let scalaVicina = 1;
+    const pianiFinestrella = [new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane()];
+    let tagliata = false;
+    // inclinazione dal giroscopio (stessa formula della card olografica: gradi → radianti)
+    let inclMetaX = 0;
+    let inclMetaY = 0;
+    let inclX = 0;
+    let inclY = 0;
+    const giroscopio = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null || e.beta == null) return;
+      inclMetaY = THREE.MathUtils.degToRad(Math.max(-18, Math.min(18, e.gamma / 2.5)));
+      inclMetaX = THREE.MathUtils.degToRad(Math.max(-18, Math.min(18, -(e.beta - 45) / 2.5)));
+    };
+    window.addEventListener("deviceorientation", giroscopio);
+    let fotoFatta = false;
     let inizioFase = 0;
     let tocchi = 0;
     let salto = 0; // altezza del sobbalzo
@@ -822,17 +892,50 @@ export default function ScenaBusta({
           const punto = new THREE.Vector3((cx / w) * 2 - 1, -(cy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
           const pos = camera.position.clone().add(punto.multiplyScalar(distanza));
           const perPixel = (2 * distanza * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / h;
-          // dentro la slot: larga quanto la finestrella (meno un margine)
-          const scala = (((r ? r.width : 170) - 8) * perPixel) / LARGHEZZA;
-          scalaVicina = (w * 0.85 * perPixel) / LARGHEZZA; // quando la slot si rompe si avvicina allo schermo
+          // dentro la slot: il sigillo grande quanto i personaggi (la busta è più larga della finestrella: lì dietro si vede solo carta)
+          const scala = (SIGILLO_PX * perPixel) / (2 * R_CERA);
+          scalaVicina = Math.max(scala, (w * 0.85 * perPixel) / LARGHEZZA); // quando la slot si rompe si avvicina allo schermo
           const quat = camera.quaternion.clone();
+          // il sigillo (non il centro della busta) va esattamente al centro della finestrella
+          pos.add(new THREE.Vector3(0, -(ALTEZZA / 2 - ALTO_LEMBO + 0.3) * scala, 0).applyQuaternion(quat));
           partenzaBusta = { pos, quat, scala };
           busta.position.copy(pos);
           busta.quaternion.copy(quat);
           busta.scale.setScalar(scala);
+          // la busta è più grande della finestrella: la taglio lungo i bordi della finestrella
+          // (quattro piani che passano per l'occhio della telecamera e per i bordi del rettangolo)
+          if (r) {
+            const aSchermo = (x: number, y: number) => new THREE.Vector3((x / w) * 2 - 1, -(y / h) * 2 + 1, 0.5).unproject(camera);
+            const occhio = camera.position;
+            const centro = aSchermo(cx, cy);
+            const angoli = [
+              [r.left, r.top, r.right, r.top],
+              [r.right, r.top, r.right, r.bottom],
+              [r.right, r.bottom, r.left, r.bottom],
+              [r.left, r.bottom, r.left, r.top],
+            ];
+            angoli.forEach(([x1, y1, x2, y2], i) => {
+              pianiFinestrella[i].setFromCoplanarPoints(occhio, aSchermo(x1, y1), aSchermo(x2, y2));
+              if (pianiFinestrella[i].distanceToPoint(centro) < 0) pianiFinestrella[i].negate();
+            });
+            if (!tagliata) {
+              busta.traverse((o) => {
+                const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+                if (m) m.clippingPlanes = pianiFinestrella;
+              });
+              tagliata = true;
+            }
+          }
           if (partiRef.current) vaiA("cade");
         }
       } else if (fase === "cade" && partenzaBusta) {
+        if (tagliata) {
+          busta.traverse((o) => {
+            const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+            if (m) m.clippingPlanes = null;
+          });
+          tagliata = false;
+        }
         // dal posto del sigillo la busta cade nella neve girando; l'inquadratura scende con lei
         // un attimo sospesa (dondola mentre i pezzi volano via), poi cade
         const SOSPESA = 0.65;
@@ -988,7 +1091,10 @@ export default function ScenaBusta({
           }
           const invito = aspettoGiro ? Math.sin(t * 2.4) * 0.06 : 0; // ondeggia piano: toccami!
           const scossa = Math.sin(t * 70) * 0.06 * trema;
-          biglietto.rotation.set(invito * 0.5, giro + invito + scossa * 0.5, Math.sin(k * Math.PI) * 0.08 + scossa);
+          // girato, segue il giroscopio esattamente come la card vera che prende il suo posto (niente stacco)
+          inclX += (inclMetaX - inclX) * Math.min(1, dt * 8);
+          inclY += (inclMetaY - inclY) * Math.min(1, dt * 8);
+          biglietto.rotation.set(invito * 0.5 - inclX * p, giro + invito + scossa * 0.5 + inclY * p, Math.sin(k * Math.PI) * 0.08 + scossa);
           biglietto.position.x += Math.sin(t * 83) * 0.05 * trema;
           // "pop" di grandezza quando si gira
           if (p > 0) biglietto.scale.multiplyScalar(1 + Math.sin(Math.PI * p) * 0.12);
@@ -1031,12 +1137,35 @@ export default function ScenaBusta({
         if (t > 3 && fotogrammi / tempi < 35) bagliore.enabled = false;
       }
 
+      // una volta sola, appena pronta: la busta SENZA sigillo (e senza neve) fotografata com'è dietro la finestrella,
+      // una striscia alta 120px centrata sul sigillo: diventa lo sfondo delle caselle della slot (buste identiche)
+      if (!fotoFatta && fase === "attesa" && fotogrammiTotali >= 4 && callback.current.onFotoBusta) {
+        fotoFatta = true;
+        const r = dati.current.sigilloSulloSchermo();
+        const cv = renderer.domElement;
+        const box = cv.getBoundingClientRect();
+        if (r && box.width > 0) {
+          cera.visible = false;
+          fiocchi.visible = false;
+          composer.render();
+          const k = cv.width / box.width;
+          const centro = r.top + r.height / 2 - box.top;
+          const foto = document.createElement("canvas");
+          foto.width = Math.round(r.width * k);
+          foto.height = Math.round(120 * k);
+          foto.getContext("2d")!.drawImage(cv, (r.left - box.left) * k, (centro - 60) * k, r.width * k, 120 * k, 0, 0, foto.width, foto.height);
+          callback.current.onFotoBusta(foto.toDataURL("image/jpeg", 0.92));
+          cera.visible = true;
+          fiocchi.visible = true;
+        }
+      }
       composer.render();
       if (++fotogrammiTotali === 3) callback.current.onPronta?.();
     };
     ciclo();
 
     return () => {
+      window.removeEventListener("deviceorientation", giroscopio);
       cancelAnimationFrame(frame);
       ro.disconnect();
       window.removeEventListener("pointerdown", giuFinestra);

@@ -1,30 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { useRef, useState } from "react";
+import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
+import { Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { creaClientBrowser } from "@/lib/supabase/client";
 
-type Vincolo = { a: number; b: number; tipo: "coppia" | "anno_scorso" };
+// Sala prove: estrazione con persone inventate (nomi modificabili) e lo stesso riquadro
+// "Chi non deve pescarsi" della pagina Organizza. Usa la stessa regola dell'estrazione vera, non salva niente.
+type Persona = { id: string; nome: string };
 
 export default function ProvaEstrazione() {
-  const [nomi, setNomi] = useState(["Giulia", "Marco", "Sara", "Luca", "Anna", "Pietro"]);
-  const [nuovo, setNuovo] = useState("");
-  const [vincoli, setVincoli] = useState<Vincolo[]>([{ a: 0, b: 1, tipo: "coppia" }]);
-  const [va, setVa] = useState(0);
-  const [vb, setVb] = useState(1);
-  const [tipo, setTipo] = useState<Vincolo["tipo"]>("coppia");
-  const [cerchio, setCerchio] = useState<number[] | null>(null);
+  const prossimo = useRef(7);
+  const [persone, setPersone] = useState<Persona[]>(
+    ["Giulia", "Marco", "Sara", "Luca", "Anna", "Pietro"].map((nome, i) => ({ id: `p${i + 1}`, nome })),
+  );
+  const [esclusioni, setEsclusioni] = useState<Esclusione[]>([{ member_a: "p1", member_b: "p2", reason: "coppia" }]);
+  const [cerchio, setCerchio] = useState<string[] | null>(null);
   const [errore, setErrore] = useState("");
   const [estraggo, setEstraggo] = useState(false);
+  const nome = (id: string) => persone.find((p) => p.id === id)?.nome.trim() || "?";
 
   async function estrai() {
     setErrore("");
+    if (persone.some((p) => !p.nome.trim())) return setErrore("C'è una persona senza nome.");
     setEstraggo(true);
-    // la stessa funzione del database usata dall'estrazione vera, ma non salva niente
+    // la stessa funzione del database usata dall'estrazione vera (persone numerate da 1), ma non salva niente
+    const numero = (id: string) => persone.findIndex((p) => p.id === id) + 1;
     const { data, error } = await creaClientBrowser().rpc("prova_estrazione", {
-      p_n: nomi.length,
-      p_coppie: vincoli.filter((v) => v.tipo === "coppia").flatMap((v) => [v.a + 1, v.b + 1]),
-      p_anno: vincoli.filter((v) => v.tipo === "anno_scorso").flatMap((v) => [v.a + 1, v.b + 1]),
+      p_n: persone.length,
+      p_coppie: esclusioni.filter((v) => v.reason !== "anno_scorso").flatMap((v) => [numero(v.member_a), numero(v.member_b)]),
+      p_anno: esclusioni.filter((v) => v.reason === "anno_scorso").flatMap((v) => [numero(v.member_a), numero(v.member_b)]),
     });
     setEstraggo(false);
     if (error) return setErrore(error.message);
@@ -32,15 +37,13 @@ export default function ProvaEstrazione() {
       setCerchio(null);
       return setErrore("Con queste esclusioni non si trova una catena valida. Prova a toglierne qualcuna.");
     }
-    setCerchio((data as number[]).map((k) => k - 1));
+    setCerchio((data as number[]).map((k) => persone[k - 1].id));
   }
 
-  function cambiaNomi(n: string[]) {
-    setNomi(n);
-    setVincoli([]);
+  function togliPersona(id: string) {
+    setPersone(persone.filter((p) => p.id !== id));
+    setEsclusioni(esclusioni.filter((e) => e.member_a !== id && e.member_b !== id));
     setCerchio(null);
-    setVa(0);
-    setVb(1);
   }
 
   return (
@@ -50,75 +53,59 @@ export default function ProvaEstrazione() {
         etichettaIndietro="Torna alla sala prove"
         contesto="Sala prove"
         titolo="Estrazione di prova"
-        sottotitolo="Stessa regola dell'estrazione vera: un unico cerchio, nessuno scambio a due, esclusioni rispettate."
+        sottotitolo="Stessa regola dell'estrazione vera: un unico cerchio, nessuno scambio a due, esclusioni rispettate. Non si salva niente."
       />
 
       <div className="mt-6 flex flex-col gap-4">
         <Feltro>
           <TitoloRiquadro>Chi partecipa</TitoloRiquadro>
-          <ul className="mt-3 divide-y-2 divide-dashed divide-abete/15">
-            {nomi.map((n, i) => (
-              <li key={n} className="flex items-center gap-3 py-2">
-                <span className="min-w-0 flex-1 truncate font-medium">{n}</span>
-                <TastoTondo etichetta={`Togli ${n}`} icona={Icone.meno} disabled={nomi.length <= 3} onClick={() => cambiaNomi(nomi.filter((_, k) => k !== i))} />
+          <p className="mt-2 text-sm text-inchiostro/70">Tocca un nome per cambiarlo.</p>
+          <ul className="mt-3 flex flex-col gap-3">
+            {persone.map((p, i) => (
+              <li key={p.id} className="flex items-center gap-3">
+                <span className="campo-cucito block min-w-0 flex-1">
+                  <input
+                    aria-label={`Nome della persona ${i + 1}`}
+                    value={p.nome}
+                    maxLength={30}
+                    onChange={(e) => {
+                      setPersone(persone.map((x) => (x.id === p.id ? { ...x, nome: e.target.value } : x)));
+                      setCerchio(null);
+                    }}
+                  />
+                </span>
+                <TastoTondo etichetta={`Togli ${p.nome || "questa persona"}`} icona={Icone.meno} disabled={persone.length <= 3} onClick={() => togliPersona(p.id)} />
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex items-end gap-3">
-            <div className="min-w-0 flex-1">
-              <Campo id="nuovo" etichetta="Aggiungi una persona" value={nuovo} onChange={(e) => setNuovo(e.target.value)} maxLength={30} />
-            </div>
-            <TastoTondo
-              etichetta="Aggiungi"
-              icona={Icone.piu}
-              disabled={!nuovo.trim() || nomi.includes(nuovo.trim())}
-              onClick={() => {
-                cambiaNomi([...nomi, nuovo.trim()]);
-                setNuovo("");
-              }}
-            />
-          </div>
-          <p className="mt-2 text-sm text-inchiostro/70">Cambiando la lista si azzerano le esclusioni.</p>
-        </Feltro>
-
-        <Feltro>
-          <TitoloRiquadro>Chi non deve pescarsi</TitoloRiquadro>
-          {vincoli.length > 0 && (
-            <ul className="mt-3 divide-y-2 divide-dashed divide-abete/15">
-              {vincoli.map((v, i) => (
-                <li key={i} className="flex items-center gap-3 py-2">
-                  <span className="min-w-0 flex-1">
-                    {v.tipo === "coppia" ? `💞 ${nomi[v.a]} e ${nomi[v.b]} (coppia)` : `🎁 ${nomi[v.a]} → ${nomi[v.b]} (anno scorso)`}
-                  </span>
-                  <TastoTondo etichetta="Togli" icona={Icone.meno} onClick={() => setVincoli(vincoli.filter((_, k) => k !== i))} />
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <select className="campo-cucito h-14 px-3" value={va} onChange={(e) => setVa(Number(e.target.value))} aria-label="Prima persona">
-              {nomi.map((n, i) => (
-                <option key={n} value={i}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            <select className="campo-cucito h-14 px-3" value={vb} onChange={(e) => setVb(Number(e.target.value))} aria-label="Seconda persona">
-              {nomi.map((n, i) => (
-                <option key={n} value={i}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            <select className="campo-cucito col-span-2 h-14 px-3" value={tipo} onChange={(e) => setTipo(e.target.value as Vincolo["tipo"])} aria-label="Motivo">
-              <option value="coppia">Coppia (non si pescano a vicenda)</option>
-              <option value="anno_scorso">Anno scorso: la prima ha regalato alla seconda</option>
-            </select>
-          </div>
-          <Tasto tipo="secondario" className="mt-3" disabled={va === vb} onClick={() => setVincoli([...vincoli, { a: va, b: vb, tipo }])}>
-            Aggiungi l&apos;esclusione
+          <Tasto
+            tipo="secondario"
+            className="mt-4"
+            disabled={persone.length >= 30}
+            onClick={() => {
+              setPersone([...persone, { id: `p${prossimo.current++}`, nome: "" }]);
+              setCerchio(null);
+            }}
+          >
+            + Aggiungi una persona
           </Tasto>
         </Feltro>
+
+        <RiquadroEsclusioni
+          persone={persone.map((p) => ({ id: p.id, nome: p.nome.trim() || "(senza nome)" }))}
+          esclusioni={esclusioni}
+          modificabile
+          onAggiungi={async (e) => {
+            if (esclusioni.some((x) => x.member_a === e.member_a && x.member_b === e.member_b && x.reason === e.reason)) return "C'è già.";
+            setEsclusioni([...esclusioni, e]);
+            setCerchio(null);
+            return null;
+          }}
+          onTogli={async (c) => {
+            setEsclusioni(esclusioni.filter((x) => !(x.member_a === c.member_a && x.member_b === c.member_b && x.reason === c.reason)));
+            setCerchio(null);
+          }}
+        />
 
         <Feltro>
           <TitoloRiquadro>Risultato</TitoloRiquadro>
@@ -126,7 +113,7 @@ export default function ProvaEstrazione() {
             <ol className="mt-3 flex flex-col gap-1">
               {cerchio.map((g, i) => (
                 <li key={g}>
-                  🎅 <b>{nomi[g]}</b> regala a <b>{nomi[cerchio[(i + 1) % cerchio.length]]}</b>
+                  🎅 <b>{nome(g)}</b> regala a <b>{nome(cerchio[(i + 1) % cerchio.length])}</b>
                 </li>
               ))}
             </ol>

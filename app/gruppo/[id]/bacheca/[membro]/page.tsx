@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Bacheca, type Elemento } from "@/components/bacheca";
 import { SondaggioPerBacheca } from "@/components/sondaggio-totem";
 import { FrancobolloTotem } from "@/components/totem";
+import type { RigaPersonalizzata } from "@/components/toppe";
 import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 import { descrizioneDi, type Profilo } from "@/lib/totem";
@@ -13,10 +14,11 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
   const { supabase, userId } = await utenteCollegato();
   if (!userId) redirect("/");
 
-  const [{ data: gruppo }, { data: persona }, { data: elementi }] = await Promise.all([
+  const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("display_name, user_id, quiz_rifiutato_at").eq("id", membro).eq("group_id", id).maybeSingle(),
     supabase.from("moodboard_items").select("id, kind, content, x, y, width, rotation, z").eq("member_id", membro),
+    supabase.from("group_toppe").select("id, tipo, ordine, contenuto, member_id").eq("group_id", id).order("ordine"),
   ]);
   if (!gruppo || !persona) notFound();
   const mia = persona.user_id === userId;
@@ -58,7 +60,14 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
 
       <div className="mt-6">
         {risultato ? (
-          <Bacheca groupId={id} memberId={membro} modificabile={mia} iniziali={(elementi as Elemento[]) ?? []} />
+          <Bacheca
+            groupId={id}
+            memberId={membro}
+            modificabile={mia}
+            iniziali={(elementi as Elemento[]) ?? []}
+            totem={totem ? { profilo: totem.profilo as Profilo, nome: totem.nome, immagine: totem.immagine } : null}
+            personalizzate={(toppeGruppo as RigaPersonalizzata[]) ?? []}
+          />
         ) : mia ? (
           <SondaggioPerBacheca groupId={id} rifiutato={!!persona.quiz_rifiutato_at} />
         ) : (
