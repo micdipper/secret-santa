@@ -11,6 +11,7 @@ export type InfoGioco = {
   n: number;
   nome: string;
   storia: string; // il racconto che spiega il gioco (deve dire il vero: ricontrollarlo a ogni ritocco)
+  riepilogo?: (stats: Record<string, number>) => string; // a fine partita, sotto il punteggio (come si è formato)
   sfondoChiaro?: boolean; // il gioco ha lo sfondo chiaro (neve): il 3-2-1 diventa vermiglio
   premio: string; // id del premio (unlocked_accessories)
   nomePremio: string;
@@ -27,7 +28,7 @@ export const GIOCHI: InfoGioco[] = [
     n: 1,
     nome: "Palline al volo",
     storia:
-      "Una raffica di vento ha scosso l'albero e le palline dorate stanno precipitando! Acchiappale con un tocco prima che si rompano sulla neve. Il Grinch ci ha nascosto in mezzo del carbone: non toccarlo, nemmeno quando sfreccia come una meteora, e diffida delle dorate che a metà caduta lampeggiano: sono carbone travestito. Hai 45 secondi e 3 cuori: ne perdi uno per ogni pallina rotta e per ogni carbone toccato. Con 5 prese di fila il bottino vale sempre di più e, se passa la cometa d'oro, non fartela scappare: vale 50!",
+      "Una raffica di vento ha scosso l'albero e le palline dorate stanno cadendo: salvale con un tocco prima che si rompano sulla neve. Il Grinch ci ha nascosto in mezzo del carbone... e non tutto quello che luccica è oro.",
     premio: "neon",
     nomePremio: "Capelli neon",
     durataMax: 50,
@@ -38,7 +39,7 @@ export const GIOCHI: InfoGioco[] = [
     n: 2,
     nome: "Campanelli",
     storia:
-      'Gli elfi provano il concerto di Natale, ma il direttore ha perso lo spartito: tocca a te. Ascolta la melodia dei campanelli e risuonala uguale, toccandoli nello stesso ordine. A ogni prova gli elfi aggiungono una nota e, dispettosi, ne cambiano una che avevi già sentito: ascolta bene ogni volta! Più sei svelto, più applausi (e punti). Dal 7° giro i campanelli si scambiano di posto: seguili con gli occhi. Basta una stonata, o 5 secondi di silenzio, e il concerto finisce.',
+      "Gli elfi provano il concerto di Natale, ma il direttore ha perso lo spartito. Ascolta i campanelli e risuona la melodia identica. Attento: gli elfi sono dispettosi, tieni aperte le orecchie (e anche gli occhi).",
     premio: "pazzo",
     nomePremio: "Taglio Esplosione",
     durataMax: 600,
@@ -49,7 +50,7 @@ export const GIOCHI: InfoGioco[] = [
     n: 3,
     nome: "Impila i regali",
     storia:
-      "Il tuo Babbo Natale ha esagerato con gli acquisti e i regali vanno impilati in una torre. Ogni pacco scorre sopra la pila: tocca per appoggiarlo. Quello che sporge si strappa e cade, e il pacco dopo sarà più stretto. Appoggialo preciso al millimetro per un Perfetto, che vale doppio; con tre Perfetti di fila il pacco torna un po' più largo. Più la torre sale, più i pacchi corrono. Se ne manchi uno, la torre è finita.",
+      "Il tuo Babbo Natale ha esagerato con gli acquisti: impila i regali in una torre più alta che puoi, toccando per far cadere ogni pacco. Quello che sporge va perso. La precisione, dicono, viene premiata.",
     premio: "godo",
     nomePremio: "Maglione GODO",
     durataMax: 600,
@@ -60,12 +61,13 @@ export const GIOCHI: InfoGioco[] = [
     n: 4,
     nome: "Slitta slalom",
     storia:
-      "Una bufera di neve ha sparpagliato lungo la pista i regali che il tuo Babbo Natale doveva consegnarti! Salta sulla slitta e recuperali: trascina il dito a destra e a sinistra, dove vuoi sullo schermo, e la slitta ti segue. Schiva abeti, pupazzi di neve e lastre di ghiaccio: basta un urto per ribaltarti. Ogni metro vale un punto e ogni regalo ripreso 25. Più vai avanti, più si corre e più i regali sono rari, nascosti vicino agli ostacoli o in fuga sul ghiaccio. Ma un varco per passare c'è sempre.",
+      "Una bufera ha sparpagliato sulla pista i regali che il tuo Babbo Natale doveva consegnarti. Salta sulla slitta, trascina il dito per guidarla e vai più lontano che puoi, recuperando più regali che puoi. Occhio alle scorciatoie...",
     premio: "cornici",
     nomePremio: "Cornici ricamate",
     durataMax: 300,
     gioco: slitta,
     sfondoChiaro: true,
+    riepilogo: (st) => `${st.metri} m + ${st.regali} ${st.regali === 1 ? "regalo" : "regali"} × 25`,
     provvisorio: false,
   },
   { n: 5, nome: "Palle di neve", storia: STORIA_PROVVISORIA, premio: "cowboy", nomePremio: "Cappello da cowboy", durataMax: 65, gioco: stelline, provvisorio: true },

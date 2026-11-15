@@ -41,11 +41,13 @@ export function Partita({
   const tempo = useRef<HTMLSpanElement>(null);
   const vite = useRef<HTMLSpanElement>(null);
   const extra = useRef<HTMLSpanElement>(null);
+  const extra2 = useRef<HTMLSpanElement>(null);
   const riduci = useReducedMotion() ?? false;
   const [fase, setFase] = useState<"conto" | "gioco" | "pausa" | "invio" | "fine" | "errore">("conto");
   const [conto, setConto] = useState(3);
   const [esito, setEsito] = useState<Esito | null>(null);
   const [puntiFinali, setPuntiFinali] = useState(0);
+  const [statsFinali, setStatsFinali] = useState<Record<string, number> | null>(null);
   const finale = useRef<{ punteggio: number; stats: Record<string, number> | null } | null>(null);
   const onFineRef = useRef(onFine);
   useEffect(() => {
@@ -85,11 +87,13 @@ export function Partita({
         scrivi(tempo.current, h.tempo !== undefined ? `${Math.ceil(h.tempo)} s` : "");
         scrivi(vite.current, h.vite !== undefined ? "♥".repeat(Math.max(0, h.vite)) + "♡".repeat(Math.max(0, (h.viteMax ?? h.vite) - h.vite)) : "");
         scrivi(extra.current, h.molt && h.molt > 1 ? `×${h.molt}` : (h.etichetta ?? ""));
+        scrivi(extra2.current, h.etichetta2 ?? "");
       },
       onPausa: () => setFase("pausa"),
       onFine: (punteggio, stats) => {
         finale.current = { punteggio, stats };
         setPuntiFinali(punteggio);
+        setStatsFinali(stats);
         setTimeout(invia, 700); // un attimo per vedere l'ultimo colpo
       },
     });
@@ -135,6 +139,7 @@ export function Partita({
           <span ref={tempo} className="etichetta-stoffa bg-vermiglio text-crema tabular-nums" style={{ display: "none" }} />
           <span ref={vite} className="etichetta-stoffa bg-feltro tracking-wider text-vermiglio" style={{ display: "none" }} />
           <span ref={extra} className="etichetta-stoffa bg-senape font-titolo text-inchiostro" style={{ display: "none" }} />
+          <span ref={extra2} className="etichetta-stoffa bg-vermiglio font-titolo text-crema" style={{ display: "none" }} />
         </div>
 
         <AnimatePresence>
@@ -175,6 +180,7 @@ export function Partita({
                 <div className="relative">
                   <TitoloRiquadro>Fine!</TitoloRiquadro>
                   <p className="mt-2 font-titolo text-[72px] leading-none text-vermiglio tabular-nums">{esito?.punteggio ?? puntiFinali}</p>
+                  {info.riepilogo && statsFinali && <p className="mt-2 text-inchiostro/80">{info.riepilogo(statsFinali)}</p>}
                   {fase === "invio" && <p className="mt-3 text-inchiostro/70">Salvo il punteggio…</p>}
                   {fase === "errore" && (
                     <>

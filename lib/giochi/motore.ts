@@ -141,7 +141,8 @@ export function avviaMotore<S>(
   let dpr = 1;
   const misura = () => {
     const r = canvas.getBoundingClientRect();
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // risoluzione vera del telefono (gli iPhone sono 3x: a 2x il disegno veniva ingrandito e sembrava sfocato)
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
     mondo.w = Math.max(1, r.width);
     mondo.h = Math.max(1, r.height);
     canvas.width = Math.round(mondo.w * dpr);
@@ -216,7 +217,7 @@ export function avviaMotore<S>(
     fx.aggiorna(dt);
 
     const h = gioco.hud(s);
-    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.molt}|${h.etichetta}`;
+    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.molt}|${h.etichetta}|${h.etichetta2}`;
     if (chiave !== hudPrima) {
       hudPrima = chiave;
       op.onHud(h);

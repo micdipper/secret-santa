@@ -2,16 +2,20 @@
 // La slitta corre sulla neve (in basso sullo schermo, il mondo scorre verso di lei): trascina il dito
 // a destra e a sinistra (movimento relativo: il dito può stare ovunque) per evitare abeti, pupazzi di neve
 // e lastre di ghiaccio e prendere i regali. Un urto = fine.
+// VICOLI CIECHI: ogni tanto dal varco vero si stacca un varco finto, largo e invitante (a volte con un regalo
+// come esca), che dopo un po' finisce contro un muro di ostacoli. Uscirne in tempo è difficile.
 // SEMPRE POSSIBILE: prima si genera un corridoio libero (curva morbida, mai più stretta del minimo e mai
 // più ripida di quanto la slitta riesca a seguire a quella velocità), poi si mettono gli ostacoli intorno.
 import { PASSO, casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
-const VELOCITA = [320, 950]; // px/s, dall'inizio…
-const SECONDI_ACCELERA = 90; // …a qui (poi resta al massimo)
+// (mai troppo veloce: oltre ~650 px/s gli oggetti saltano più di 11 px tra un'immagine e l'altra dello schermo
+// e l'occhio li vede strisciati e doppi, "sfocati"; la difficoltà viene da varchi stretti e vicoli ciechi)
+const VELOCITA = [300, 640]; // px/s, dall'inizio…
+const SECONDI_ACCELERA = 75; // …a qui (poi resta al massimo)
 const LARGA = 34; // px, larghezza della slitta (per i varchi)
 const RAGGIO_SLITTA = 12; // px, area d'urto della slitta (un po' più piccola del disegno: urti onesti)
-const VARCO = [3.2, 1.6]; // larghezza del corridoio libero, in slitte (dall'inizio al massimo della velocità)
+const VARCO = [3.0, 1.6]; // larghezza del corridoio libero, in slitte (dall'inizio al massimo della velocità)
 const LATERALE_MAX = 900; // px/s: la slitta non va di lato più veloce di così…
 const MORBIDEZZA = 14; // …e insegue il dito con questa prontezza (1/s)
 const SENSIBILITA = 1.2; // 1 px di dito = 1,2 px di slitta
@@ -30,6 +34,14 @@ const BORDO_REGALO = [0.25, 0.92]; // distanza dal centro del varco (frazione de
 const SCIVOLA_DA = 25; // s: da qui alcuni regali scivolano da un lato all'altro del varco…
 const P_SCIVOLA = [0.2, 0.65]; // …con questa probabilità (da SCIVOLA_DA a SECONDI_ACCELERA)
 const VELOCITA_SCIVOLA = [2.6, 4.2]; // rad/s dell'oscillazione
+const FINTE_DA = 2200; // px: da qui possono comparire i vicoli ciechi…
+const OGNI_FINTA = [1200, 2600]; // …uno ogni tanto (px dalla fine del precedente)
+const LUNGA_FINTA = [420, 760]; // px dal bivio al muro
+const APRE_FINTA = 280; // px in cui il varco finto si allontana da quello vero
+const LARGA_FINTA = 1.3; // il varco finto è più largo di quello vero: invita
+const SEPARA_FINTA = [40, 90]; // px di ostacoli tra il varco vero e quello finto
+const MURO = 2; // file di ostacoli che chiudono il vicolo
+const P_ESCA = 0.6; // probabilità di un regalo dentro il vicolo cieco
 const METRO = 20; // px per metro (1 punto a metro)
 const PUNTI_REGALO = 25;
 const RAGGIO_REGALO = [24, 15]; // px: quanto vicino passare per prenderlo (sempre più preciso)
@@ -60,6 +72,9 @@ export type StatoSlitta = {
   regali: Regalo[];
   fila: number; // d della prossima fila da generare
   prossimoRegalo: number; // fra quante file
+  finta: { inizio: number; fine: number; lato: number; sep: number } | null; // il vicolo cieco in corso
+  prossimaFinta: number; // d da cui può partire il prossimo
+  w: number; // larghezza dello schermo
   preso: number; // regali presi
   urto: number; // istante dell'urto (-1 = no)
   traguardo: boolean;
@@ -81,6 +96,42 @@ export function corridoio(s: StatoSlitta, d: number) {
   const k = b.d > a.d ? limita((d - a.d) / (b.d - a.d), 0, 1) : 0;
   const morbido = (1 - Math.cos(Math.PI * k)) / 2;
   return { c: mescola(a.c, b.c, morbido), hw: mescola(a.hw, b.hw, k) };
+}
+
+// il vicolo cieco alla distanza d (null se non c'è): segue il varco vero spostato di lato
+export function finta(s: StatoSlitta, d: number) {
+  const f = s.finta;
+  if (!f || d < f.inizio || d > f.fine + MURO * FILA + 40) return null;
+  const q = corridoio(s, d);
+  const hw = q.hw * LARGA_FINTA;
+  const k = limita((d - f.inizio) / APRE_FINTA, 0, 1);
+  const c = limita(q.c + f.lato * f.sep * ((1 - Math.cos(Math.PI * k)) / 2), hw + 6, s.w - hw - 6);
+  return { c, hw, muro: d >= f.fine };
+}
+
+function nuovaFinta(s: StatoSlitta, d: number) {
+  const q = corridoio(s, d);
+  const hw = q.hw * LARGA_FINTA;
+  const destra = s.w - q.c;
+  const lato = destra > q.c ? 1 : -1;
+  const sep = q.hw + hw + 2 * 17 + mescola(SEPARA_FINTA[0], SEPARA_FINTA[1], s.caso());
+  // serve spazio dal lato scelto, altrimenti si riprova alla fila dopo
+  if ((lato > 0 ? destra : q.c) < sep + hw + 6) {
+    s.prossimaFinta = d + FILA;
+    return;
+  }
+  const lunga = mescola(LUNGA_FINTA[0], LUNGA_FINTA[1], s.caso());
+  s.finta = { inizio: d, fine: d + lunga, lato, sep };
+  s.prossimaFinta = d + lunga + MURO * FILA + mescola(OGNI_FINTA[0], OGNI_FINTA[1], s.caso());
+  // l'esca: un regalo in fondo al vicolo, poco prima del muro
+  if (s.caso() < P_ESCA) {
+    const de = d + lunga * mescola(0.55, 0.8, s.caso());
+    const fe = finta(s, de);
+    if (fe) {
+      const r = s.regali.find((r) => !r.vivo) ?? (s.regali[s.regali.length] = {} as Regalo);
+      Object.assign(r, { d: de, c: fe.c, off: 0, ampiezza: 0, vel: 0, fase: 0, colore: Math.floor(s.caso() * 3), vivo: true });
+    }
+  }
 }
 
 // aggiunge un tratto di corridoio: la curva più ripida possibile (coseno) resta sotto PENDENZA
@@ -106,6 +157,7 @@ function nuovaFila(s: StatoSlitta, m: Mondo) {
   s.fila += FILA;
   if (d < PARTENZA) return;
   const k = limita(s.t / SECONDI_ACCELERA, 0, 1);
+  if (d >= FINTE_DA && d >= s.prossimaFinta && (!s.finta || d > s.finta.fine + MURO * FILA)) nuovaFinta(s, d);
   const posti = Math.max(3, Math.round(m.w / POSTO));
   const sfasa = s.caso() * POSTO; // le file non sono tutte allineate
   for (let p = 0; p < posti; p++) {
@@ -119,9 +171,25 @@ function nuovaFila(s: StatoSlitta, m: Mondo) {
       const q = corridoio(s, dd + off);
       if (Math.abs(x - q.c) < q.hw + rx) libero = false;
     }
-    if (!libero || s.caso() > mescola(FITTO[0], FITTO[1], k)) continue;
+    if (!libero) continue;
+    // vicolo cieco: libero (e invitante) fino al muro, poi chiuso da una fila piena di ostacoli
+    const f = finta(s, dd);
+    if (f && f.muro) {
+      if (Math.abs(x - f.c) < f.hw + 24 || s.caso() > mescola(FITTO[0], FITTO[1], k)) continue; // il muro lo fa sotto
+    } else if (f && [-ry - RAGGIO_SLITTA, 0, ry + RAGGIO_SLITTA].some((off) => { const g = finta(s, dd + off); return g && !g.muro && Math.abs(x - g.c) < g.hw + rx; })) continue;
+    else if (s.caso() > mescola(FITTO[0], FITTO[1], k)) continue;
     const o = s.ostacoli.find((o) => !o.vivo) ?? (s.ostacoli[s.ostacoli.length] = {} as Ostacolo);
     Object.assign(o, { tipo, d: dd, x, vivo: true });
+  }
+  // il muro che chiude il vicolo: abeti fitti (si toccano) da un bordo all'altro, mai nel varco vero
+  const f = finta(s, d);
+  if (f && f.muro) {
+    for (let x = f.c - f.hw - 20; x <= f.c + f.hw + 20; x += 26) {
+      const { rx, ry } = FORMA.abete;
+      if ([-ry - RAGGIO_SLITTA, 0, ry + RAGGIO_SLITTA].some((off) => { const q = corridoio(s, d + off); return Math.abs(x - q.c) < q.hw + rx; })) continue;
+      const o = s.ostacoli.find((o) => !o.vivo) ?? (s.ostacoli[s.ostacoli.length] = {} as Ostacolo);
+      Object.assign(o, { tipo: "abete", d, x, vivo: true });
+    }
   }
   if (--s.prossimoRegalo <= 0) {
     const k = progresso(s);
@@ -151,6 +219,9 @@ export const slitta: Gioco<StatoSlitta> = {
       regali: [],
       fila: 0,
       prossimoRegalo: 4,
+      finta: null,
+      prossimaFinta: FINTE_DA,
+      w: m.w,
       preso: 0,
       urto: -1,
       traguardo: false,
@@ -217,7 +288,8 @@ export const slitta: Gioco<StatoSlitta> = {
   },
 
   finito: (s) => s.traguardo || (s.urto >= 0 && s.t - s.urto >= DOPO_URTO),
-  hud: (s) => ({ punteggio: punti(s), etichetta: `${Math.floor(s.dist / METRO)} m` }),
+  // metri e regali contati a parte; il punteggio (che decide la classifica) li mette insieme
+  hud: (s) => ({ punteggio: punti(s), etichetta: `${Math.floor(s.dist / METRO)} m`, etichetta2: `🎁 ${s.preso}` }),
   eventi: (s) => s.eventi,
   stats: (s) => ({ metri: Math.floor(s.dist / METRO), regali: s.preso, secondi: Math.round(s.t) }),
 

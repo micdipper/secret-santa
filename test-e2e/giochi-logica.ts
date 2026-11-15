@@ -140,8 +140,10 @@ for (const info of GIOCHI) {
     maxPs = Math.max(maxPs, punteggio / Math.max(1, secondi));
   }
   punti.sort((a, b) => a - b);
-  if (process.env.DETTAGLI) console.log("  per bravura:", JSON.stringify(dettagli));
   const mediana = punti[Math.floor(punti.length / 2)];
+  // DETTAGLI=1: secondi di gioco del bot medio e del fortissimo (mediana)
+  const med = (a: number[]) => a.sort((x, y) => x - y)[Math.floor(a.length / 2)];
+  if (process.env.DETTAGLI) console.log(`  secondi: medio ${med(dettagli.medio)}, fortissimo ${med(dettagli.forte)}`);
   console.log(
     `gioco ${info.n} (${info.provvisorio ? "provvisorio" : info.nome}): mediana ${mediana}, record ${punti.at(-1)} (limite ${r.scoreMax}), punti/s max ${maxPs.toFixed(0)} (limite ${r.puntiAlSecondo})`,
   );
