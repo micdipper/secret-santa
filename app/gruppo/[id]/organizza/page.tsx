@@ -15,6 +15,7 @@ import {
   TestataInterna,
   TitoloRiquadro,
 } from "@/components/ui";
+import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Gruppo = {
@@ -27,6 +28,7 @@ type Gruppo = {
   invite_code: string;
   organizer_id: string;
   quiz_salvato_at: string | null;
+  giochi_attivi: boolean;
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
 type Coppia = Esclusione;
@@ -71,7 +73,7 @@ function Organizza() {
         supabase
           .from("groups")
           .select(
-            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at",
+            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -118,6 +120,16 @@ function Organizza() {
     );
 
   const modificabile = gruppo.status === "aperto";
+  // Calendario dei giochi: servono almeno 6 giorni; da 5 giorni prima la data non si tocca più
+  const giorniAlloScambio = giorniMancanti(gruppo.exchange_date);
+  const dataBloccata = gruppo.giochi_attivi && giorniAlloScambio !== null && giorniAlloScambio <= 5;
+  const notaGiochi = !gruppo.exchange_date
+    ? "Con una data lontana almeno 6 giorni parte anche il calendario dei giochi."
+    : dataBloccata
+      ? "La data è bloccata: i giochi stanno per iniziare."
+      : gruppo.giochi_attivi
+        ? `Dal ${dataBreve(giornoPrima(gruppo.exchange_date, 5))} la data si blocca: iniziano i giochi.`
+        : "Mancano meno di 6 giorni: niente giochi per questo gruppo.";
   const mancanti = membri.filter((m) => !m.user_id);
   const puoEstrarre =
     modificabile && mancanti.length === 0 && membri.length >= 3;
@@ -127,8 +139,11 @@ function Organizza() {
   ) {
     setGruppo((g) => (g ? { ...g, ...campi } : g));
     setSalvataggio("salvo");
-    const { error } = await supabase.from("groups").update(campi).eq("id", id);
-    setErrore(error ? "Non sono riuscito a salvare. Riprova." : "");
+    // il database ricalcola "giochi_attivi" a ogni cambio di data, e blocca la data quando i giochi stanno per iniziare
+    const { data, error } = await supabase.from("groups").update(campi).eq("id", id).select("giochi_attivi").single();
+    if (data) setGruppo((g) => (g ? { ...g, giochi_attivi: data.giochi_attivi } : g));
+    if (error) carica();
+    setErrore(error ? (error.message.includes("bloccata") ? error.message : "Non sono riuscito a salvare. Riprova.") : "");
     setSalvataggio(error ? "" : "salvato");
   }
 
@@ -293,7 +308,8 @@ function Organizza() {
             type="date"
             etichetta="Giorno dello scambio"
             value={gruppo.exchange_date ?? ""}
-            disabled={!modificabile}
+            disabled={!modificabile || dataBloccata}
+            aiuto={notaGiochi}
             onChange={(e) => salva({ exchange_date: e.target.value || null })}
           />
           <div className="flex flex-col gap-2">
