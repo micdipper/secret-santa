@@ -174,7 +174,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 4. **Taratura sul telefono vero di Marzia** (sala prove): ogni gioco deve essere difficile ma onesto; le costanti in cima ai file si cambiano senza toccare la logica.
 
 ## 9. Ordine dei lavori (una sessione per blocco)
-1. **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
+1. ✅ (16/11) **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
 2. Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
 3. Giochi 1 e 2.
 4. Giochi 3 e 4.

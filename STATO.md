@@ -4,7 +4,10 @@ Aggiornato al 16/11/2026. Da leggere insieme a `CLAUDE.md` (brief e regole). Qui
 **Aggiornarlo a fine blocco** riscrivendo le voci che cambiano, senza aggiungere diari giornalieri.
 
 ## ➡ Da fare (in ordine)
-1. **Calendario dei giochi**: piano completo e approvato in `PIANO-GIOCHI.md` (comprende anche la sistemazione delle cuciture/cornici). Da eseguire con Fable, a blocchi (sezione 9 del piano), chiedendo **tutte le autorizzazioni all'inizio** (sezione 0).
+1. **Calendario dei giochi**: piano completo e approvato in `PIANO-GIOCHI.md` (comprende anche la sistemazione delle cuciture/cornici), a blocchi (sezione 9).
+   - ✅ **Blocco 1 fatto (16/11)**: migrazione `20261116100000_giochi.sql` applicata (`groups.giochi_attivi`, trigger che blocca la data da T−5 e ricalcola i giochi, tabella `game_runs` in Realtime, `get_giochi`, `start_game_run`, `finish_game_run`, vincitore e premi `neon`/`pazzo`/`godo`/`cornici`/`cowboy` in `unlocked_accessories` e `save_avatar`). Collaudo `test-e2e/giochi.sql`: 34 controlli tutti OK (in transazione annullata, nessun dato lasciato). Organizza: nota sotto la data e campo spento quando è bloccata.
+   - Scelte del blocco 1 (diverse dal piano): la data si blocca da T−5 **solo se il gruppo ha i giochi**; il vincitore si annuncia a mezzanotte ma aspetta che finisca chi stava ancora giocando (al massimo durata del gioco + 60 s), così non cambia dopo l'annuncio. Ora finta per i test: `set_config('giochi.ora_finta', …)`, funziona SOLO come postgres.
+   - ➡ Prossimo: **blocco 2** (motore comune, calendario, pagina del gioco con classifica in diretta, sala prove).
 2. **Debug completo dell'app vera** (chiesto da Marzia: "prenditi tutto il tempo"), in una sessione dedicata. Quasi tutto è stato provato solo su telefoni simulati.
 3. **Rivelazione finale** ("Chi era il Babbo Natale di chi", CLAUDE.md punto 11).
 4. **Pubblicazione**: unire il ramo di lavoro in `main` → Production su Vercel (solo quando Marzia lo chiede, con PR).
@@ -54,7 +57,7 @@ Aperte, in attesa di Marzia:
 - Marzia vuole risparmiare token: una sessione nuova per blocco, richieste raggruppate in un solo messaggio, poche prove visive.
 
 ## Note tecniche
-- **Supabase**: progetto `gesihnbtflnpjxwmpxkd` (Irlanda, gratuito). Migrazioni in `supabase/migrations/`, applicate con `apply_migration` (chiede conferma). ⚠ Se si cambiano `private.unlocked_accessories` o `public.save_avatar`, **partire sempre dall'ultima versione** (oggi rispettivamente `20261115100000_chat_censura_premi` e `20261115200000_cuciture_e_cornici`): in passato una migrazione ha rimesso un premio vecchio.
+- **Supabase**: progetto `gesihnbtflnpjxwmpxkd` (Irlanda, gratuito). Migrazioni in `supabase/migrations/`, applicate con `apply_migration`. ⚠ `apply_migration` ed `execute_sql` chiedono una conferma che compare **solo nell'app desktop di Claude** (dal telefono non si vede e scade dopo 60 s): le operazioni sul database vanno fatte con Marzia al computer. ⚠ Se si cambiano `private.unlocked_accessories` o `public.save_avatar`, **partire sempre dall'ultima versione** (oggi rispettivamente `20261115100000_chat_censura_premi` e `20261115200000_cuciture_e_cornici`): in passato una migrazione ha rimesso un premio vecchio.
 - Indirizzo e chiave **pubblica** di Supabase sono nel codice (`lib/supabase/config.ts`); la chiave **segreta** sta solo su Vercel (`SUPABASE_SECRET_KEY`).
 - **Vercel**: team "Secret Santa", progetto `secret-santa`. Il collegamento MCP a volte non vede il progetto: in quel caso Marzia guarda la scheda Deployments.
 - **Prove in locale** nel computer in cloud: `npm ci` (parte senza node_modules), `npx next build`, poi `NODE_USE_ENV_PROXY=1 npx next start -p <porta>` (il server deve passare dal proxy).
