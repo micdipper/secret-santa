@@ -3,6 +3,9 @@
 Aggiornato al 13 novembre 2026. Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
 
 
+## ➡ NUOVO (15/11): CALENDARIO DEI GIOCHI — piano completo e approvato in `PIANO-GIOCHI.md`
+5 minigiochi a premi, uno al giorno da T−4 al giorno dello scambio, classifica in diretta, data bloccata da T−5. Marzia vuole eseguirlo con Fable, a blocchi (sezione 9 del piano). Da decidere con Marzia se farlo prima o dopo la Santa Chat.
+
 ## ➡ PROSSIMO BLOCCO: SANTA CHAT (chat anonima col proprio Babbo Natale) — CLAUDE.md, Fase 2, punto 9
 Stato al 13/11: **tutta la Fase 1 è fatta e collaudata** (gruppi, inviti, esclusioni, estrazione, busta 3D con slot machine, bacheca, personaggio e premi, sondaggio totem, suoni, sala prove `/prove`). Mancano: **Santa Chat**, toppe dei 5 totem (Marzia deve mandare i simboli/immagini del gruppo), feed del gruppo, rivelazione finale, **pubblicazione** (unire il ramo in `main` → Production su Vercel).
 Decisioni già prese da Marzia sulla Santa Chat:
