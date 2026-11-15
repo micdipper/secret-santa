@@ -116,17 +116,9 @@ ok(true, "dalla home si rientra nel primo gruppo senza password");
 await page.goto(`${SITO}/gruppo/${gB}`);
 await page.getByText("Organizza il gruppo").waitFor({ timeout: 15000 });
 ok(true, "e si torna nel secondo");
-ok(await page.getByRole("navigation", { name: "Sezioni del gruppo" }).isVisible(), "menu in basso visibile");
-// pressione lunga su un bottone del menu: compare il nome
-const tasto = page.getByRole("link", { name: "Novità" });
-const box = await tasto.boundingBox();
-await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-await page.mouse.down();
-await page.waitForTimeout(600);
-ok(await page.getByRole("status").filter({ hasText: "Novità" }).isVisible(), "pressione lunga: compare il nome della sezione");
-await page.screenshot({ path: process.env.FOTO ?? "/tmp/gruppo.png", fullPage: false });
-await page.mouse.up();
-ok(!page.url().includes("novita"), "dopo la pressione lunga non si apre la sezione");
+ok(await page.getByRole("link", { name: /Guardaroba/ }).isVisible(), "guardaroba in evidenza nella pagina del gruppo");
+ok(await page.getByRole("link", { name: "Santa Chat (ancora bloccata)" }).isVisible(), "Santa Chat presente ma bloccata");
+await page.screenshot({ path: process.env.FOTO ?? "/tmp/gruppo.png", fullPage: true });
 
 // un invitato già entrato nel gruppo B apre l'invito del gruppo del test 1: deve scegliere una password nuova
 // (l'organizzatore di B apre l'invito di A: con l'accesso del portachiavi entrerebbe come organizzatore di A,

@@ -263,22 +263,10 @@ export const Icone = {
       <path d="M5 19c-2 1-2-2 1-3 4-1 6 2 9 1" />
     </svg>
   ),
-  casa: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M4 11.5L12 4l8 7.5" />
-      <path d="M6 10v9.5h4.5V15h3v4.5H18V10" />
-    </svg>
-  ),
   gruccia: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M10 6.5a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.3V11" />
       <path d="M12 11l-8.5 6.2c-.8.6-.4 1.8.6 1.8h15.8c1 0 1.4-1.2.6-1.8z" />
-    </svg>
-  ),
-  campanella: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z" />
-      <path d="M10 20.5a2 2 0 0 0 4 0M12 3v2" />
     </svg>
   ),
   calendario: (

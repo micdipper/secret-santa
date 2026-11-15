@@ -4,11 +4,10 @@ import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { FeedGruppo } from "@/components/feed-gruppo";
-import { RiquadroGiochi } from "@/components/giochi/riquadro-giochi";
-import { MenuGruppo } from "@/components/menu-gruppo";
+import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
-import { dataBreve, giorniMancanti } from "@/lib/date";
+import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +64,35 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         ? `Estrazione fatta. ${daAprire === 1 ? "Manca 1 persona" : `Mancano ${daAprire} persone`} ad aprire la busta.`
         : "Estrazione fatta e buste aperte da tutti. Puoi sempre cambiare data, budget e tema.";
 
+  const testoChat = gruppo.status === "aperto"
+    ? "Si apre dopo l'estrazione"
+    : !chatAperta
+      ? `Si apre quando tutti avranno aperto la busta (${daAprire === 1 ? "manca 1" : `mancano ${daAprire}`})`
+      : "Messaggi segreti col tuo pescato e col tuo Babbo";
+  const testoGiochi = !gruppo.exchange_date
+    ? "Si sbloccano quando c'è la data dello scambio"
+    : !gruppo.giochi_attivi
+      ? "Niente giochi: lo scambio è troppo vicino"
+      : giorni! > 5
+        ? `Il calendario si apre ${dataBreve(giornoPrima(gruppo.exchange_date, 5))}`
+        : giorni! < 0
+          ? "Finiti: guarda chi ha vinto"
+          : giorni === 5
+            ? "Il calendario è aperto!"
+            : "Oggi c'è un regalo da scartare";
+
+  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
+  const riquadroOrganizzatore = (
+    <Feltro className="mt-6">
+      <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
+      <TitoloRiquadro className="mt-1">Organizza il gruppo</TitoloRiquadro>
+      <p className="mt-2">{statoOrganizzatore}</p>
+      <TastoLink href={`/gruppo/${id}/organizza`} tipo={gruppo.status === "aperto" ? "primario" : "secondario"} className="mt-5">
+        {!gruppo.quiz_salvato_at ? "Crea il sondaggio" : gruppo.status === "aperto" ? "Invito ed estrazione" : "Data, budget e tema"}
+      </TastoLink>
+    </Feltro>
+  );
+
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
@@ -73,7 +101,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-36">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
       <header className="relative pt-24">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
         <Profondita intensita={8} className="absolute top-[88px] right-0 w-16">
@@ -90,26 +118,17 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         {gruppo.theme && <p className="mt-3 text-crema/80">Tema: {gruppo.theme}</p>}
       </header>
 
-      {organizzatore && (
-        <Feltro className="mt-6">
-          <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
-          <TitoloRiquadro className="mt-1">Organizza il gruppo</TitoloRiquadro>
-          <p className="mt-2">{statoOrganizzatore}</p>
-          <TastoLink href={`/gruppo/${id}/organizza`} className="mt-5">
-            {!gruppo.quiz_salvato_at ? "Crea il sondaggio" : gruppo.status === "aperto" ? "Invito ed estrazione" : "Data, budget e tema"}
-          </TastoLink>
-        </Feltro>
-      )}
-
+      {/* 1. Il fulcro: busta, abbinamento o attesa (per l'organizzatore, prima dell'estrazione, è il suo riquadro) */}
       {gruppo.status === "aperto" ? (
-        // l'organizzatore lo legge già nel suo riquadro qui sopra
-        !organizzatore && (
-        <Feltro className="mt-6">
-          <TitoloRiquadro>In attesa dell&apos;estrazione</TitoloRiquadro>
-          <p className="mt-2">
-            Sono entrati {entrati} su {membri.length}. Quando ci sono tutti, l&apos;organizzatore fa l&apos;estrazione e qui troverai la tua busta.
-          </p>
-        </Feltro>
+        organizzatore ? (
+          riquadroOrganizzatore
+        ) : (
+          <Feltro className="mt-6">
+            <TitoloRiquadro>In attesa dell&apos;estrazione</TitoloRiquadro>
+            <p className="mt-2">
+              Sono entrati {entrati} su {membri.length}. Quando ci sono tutti, l&apos;organizzatore fa l&apos;estrazione e qui troverai la tua busta.
+            </p>
+          </Feltro>
         )
       ) : destinatario ? (
         <Feltro className="mt-6">
@@ -141,46 +160,56 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           </TastoLink>
         </Feltro>
       )}
+      {/* dopo l'estrazione l'organizzatore ha ancora il suo riquadro, subito sotto */}
+      {organizzatore && gruppo.status !== "aperto" && riquadroOrganizzatore}
 
       {io && (
-        // Bacheca e Guardaroba: le due cose "tue", in evidenza (prima la bacheca, che è il cuore del sito)
-        <section className="mt-8">
-          <h2 className="font-titolo text-2xl">Le tue cose</h2>
-          <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex flex-col gap-4 p-6">
-            <span className="relative flex items-center gap-4">
-              <span className="toppa tela-aida size-16 flex-none text-vermiglio [&_svg]:relative [&_svg]:size-8 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.2]">{Icone.ago}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-titolo text-2xl leading-tight text-abete">La tua bacheca</span>
-                <span className="block text-inchiostro/70">Toppe, ricami e foto: fai capire al tuo Babbo Natale cosa ti piace</span>
-              </span>
+        <>
+          {/* 2. Il tuo personaggio, in grande (un po' fuori scala: esce dal riquadro) */}
+          <Link href={`/gruppo/${id}/guardaroba`} className="feltro cliccabile relative mt-24 flex min-h-[136px] items-end p-6 pl-[156px]">
+            <span className="pointer-events-none absolute -top-20 -left-3 rounded-full shadow-[0_10px_20px_-10px_rgba(0,0,0,.6)]">
+              <ToppaAvatar look={look(io)} dimensione={168} totem={totemDi(io)} />
             </span>
-          </Link>
-          <Link href={`/gruppo/${id}/guardaroba`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-            <ToppaAvatar look={look(io)} dimensione={48} totem={totemDi(io)} />
             <span className="relative min-w-0 flex-1">
-              <span className="block font-titolo text-lg leading-tight text-abete">Guardaroba</span>
-              <span className="block text-sm text-inchiostro/70">Vesti il tuo personaggio e guarda i premi</span>
+              <span className="block text-sm text-inchiostro/70">Il tuo personaggio</span>
+              <span className="block font-titolo text-2xl leading-tight text-abete">Guardaroba</span>
+              <span className="mt-1 block text-sm text-inchiostro/70">Vestilo e indossa i premi che vinci</span>
             </span>
-            <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
           </Link>
-        </section>
-      )}
 
-      {io && <RiquadroGiochi groupId={id} />}
+          {/* 3. La tua bacheca: più piccola, ma sempre in vista */}
+          <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
+            <span className="toppa tela-aida size-14 flex-none text-vermiglio [&_svg]:relative [&_svg]:size-7 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.2]">{Icone.ago}</span>
+            <span className="relative min-w-0 flex-1">
+              <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
+              <span className="block text-sm text-inchiostro/70">Fai capire al tuo Babbo Natale cosa ti piace</span>
+            </span>
+            {freccia}
+          </Link>
 
-      {io && (
-        <section className="mt-8">
-          <h2 className="font-titolo text-2xl">Novità</h2>
-          <div className="mt-4">
-            <FeedGruppo
-              groupId={id}
-              io={io.id}
-              persone={Object.fromEntries(membri.map((m) => [m.id, { nome: m.display_name, look: look(m) }]))}
-              totem={Object.fromEntries((nomiTotem ?? []).map((t) => [t.profilo, { nome: t.nome, immagine: t.immagine }]))}
-              limite={3}
-            />
+          {/* 4. Santa Chat e mini giochi, affiancati: quelli non ancora sbloccati sono spenti col lucchetto
+                (si aprono comunque e spiegano quando si sbloccano; allo sblocco compare un avviso) */}
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            <Sezione href={`/gruppo/${id}/santa-chat`} titolo="Santa Chat" icona={Icone.fumetto} bloccata={!chatAperta} testo={testoChat} />
+            <Sezione href={`/gruppo/${id}/giochi`} titolo="Mini giochi" icona={Icone.calendario} bloccata={!giochiAperti} testo={testoGiochi} />
           </div>
-        </section>
+
+          {/* 5. Novità del gruppo */}
+          <section className="mt-8">
+            <h2 className="font-titolo text-2xl">Novità</h2>
+            <div className="mt-4">
+              <FeedGruppo
+                groupId={id}
+                io={io.id}
+                persone={Object.fromEntries(membri.map((m) => [m.id, { nome: m.display_name, look: look(m) }]))}
+                totem={Object.fromEntries((nomiTotem ?? []).map((t) => [t.profilo, { nome: t.nome, immagine: t.immagine }]))}
+                limite={3}
+              />
+            </div>
+          </section>
+
+          <AvvisoSblocchi groupId={id} chatAperta={chatAperta} giochiAperti={giochiAperti} />
+        </>
       )}
 
       <section className="mt-8">
@@ -208,7 +237,27 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Chi non è ancora entrato ha la toppa vuota.</p>
       </section>
 
-      {io && <MenuGruppo groupId={id} chatBloccata={!chatAperta} giochiBloccati={!giochiAperti} />}
     </main>
+  );
+}
+
+// Riquadro di una sezione del gruppo (Santa Chat, mini giochi). Se non è ancora sbloccata è spento,
+// con il lucchetto, ma si apre lo stesso per spiegare quando si sblocca.
+function Sezione({ href, titolo, icona, bloccata, testo }: { href: string; titolo: string; icona: React.ReactNode; bloccata: boolean; testo: string }) {
+  return (
+    <Link href={href} className={`feltro cliccabile flex flex-col gap-3 p-5 ${bloccata ? "opacity-55" : ""}`} aria-label={`${titolo}${bloccata ? " (ancora bloccata)" : ""}`}>
+      <span className="relative flex size-12 items-center justify-center rounded-full bg-abete text-crema [&>svg]:size-6 [&>svg]:fill-none [&>svg]:stroke-current [&>svg]:stroke-[2.2] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
+        {icona}
+        {bloccata && (
+          <span className="absolute -right-1.5 -bottom-1 flex size-6 items-center justify-center rounded-full bg-vermiglio text-crema shadow-[0_1px_2px_rgba(0,0,0,.4)] [&>svg]:size-3.5 [&>svg]:fill-none [&>svg]:stroke-current [&>svg]:stroke-[2.6]">
+            {Icone.lucchetto}
+          </span>
+        )}
+      </span>
+      <span className="relative">
+        <span className="block font-titolo text-lg leading-tight text-abete">{titolo}</span>
+        <span className="mt-1 block text-sm leading-snug text-inchiostro/70">{testo}</span>
+      </span>
+    </Link>
   );
 }
