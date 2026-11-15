@@ -217,7 +217,7 @@ export function avviaMotore<S>(
     fx.aggiorna(dt);
 
     const h = gioco.hud(s);
-    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.molt}|${h.etichetta}|${h.etichetta2}`;
+    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.molt}|${h.etichetta}`;
     if (chiave !== hudPrima) {
       hudPrima = chiave;
       op.onHud(h);

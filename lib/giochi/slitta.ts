@@ -43,7 +43,6 @@ const SEPARA_FINTA = [40, 90]; // px di ostacoli tra il varco vero e quello fint
 const MURO = 2; // file di ostacoli che chiudono il vicolo
 const P_ESCA = 0.6; // probabilità di un regalo dentro il vicolo cieco
 const METRO = 20; // px per metro (1 punto a metro)
-const PUNTI_REGALO = 25;
 const RAGGIO_REGALO = [24, 15]; // px: quanto vicino passare per prenderlo (sempre più preciso)
 const TEMPO_MAX = 240; // s: traguardo (il server accetta fino a 300)
 const DOPO_URTO = 0.7; // s di ribaltone prima della fine
@@ -84,7 +83,10 @@ export type StatoSlitta = {
 
 export const ySlitta = (m: Mondo) => m.h - m.sotto - 110;
 const velocitaA = (t: number) => mescola(VELOCITA[0], VELOCITA[1], limita(t / SECONDI_ACCELERA, 0, 1));
-const punti = (s: StatoSlitta) => Math.floor(s.dist / METRO) + s.preso * PUNTI_REGALO;
+// Vince chi prende più regali, a parità chi va più lontano: punteggio = regali × 10000 + metri
+// (i metri restano sotto 10000: traguardo a TEMPO_MAX). Si legge con testoPunti in elenco.ts.
+export const PESO_REGALO = 10000;
+const punti = (s: StatoSlitta) => s.preso * PESO_REGALO + Math.floor(s.dist / METRO);
 
 // centro e mezza larghezza del corridoio alla distanza d (curva morbida tra i punti)
 export function corridoio(s: StatoSlitta, d: number) {
@@ -278,7 +280,7 @@ export const slitta: Gioco<StatoSlitta> = {
       if (Math.hypot(s.x - x, s.dist - r.d) < mescola(RAGGIO_REGALO[0], RAGGIO_REGALO[1], progresso(s))) {
         r.vivo = false;
         s.preso++;
-        s.eventi.push({ tipo: "regalo", x, y: ySlitta(m) - (r.d - s.dist), testo: `+${PUNTI_REGALO}`, livello: s.preso });
+        s.eventi.push({ tipo: "regalo", x, y: ySlitta(m) - (r.d - s.dist), testo: "+1 🎁", livello: s.preso });
       }
     }
     if (s.t >= TEMPO_MAX) {
@@ -289,7 +291,7 @@ export const slitta: Gioco<StatoSlitta> = {
 
   finito: (s) => s.traguardo || (s.urto >= 0 && s.t - s.urto >= DOPO_URTO),
   // metri e regali contati a parte; il punteggio (che decide la classifica) li mette insieme
-  hud: (s) => ({ punteggio: punti(s), etichetta: `${Math.floor(s.dist / METRO)} m`, etichetta2: `🎁 ${s.preso}` }),
+  hud: (s) => ({ punteggio: punti(s) }),
   eventi: (s) => s.eventi,
   stats: (s) => ({ metri: Math.floor(s.dist / METRO), regali: s.preso, secondi: Math.round(s.t) }),
 

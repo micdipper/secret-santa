@@ -1,4 +1,6 @@
-# Piano – Calendario dei giochi (avvento a 5 giochi)
+# Piano – Mini giochi dell'avvento (calendario a 5 giochi)
+
+> ⚠ 16/11: il calendario, i premi (solo indizi) e il punteggio del gioco 4 sono cambiati su richiesta di Marzia: vale quello che c'è scritto in STATO.md.
 
 Scritto il 15/11/2026 (pianificazione con Opus), approvato da Marzia nelle decisioni qui sotto.
 **Chi lo esegue**: leggere prima `CLAUDE.md` e `STATO.md`, poi questo file. Lavorare a blocchi (sezione 9), una sessione per blocco.

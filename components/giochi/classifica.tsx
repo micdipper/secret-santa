@@ -1,5 +1,6 @@
 "use client";
 
+import { testoPunti } from "@/lib/giochi/elenco";
 import { LayoutGroup, motion } from "framer-motion";
 import { ToppaAvatar, type Look } from "@/components/avatar";
 
@@ -55,7 +56,7 @@ export function Pallini({ usati, totale = 3, className = "" }: { usati: number; 
 }
 
 // Classifica in diretta (piatta: non si tocca). Le righe si riordinano con una molla.
-export function Classifica({ righe, io, tentativiMax = 3 }: { righe: Riga[]; io: string | null; tentativiMax?: number }) {
+export function Classifica({ righe, io, n, tentativiMax = 3 }: { righe: Riga[]; io: string | null; n: number; tentativiMax?: number }) {
   const pos = posizioni(righe);
   return (
     <LayoutGroup>
@@ -85,8 +86,9 @@ export function Classifica({ righe, io, tentativiMax = 3 }: { righe: Riga[]; io:
                   <Pallini usati={r.tentativi} totale={tentativiMax} className="mt-1 text-abete" />
                 )}
               </span>
-              <motion.span key={r.migliore ?? -1} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="flex-none font-titolo text-2xl text-abete tabular-nums">
-                {r.migliore ?? ""}
+              <motion.span key={r.migliore ?? -1} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="flex flex-none flex-col items-end font-titolo text-2xl leading-tight text-abete tabular-nums">
+                {r.migliore !== null && testoPunti(n, r.migliore)[0]}
+                {r.migliore !== null && testoPunti(n, r.migliore)[1] && <span className="text-sm text-inchiostro/70">{testoPunti(n, r.migliore)[1]}</span>}
               </motion.span>
             </motion.li>
           );

@@ -344,30 +344,6 @@ textarea {
   animation: lampeggia 1.2s ease-in-out infinite;
 }
 
-/* ---------- Finestrelle del calendario dei giochi (raggio 24, cucitura a 6px → raggio 18) ---------- */
-.finestrella {
-  position: relative;
-  border-radius: 24px;
-}
-.finestrella::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border-radius: 18px;
-  border: 2px dashed currentColor;
-  opacity: 0.4;
-  pointer-events: none;
-}
-/* non ancora aperta: solo la cucitura vermiglia (con la X disegnata sopra) */
-.finestrella-chiusa {
-  background: var(--color-feltro);
-  color: var(--color-inchiostro);
-}
-.finestrella-chiusa::before {
-  border-color: var(--color-vermiglio);
-  opacity: 0.75;
-}
-
 /* ---------- Toppa rotonda (membri) ---------- */
 /* con una cucitura "di lusso" (premio) la filza tratteggiata non c'è */
 .toppa-senza-cucitura::before {

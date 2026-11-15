@@ -13,7 +13,7 @@ export type Mondo = { w: number; h: number; sopra: number; sotto: number };
 export type Evento = { tipo: string; x?: number; y?: number; testo?: string; livello?: number };
 
 // Cosa mostrare in alto durante la partita (accanto ai punti; a destra c'è il tasto dell'audio)
-export type Hud = { punteggio: number; tempo?: number; vite?: number; viteMax?: number; molt?: number; etichetta?: string; etichetta2?: string };
+export type Hud = { punteggio: number; tempo?: number; vite?: number; viteMax?: number; molt?: number; etichetta?: string };
 
 // Il font dei titoli (Basteleur): il motore lo legge dal CSS all'avvio
 export const stile = { fontTitoli: "Georgia, serif" };

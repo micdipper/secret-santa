@@ -6,7 +6,7 @@ import { ToppaAvatar } from "@/components/avatar";
 import { Classifica, Pallini, posizioni, type Riga } from "@/components/giochi/classifica";
 import { Partita, type Esito } from "@/components/giochi/partita";
 import { Errore, Feltro, Tasto, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { TENTATIVI, type InfoGioco } from "@/lib/giochi/elenco";
+import { TENTATIVI, testoPunti, type InfoGioco } from "@/lib/giochi/elenco";
 import { durataBreve, giornoGioco, statoDa } from "@/lib/giochi/ora";
 import { suoni } from "@/lib/suoni";
 
@@ -90,7 +90,7 @@ export function PaginaGioco({
           <>
             <TitoloRiquadro>Si apre tra {durataBreve(apre - ora)}</TitoloRiquadro>
             <p className="mt-2">
-              Si gioca {giornoGioco(apre)}, da mezzanotte a mezzanotte. In palio: <strong>{info.nomePremio}</strong>.
+              Si gioca {giornoGioco(apre)}, da mezzanotte a mezzanotte. Il premio? <em>{info.indizio}</em>
             </p>
           </>
         )}
@@ -99,7 +99,7 @@ export function PaginaGioco({
           <>
             <p>{info.storia}</p>
             <p className="mt-4 text-sm text-inchiostro/80">
-              In palio per chi vince: <strong>{info.nomePremio}</strong>. Chiude tra {durataBreve(chiude - ora)}.
+              Il premio? <em>{info.indizio}</em> Chiude tra {durataBreve(chiude - ora)}.
             </p>
             {!illimitati && (
               <div className="mt-4 flex items-center gap-3 text-abete">
@@ -131,7 +131,7 @@ export function PaginaGioco({
                 <p className="text-sm text-inchiostro/70">Ha vinto</p>
                 <TitoloRiquadro>{vincitore.nome}</TitoloRiquadro>
                 <p className="text-sm text-inchiostro/80">
-                  {vincitore.migliore} punti · premio: <strong>{info.nomePremio}</strong>
+                  {testoPunti(info.n, vincitore.migliore ?? 0).filter(Boolean).join(" · ")}{info.formatta ? "" : " punti"} · premio: <strong>{info.nomePremio}</strong>
                 </p>
               </div>
             </div>
@@ -153,7 +153,7 @@ export function PaginaGioco({
           )}
         </div>
         <div className="mt-4">
-          <Classifica righe={righe} io={io} />
+          <Classifica righe={righe} io={io} n={info.n} />
         </div>
       </section>
 

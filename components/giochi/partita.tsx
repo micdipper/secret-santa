@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
 import type { Hud } from "@/lib/giochi/base";
-import type { InfoGioco } from "@/lib/giochi/elenco";
+import { testoPunti, type InfoGioco } from "@/lib/giochi/elenco";
 import { avviaMotore, type Controllo } from "@/lib/giochi/motore";
 import { musicaBassa, suoni } from "@/lib/suoni";
 
@@ -41,13 +41,11 @@ export function Partita({
   const tempo = useRef<HTMLSpanElement>(null);
   const vite = useRef<HTMLSpanElement>(null);
   const extra = useRef<HTMLSpanElement>(null);
-  const extra2 = useRef<HTMLSpanElement>(null);
   const riduci = useReducedMotion() ?? false;
   const [fase, setFase] = useState<"conto" | "gioco" | "pausa" | "invio" | "fine" | "errore">("conto");
   const [conto, setConto] = useState(3);
   const [esito, setEsito] = useState<Esito | null>(null);
   const [puntiFinali, setPuntiFinali] = useState(0);
-  const [statsFinali, setStatsFinali] = useState<Record<string, number> | null>(null);
   const finale = useRef<{ punteggio: number; stats: Record<string, number> | null } | null>(null);
   const onFineRef = useRef(onFine);
   useEffect(() => {
@@ -77,7 +75,8 @@ export function Partita({
     motore.current = avviaMotore(canvas.current!, info.gioco, seme, {
       riduci,
       onHud: (h: Hud) => {
-        if (punti.current) punti.current.textContent = String(h.punteggio);
+        const [grande, piccolo] = testoPunti(info.n, h.punteggio);
+        if (punti.current) punti.current.textContent = piccolo ? `${grande} · ${piccolo}` : grande;
         // (il display dell'etichetta di stoffa vince su "empty:hidden": la nascondo a mano quando è vuota)
         const scrivi = (el: HTMLSpanElement | null, testo: string) => {
           if (!el) return;
@@ -87,13 +86,11 @@ export function Partita({
         scrivi(tempo.current, h.tempo !== undefined ? `${Math.ceil(h.tempo)} s` : "");
         scrivi(vite.current, h.vite !== undefined ? "♥".repeat(Math.max(0, h.vite)) + "♡".repeat(Math.max(0, (h.viteMax ?? h.vite) - h.vite)) : "");
         scrivi(extra.current, h.molt && h.molt > 1 ? `×${h.molt}` : (h.etichetta ?? ""));
-        scrivi(extra2.current, h.etichetta2 ?? "");
       },
       onPausa: () => setFase("pausa"),
       onFine: (punteggio, stats) => {
         finale.current = { punteggio, stats };
         setPuntiFinali(punteggio);
-        setStatsFinali(stats);
         setTimeout(invia, 700); // un attimo per vedere l'ultimo colpo
       },
     });
@@ -139,7 +136,6 @@ export function Partita({
           <span ref={tempo} className="etichetta-stoffa bg-vermiglio text-crema tabular-nums" style={{ display: "none" }} />
           <span ref={vite} className="etichetta-stoffa bg-feltro tracking-wider text-vermiglio" style={{ display: "none" }} />
           <span ref={extra} className="etichetta-stoffa bg-senape font-titolo text-inchiostro" style={{ display: "none" }} />
-          <span ref={extra2} className="etichetta-stoffa bg-vermiglio font-titolo text-crema" style={{ display: "none" }} />
         </div>
 
         <AnimatePresence>
@@ -179,8 +175,8 @@ export function Partita({
               <motion.div className="feltro w-full p-6 text-center" initial={{ y: 40, scale: 0.9 }} animate={{ y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
                 <div className="relative">
                   <TitoloRiquadro>Fine!</TitoloRiquadro>
-                  <p className="mt-2 font-titolo text-[72px] leading-none text-vermiglio tabular-nums">{esito?.punteggio ?? puntiFinali}</p>
-                  {info.riepilogo && statsFinali && <p className="mt-2 text-inchiostro/80">{info.riepilogo(statsFinali)}</p>}
+                  <p className="mt-2 font-titolo text-[72px] leading-none text-vermiglio tabular-nums">{testoPunti(info.n, esito?.punteggio ?? puntiFinali)[0]}</p>
+                  {testoPunti(info.n, esito?.punteggio ?? puntiFinali)[1] && <p className="mt-1 font-titolo text-2xl text-abete">{testoPunti(info.n, esito?.punteggio ?? puntiFinali)[1]}</p>}
                   {fase === "invio" && <p className="mt-3 text-inchiostro/70">Salvo il punteggio…</p>}
                   {fase === "errore" && (
                     <>

@@ -2,13 +2,14 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Calendario, type Finestra } from "@/components/giochi/calendario";
+import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
 import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { caricaGiochi, caricaPersone, finestreDa } from "@/lib/giochi/dati";
-import { scartoDa, statoDa, useOraServer } from "@/lib/giochi/ora";
+import { aperturaCalendario, benvenutoVisto, giorniAlloScambio, segnaBenvenuto } from "@/lib/giochi/avvento";
+import { durataBreve, scartoDa, statoDa, useOraServer } from "@/lib/giochi/ora";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
-// Calendario dei giochi del gruppo: 5 finestrelle, una al giorno da 4 giorni prima dello scambio.
+// Mini giochi dell'avvento del gruppo: il calendario si apre 5 giorni prima dello scambio, poi un regalo (gioco) al giorno.
 export default function PaginaCalendario() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -52,6 +53,15 @@ export default function PaginaCalendario() {
     return () => clearInterval(t);
   }, [inAttesa, carica]);
 
+  // benvenuto: la prima volta che si apre il calendario (una volta per gruppo, ricordato nel telefono)
+  const [benvenuto, setBenvenuto] = useState(false);
+  const apertura = dati?.attivi && dati.finestre.length === 5 ? aperturaCalendario(dati.finestre[0].apre) : null;
+  const aperto = apertura !== null && ora >= apertura;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- memoria del telefono (solo nel browser)
+    if (aperto && !benvenutoVisto(id)) setBenvenuto(true);
+  }, [aperto, id]);
+
   if (!dati || !ora) return <main className="flex-1" />;
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
@@ -59,12 +69,17 @@ export default function PaginaCalendario() {
         indietro={`/gruppo/${id}`}
         etichettaIndietro="Torna al gruppo"
         contesto={nomeGruppo}
-        titolo="Calendario dei giochi"
-        sottotitolo="Un gioco al giorno fino allo scambio. 3 tentativi a testa: vince il punteggio migliore."
+        titolo="Mini giochi dell'avvento"
+        sottotitolo="Un regalo da scartare ogni giorno fino allo scambio."
       />
       <div className="mt-6">
-        {dati.attivi ? (
-          <Calendario finestre={dati.finestre} ora={ora} href={(n) => `/gruppo/${id}/giochi/${n}`} />
+        {dati.attivi && aperto ? (
+          <Calendario finestre={dati.finestre} ora={ora} href={(n) => `/gruppo/${id}/giochi/${n}`} gruppo={id} />
+        ) : dati.attivi && apertura !== null ? (
+          <Feltro>
+            <TitoloRiquadro>Si apre tra {durataBreve(apertura - ora)}</TitoloRiquadro>
+            <p className="mt-2">Il calendario si sblocca 5 giorni prima dello scambio. Pazienta ancora un po&apos;.</p>
+          </Feltro>
         ) : (
           <Feltro>
             <TitoloRiquadro>Niente giochi per questo gruppo</TitoloRiquadro>
@@ -72,6 +87,16 @@ export default function PaginaCalendario() {
           </Feltro>
         )}
       </div>
+      {aperto && (
+        <Benvenuto
+          giorni={giorniAlloScambio(dati.finestre[4].apre, ora)}
+          aperto={benvenuto}
+          onChiudi={() => {
+            segnaBenvenuto(id);
+            setBenvenuto(false);
+          }}
+        />
+      )}
     </main>
   );
 }

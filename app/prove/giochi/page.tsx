@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { normalizzaLook } from "@/components/avatar";
-import { Calendario, type Finestra } from "@/components/giochi/calendario";
+import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
+import { giorniAlloScambio } from "@/lib/giochi/avvento";
 import { TestataInterna } from "@/components/ui";
 import { useOraServer } from "@/lib/giochi/ora";
 import { NOMI_PROVA } from "@/lib/prove";
 
 // Sala prove del calendario: come se oggi fosse il giorno del gioco 3.
-// Le finestrelle si aprono tutte (anche quelle chiuse), si gioca senza limiti e non si salva niente.
+// Si scartano tutti i regali (anche quelli futuri), si gioca senza limiti e non si salva niente.
 const GIORNO = 86_400_000;
 
 function finestreFinte(): Finestra[] {
@@ -23,6 +24,7 @@ function finestreFinte(): Finestra[] {
 
 export default function ProvaCalendario() {
   const [finestre] = useState(finestreFinte);
+  const [benvenuto, setBenvenuto] = useState(true); // in sala prove si vede ogni volta
   const ora = useOraServer(0);
   if (!ora) return <main className="flex-1" />;
   return (
@@ -31,12 +33,13 @@ export default function ProvaCalendario() {
         indietro="/prove"
         etichettaIndietro="Torna alla sala prove"
         contesto="Sala prove · come se oggi fosse il giorno del gioco 3"
-        titolo="Calendario dei giochi"
-        sottotitolo="Qui tutte le finestrelle si aprono, anche quelle ancora cucite. Niente viene salvato."
+        titolo="Mini giochi dell'avvento"
+        sottotitolo="Qui si scartano tutti i regali, anche quelli dei giorni che devono ancora arrivare. Niente viene salvato."
       />
       <div className="mt-6">
-        <Calendario finestre={finestre} ora={ora} href={(n) => `/prove/giochi/${n}`} sempreAperte />
+        <Calendario finestre={finestre} ora={ora} href={(n) => `/prove/giochi/${n}`} gruppo={null} sempreAperte />
       </div>
+      <Benvenuto giorni={giorniAlloScambio(finestre[4].apre, ora)} aperto={benvenuto} onChiudi={() => setBenvenuto(false)} />
     </main>
   );
 }

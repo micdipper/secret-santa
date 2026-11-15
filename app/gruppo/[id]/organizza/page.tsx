@@ -124,7 +124,7 @@ function Organizza() {
   const giorniAlloScambio = giorniMancanti(gruppo.exchange_date);
   const dataBloccata = gruppo.giochi_attivi && giorniAlloScambio !== null && giorniAlloScambio <= 5;
   const notaGiochi = !gruppo.exchange_date
-    ? "Con una data lontana almeno 6 giorni parte anche il calendario dei giochi."
+    ? "Con una data lontana almeno 6 giorni partono anche i mini giochi dell'avvento."
     : dataBloccata
       ? "La data è bloccata: i giochi stanno per iniziare."
       : gruppo.giochi_attivi

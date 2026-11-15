@@ -26,7 +26,7 @@ function partiteFinte(n: number): Partita[] {
   const caso = casuale(n * 7919);
   return NOMI_PROVA.flatMap((_, i) => {
     const quante = (i + n) % 4; // 0..3 tentativi
-    return Array.from({ length: quante }, (_, k) => ({ member_id: `p${i}`, score: 100 + Math.round(caso() * 22) * 10, started_at: fa(3600 - k * 600), finished_at: fa(3500 - k * 600 - i * 37) }));
+    return Array.from({ length: quante }, (_, k) => ({ member_id: `p${i}`, score: n === 4 ? Math.floor(caso() * 8) * 10000 + 200 + Math.round(caso() * 900) : 100 + Math.round(caso() * 22) * 10, started_at: fa(3600 - k * 600), finished_at: fa(3500 - k * 600 - i * 37) }));
   });
 }
 
@@ -52,7 +52,7 @@ export default function ProvaGioco() {
       setPartite((p) => (p.filter((x) => x.member_id === id).length >= 3 ? p : [...p, { member_id: id, score: null, started_at: inizio, finished_at: null }]));
       timer.push(
         setTimeout(() => {
-          const punti = 150 + Math.round(Math.random() * 22) * 10;
+          const punti = info.n === 4 ? Math.floor(Math.random() * 9) * 10000 + 300 + Math.round(Math.random() * 900) : 150 + Math.round(Math.random() * 22) * 10;
           setPartite((p) => p.map((x) => (x.member_id === id && x.started_at === inizio ? { ...x, score: punti, finished_at: new Date().toISOString() } : x)));
         }, 6000),
       );
@@ -61,7 +61,7 @@ export default function ProvaGioco() {
       clearInterval(t);
       timer.forEach(clearTimeout);
     };
-  }, []);
+  }, [info.n]);
 
   const righe = useMemo(() => calcolaRighe(PERSONE, partite, ora, 30), [partite, ora]);
   const mie = partite.filter((p) => p.member_id === IO).length;
