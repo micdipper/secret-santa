@@ -1,6 +1,6 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 16/11/2026 (blocco 3 dei giochi finito e tarato; prossimo il blocco 4). Da leggere insieme a `CLAUDE.md` (brief e regole). Qui c'è solo **come stanno le cose oggi**: la cronologia completa delle giornate è nella storia di git (la versione lunga di questo file è nel commit `8fd57b6`).
+Aggiornato al 16/11/2026 (blocchi 1-3 dei giochi fatti = giochi 1 e 2; prossimo il blocco 4 = giochi 3 e 4). Da leggere insieme a `CLAUDE.md` (brief e regole). Qui c'è solo **come stanno le cose oggi**: la cronologia completa delle giornate è nella storia di git (la versione lunga di questo file è nel commit `8fd57b6`).
 **Aggiornarlo a fine blocco** riscrivendo le voci che cambiano, senza aggiungere diari giornalieri.
 
 ## ➡ Da fare (in ordine)
@@ -20,15 +20,14 @@ Aggiornato al 16/11/2026 (blocco 3 dei giochi finito e tarato; prossimo il blocc
    - **Anticipato dal blocco 5** (fatto): premi grafici in `components/avatar.tsx` — colore `COLORE_NEON = 8` (alone con filtro SVG: Safari non applica i filtri CSS dentro gli SVG), taglio `CAPELLI_PAZZO = 13` "Esplosione" (mullet spettinato su foto di Marzia), maglione `MAGLIONE_GODO = 6`, accessorio `cowboy` (capelli tagliati sotto la tesa) — e **cuciture/cornici sistemate** (verdi come la filza, 1,5 px veri a ogni dimensione, stesso cerchio, sotto il busto). L'editor mostra ogni premio solo se sbloccato e tiene il suo numero anche quando quelli prima sono nascosti (`PREMI_TAGLI`, `PREMI_COLORI`, `PREMI_MAGLIONI`); il profilo toglie i premi non sbloccati; pop-up premi con nomi e anteprime; tutto in `/prove/personaggio` e `/stile`. Del blocco 5 restano solo **gioco 5 e annuncio del vincitore**.
    - Nuovo taglio normale **"Riga in mezzo"** (a tendina, corto e mosso, su foto di Marzia): numero 14. I numeri dei tagli sono salvati nei personaggi: i tagli nuovi vanno sempre in coda; l'editor mostra comunque i premi per ultimi.
    - Calendario (richiesta di Marzia): finestrelle chiuse in feltro pieno con SOLO la cucitura vermiglia e la X; finestrelle giocate con il numero a colore pieno.
-   - Dati di prova "Test E2E Natale" ripuliti il 16/11 (gruppi + accessi finti + l'accesso senza gruppo).
+   - Database ripulito il 16/11: nessun gruppo (cancellati sia i "Test E2E Natale" sia i gruppi di prova di Marzia).
    - **Come aggiungere un gioco (blocchi 4 e 5)**: 1) `lib/giochi/<nome>.ts` con logica pura (`crea`, `aggiorna`, `finito`, `hud`, `eventi`, `stats`) + disegno su canvas, niente JSX, import relativi con `.ts`; costanti di taratura in cima. 2) In `lib/giochi/elenco.ts` sostituire `gioco`, `regole` (3 righe, devono dire il vero: controllarle a ogni ritocco) e `provvisorio: false`. 3) In `test-e2e/giochi-logica.ts` aggiungere il bot del gioco (medio e fortissimo) e il nome in `nomeBot`. 4) Controllare che una partita persa subito non finisca sotto la durata minima del server, altrimenti abbassarla con una migrazione su `private.regole_gioco`. 5) Suoni nuovi in `lib/suoni.ts`, effetti con `fx` (particelle, testi, tremolio). 6) Provare in `/prove/giochi/<n>` col telefono simulato.
-   - ➡ Prossimo: **blocco 4** (giochi 3 e 4).
+   - ➡ Prossimo: **blocco 4 = gioco 3 "Impila i regali" e gioco 4 "Slitta slalom"**. Oggi tutti e due (e il gioco 5) sono ancora il segnaposto provvisorio "Stelline" (`lib/giochi/finto.ts`).
 2. **Debug completo dell'app vera** (chiesto da Marzia: "prenditi tutto il tempo"), in una sessione dedicata. Quasi tutto è stato provato solo su telefoni simulati.
 3. **Rivelazione finale** ("Chi era il Babbo Natale di chi", CLAUDE.md punto 11).
 4. **Pubblicazione**: unire il ramo di lavoro in `main` → Production su Vercel (solo quando Marzia lo chiede, con PR).
 
 Aperte, in attesa di Marzia:
-- Gruppi di prova di Marzia ancora nel database (non cancellati: chiedere): sei "A" (10/11 e 14/11), "d", "Fkejd", "Z", "D". Una vecchia foto di prova nello Storage `moodboard` (si toglie dalla dashboard).
 - Toppe: "chronically online" all'inglese (Marzia aveva scritto "cronically")? "iPhone duo" come due iPhone? Scelte libere da confermare: bradipo e cartello "NO!" (hater), uovo sodo con gli occhi a spirale (so cooked).
 - Bacheca: il bug del ricamo "dopo il doppio fondo" non si riproduce nel simulatore (ipotesi: zoom col pinch su iPhone, ora spento). Da verificare sul telefono vero.
 
