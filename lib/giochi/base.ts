@@ -30,7 +30,9 @@ export interface Gioco<S> {
   hud(s: S): Hud;
   eventi(s: S): Evento[]; // il motore li legge e svuota l'elenco
   stats?(s: S): Record<string, number>; // contatori per il controllo del server (piccoli)
-  disegna(ctx: CanvasRenderingContext2D, s: S, mondo: Mondo, riduci: boolean): void;
+  // anticipo = frazione (0..1) di passo già trascorsa dopo l'ultimo aggiornamento: chi si muove veloce
+  // la usa per disegnarsi dove è DAVVERO in quell'istante (senza, a velocità alta il movimento scatta e sembra sfocato)
+  disegna(ctx: CanvasRenderingContext2D, s: S, mondo: Mondo, riduci: boolean, anticipo: number): void;
   effetto?(e: Evento, fx: Effetti): void;
 }
 

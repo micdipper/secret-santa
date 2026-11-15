@@ -225,7 +225,7 @@ export function avviaMotore<S>(
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const [dx, dy] = fx.spostamento();
     ctx.translate(dx, dy);
-    gioco.disegna(ctx, s, mondo, op.riduci);
+    gioco.disegna(ctx, s, mondo, op.riduci, stato === "gioco" ? Math.min(1, accumulo / PASSO) : 0);
     fx.disegna(ctx);
   };
   raf = requestAnimationFrame(fotogramma);

@@ -4,7 +4,7 @@
 // e lastre di ghiaccio e prendere i regali. Un urto = fine.
 // SEMPRE POSSIBILE: prima si genera un corridoio libero (curva morbida, mai più stretta del minimo e mai
 // più ripida di quanto la slitta riesca a seguire a quella velocità), poi si mettono gli ostacoli intorno.
-import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
+import { PASSO, casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
 const VELOCITA = [320, 950]; // px/s, dall'inizio…
@@ -21,10 +21,18 @@ const FILA = 120; // px tra due file di ostacoli
 const PARTENZA = 900; // px liberi all'inizio (quasi 3 s)
 const FITTO = [0.5, 0.92]; // probabilità di un ostacolo in ogni posto libero di una fila
 const POSTO = 54; // px tra un posto e l'altro della fila
-const OGNI_REGALO = [7, 11]; // file tra un regalo e l'altro
+// I regali diventano sempre più difficili (da 0 a SECONDI_ACCELERA):
+const OGNI_REGALO = [
+  [6, 9], // file tra un regalo e l'altro all'inizio…
+  [13, 19], // …e alla fine: sempre più rari
+];
+const BORDO_REGALO = [0.25, 0.92]; // distanza dal centro del varco (frazione della mezza larghezza): sempre più vicini agli ostacoli
+const SCIVOLA_DA = 25; // s: da qui alcuni regali scivolano da un lato all'altro del varco…
+const P_SCIVOLA = [0.2, 0.65]; // …con questa probabilità (da SCIVOLA_DA a SECONDI_ACCELERA)
+const VELOCITA_SCIVOLA = [2.6, 4.2]; // rad/s dell'oscillazione
 const METRO = 20; // px per metro (1 punto a metro)
 const PUNTI_REGALO = 25;
-const RAGGIO_REGALO = 24; // px: quanto vicino passare per prenderlo
+const RAGGIO_REGALO = [24, 15]; // px: quanto vicino passare per prenderlo (sempre più preciso)
 const TEMPO_MAX = 240; // s: traguardo (il server accetta fino a 300)
 const DOPO_URTO = 0.7; // s di ribaltone prima della fine
 
@@ -32,7 +40,10 @@ type Tipo = "abete" | "pupazzo" | "ghiaccio";
 // rx/ry = semiassi dell'area d'urto (ellisse)
 const FORMA: Record<Tipo, { rx: number; ry: number }> = { abete: { rx: 17, ry: 15 }, pupazzo: { rx: 16, ry: 16 }, ghiaccio: { rx: 30, ry: 10 } };
 type Ostacolo = { tipo: Tipo; d: number; x: number; vivo: boolean };
-type Regalo = { d: number; x: number; colore: number; vivo: boolean };
+// x = c + off, oppure (se scivola) oscilla tra i due lati del varco
+type Regalo = { d: number; c: number; off: number; ampiezza: number; vel: number; fase: number; colore: number; vivo: boolean };
+const xRegalo = (r: Regalo, t: number) => r.c + (r.ampiezza ? Math.sin(t * r.vel + r.fase) * r.ampiezza : r.off);
+const progresso = (s: StatoSlitta) => limita(s.t / SECONDI_ACCELERA, 0, 1);
 type Punto = { d: number; c: number; hw: number }; // corridoio: a distanza d il centro è c, mezza larghezza hw
 
 export type StatoSlitta = {
@@ -113,10 +124,14 @@ function nuovaFila(s: StatoSlitta, m: Mondo) {
     Object.assign(o, { tipo, d: dd, x, vivo: true });
   }
   if (--s.prossimoRegalo <= 0) {
-    s.prossimoRegalo = Math.round(mescola(OGNI_REGALO[0], OGNI_REGALO[1], s.caso()));
+    const k = progresso(s);
+    s.prossimoRegalo = Math.round(mescola(mescola(OGNI_REGALO[0][0], OGNI_REGALO[1][0], k), mescola(OGNI_REGALO[0][1], OGNI_REGALO[1][1], k), s.caso()));
+    // sempre dentro il varco libero (mai sopra un ostacolo), ma sempre più vicino al bordo
     const q = corridoio(s, d);
+    const off = (s.caso() < 0.5 ? -1 : 1) * q.hw * mescola(BORDO_REGALO[0], BORDO_REGALO[1], k * (0.6 + 0.4 * s.caso()));
+    const scivola = s.t >= SCIVOLA_DA && s.caso() < mescola(P_SCIVOLA[0], P_SCIVOLA[1], limita((s.t - SCIVOLA_DA) / (SECONDI_ACCELERA - SCIVOLA_DA), 0, 1));
     const r = s.regali.find((r) => !r.vivo) ?? (s.regali[s.regali.length] = {} as Regalo);
-    Object.assign(r, { d, x: q.c + (s.caso() - 0.5) * q.hw, colore: Math.floor(s.caso() * 3), vivo: true });
+    Object.assign(r, { d, c: q.c, off, ampiezza: scivola ? q.hw * BORDO_REGALO[1] : 0, vel: mescola(VELOCITA_SCIVOLA[0], VELOCITA_SCIVOLA[1], k), fase: s.caso() * 6.28, colore: Math.floor(s.caso() * 3), vivo: true });
   }
 }
 
@@ -188,10 +203,11 @@ export const slitta: Gioco<StatoSlitta> = {
     }
     for (const r of s.regali) {
       if (!r.vivo) continue;
-      if (Math.hypot(s.x - r.x, s.dist - r.d) < RAGGIO_REGALO) {
+      const x = xRegalo(r, s.t);
+      if (Math.hypot(s.x - x, s.dist - r.d) < mescola(RAGGIO_REGALO[0], RAGGIO_REGALO[1], progresso(s))) {
         r.vivo = false;
         s.preso++;
-        s.eventi.push({ tipo: "regalo", x: r.x, y: ySlitta(m) - (r.d - s.dist), testo: `+${PUNTI_REGALO}`, livello: s.preso });
+        s.eventi.push({ tipo: "regalo", x, y: ySlitta(m) - (r.d - s.dist), testo: `+${PUNTI_REGALO}`, livello: s.preso });
       }
     }
     if (s.t >= TEMPO_MAX) {
@@ -205,7 +221,12 @@ export const slitta: Gioco<StatoSlitta> = {
   eventi: (s) => s.eventi,
   stats: (s) => ({ metri: Math.floor(s.dist / METRO), regali: s.preso, secondi: Math.round(s.t) }),
 
-  disegna(ctx, s, m, riduci) {
+  disegna(ctx, s, m, riduci, anticipo) {
+    // dove sono DAVVERO slitta e pista in questo istante (tra un passo di logica e l'altro)
+    const corre = s.urto < 0 && !s.traguardo;
+    const dist = s.dist + (corre ? s.v * PASSO * anticipo : 0);
+    const xs = s.x + (corre ? s.vx * PASSO * anticipo : 0);
+    const t = s.t + (corre ? PASSO * anticipo : 0);
     ctx.clearRect(-20, -20, m.w + 40, m.h + 40);
     const ys = ySlitta(m);
     const sp = sprites();
@@ -217,7 +238,7 @@ export const slitta: Gioco<StatoSlitta> = {
     ctx.strokeStyle = "rgba(127,179,213,.22)";
     ctx.lineWidth = 3;
     for (let i = 0; i < 9; i++) {
-      const y = orizzonte + ((((i * 140 + s.dist * 0.999) % 1260) + 1260) % 1260) - 20;
+      const y = orizzonte + ((((i * 140 + dist * 0.999) % 1260) + 1260) % 1260) - 20;
       if (y > m.h + 20) continue;
       const x = (i * 173) % m.w;
       ctx.beginPath();
@@ -246,12 +267,12 @@ export const slitta: Gioco<StatoSlitta> = {
     ctx.beginPath();
     ctx.rect(-20, orizzonte, m.w + 40, m.h);
     ctx.clip();
-    const y = (d: number) => ys - (d - s.dist);
+    const y = (d: number) => ys - (d - dist);
     for (const r of s.regali) {
       if (!r.vivo) continue;
       const yy = y(r.d);
       if (yy < orizzonte - 20 || yy > m.h + 30) continue;
-      ctx.drawImage(sp.regali[r.colore], r.x - 15, yy - 18 + (riduci ? 0 : Math.sin(s.t * 6 + r.d) * 2), 30, 30);
+      ctx.drawImage(sp.regali[r.colore], xRegalo(r, t) - 15, yy - 18 + (riduci ? 0 : Math.sin(t * 6 + r.d) * 2), 30, 30);
     }
     const visibili = s.ostacoli.filter((o) => o.vivo && y(o.d) > orizzonte - 60 && y(o.d) < m.h + 60).sort((a, b) => b.d - a.d);
     for (const o of visibili) {
@@ -283,7 +304,7 @@ export const slitta: Gioco<StatoSlitta> = {
 
     // la slitta (si inclina in curva; dopo l'urto si ribalta)
     ctx.save();
-    ctx.translate(s.x, ys);
+    ctx.translate(xs, ys);
     if (s.urto >= 0) {
       const k = limita((s.t - s.urto) / DOPO_URTO, 0, 1);
       ctx.translate(0, -Math.sin(k * Math.PI) * 26);

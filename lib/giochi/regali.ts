@@ -3,7 +3,7 @@
 // viene tagliata e cade; il pacco dopo è largo quanto la parte rimasta. Mancare la torre = fine.
 // Perfetto (entro pochi px) = niente taglio e punti in più; 3 perfetti di fila = il pacco si riallarga.
 // Più si sale, più il pacco è veloce; dal piano 10 parte da un lato a caso, dal piano 20 accelera al centro.
-import { casuale, curve, limita, mescola, stile, type Evento, type Gioco, type Mondo } from "./base.ts";
+import { PASSO, casuale, curve, limita, mescola, stile, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
 const ALTEZZA = 30; // px, un pacco
@@ -182,7 +182,7 @@ export const regali: Gioco<StatoRegali> = {
   eventi: (s) => s.eventi,
   stats: (s) => ({ piani: s.piani.length - 1, perfetti: s.perfetti, tocchi: s.tocchi }),
 
-  disegna(ctx, s, m, riduci) {
+  disegna(ctx, s, m, riduci, anticipo) {
     ctx.clearRect(-20, -20, m.w + 40, m.h + 40);
     const cam = s.camera;
 
@@ -232,7 +232,10 @@ export const regali: Gioco<StatoRegali> = {
       const pk = s.pacco;
       const entra = curve.esceMorbida(limita((s.t - pk.nato) / 0.18, 0, 1));
       ctx.globalAlpha = entra;
-      disegnaPacco(ctx, pk.x, yPiano(m, s.piani.length) + cam - (1 - entra) * 16, pk.w, pk.colore, false, true);
+      // disegnato dove è DAVVERO in questo istante (a 900 px/s un passo sono 15 px)
+      const [lo, hi] = limiti(m, pk.w);
+      const x = limita(pk.x + pk.dir * velocita(s.piani.length) * PASSO * anticipo, lo, hi);
+      disegnaPacco(ctx, x, yPiano(m, s.piani.length) + cam - (1 - entra) * 16, pk.w, pk.colore, false, true);
       ctx.globalAlpha = 1;
     }
 

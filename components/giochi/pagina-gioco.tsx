@@ -3,7 +3,6 @@
 import confetti from "canvas-confetti";
 import { useEffect, useRef, useState } from "react";
 import { ToppaAvatar } from "@/components/avatar";
-import { Stellina } from "@/components/ornamenti";
 import { Classifica, Pallini, posizioni, type Riga } from "@/components/giochi/classifica";
 import { Partita, type Esito } from "@/components/giochi/partita";
 import { Errore, Feltro, Tasto, TestataInterna, TitoloRiquadro } from "@/components/ui";
@@ -98,14 +97,7 @@ export function PaginaGioco({
 
         {stato === "aperto" && (
           <>
-            <ul className="flex flex-col gap-2">
-              {info.regole.map((r, i) => (
-                <li key={i} className="flex gap-3">
-                  <Stellina className="mt-1 size-4 flex-none text-vermiglio" />
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
+            <p>{info.storia}</p>
             <p className="mt-4 text-sm text-inchiostro/80">
               In palio per chi vince: <strong>{info.nomePremio}</strong>. Chiude tra {durataBreve(chiude - ora)}.
             </p>

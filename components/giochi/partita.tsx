@@ -139,8 +139,16 @@ export function Partita({
 
         <AnimatePresence>
           {fase === "conto" && (
-            <motion.div key={conto} className="pointer-events-none absolute inset-0 flex items-center justify-center" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.6, opacity: 0 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
-              <span className="font-titolo text-[120px] leading-none text-crema drop-shadow-[0_6px_0_rgba(0,0,0,.25)]">{conto === 0 ? "Via!" : conto}</span>
+            <motion.div
+              key={conto}
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1, transition: { scale: { type: "spring", stiffness: 380, damping: 18 }, opacity: { duration: 0.12 } } }}
+              // in uscita niente molla: la trasparenza "rimbalzava" e il numero vecchio ricompariva sotto il nuovo
+              exit={{ scale: 1.3, opacity: 0, transition: { duration: 0.14, ease: "easeOut" } }}
+            >
+              {/* sulla neve (sfondo chiaro) il conto è vermiglio, sul verde è crema */}
+              <span className={`font-titolo text-[120px] leading-none ${info.sfondoChiaro ? "text-vermiglio drop-shadow-[0_5px_0_rgba(30,56,38,.35)]" : "text-crema drop-shadow-[0_6px_0_rgba(0,0,0,.25)]"}`}>{conto === 0 ? "Via!" : conto}</span>
             </motion.div>
           )}
         </AnimatePresence>

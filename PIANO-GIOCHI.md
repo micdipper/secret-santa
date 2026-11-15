@@ -156,6 +156,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 - Antispam: una palla ogni 0,2 s; colpire una finestra vuota = −2 e combo azzerata.
 - Combo ×1 → ×4. Durata 60 s, ritmo che accelera (più personaggi insieme, più Babbi).
 - Effetti: palla che si schiaccia, elfo che barcolla con le stelline, imposte che sbattono, Babbo Natale offeso.
+- Racconto (campo `storia`, proposta da adattare ai valori veri): "Invece di incartare i regali, gli elfi del laboratorio si affacciano alle finestre a fare scherzi. Rispondi a palle di neve! Tocca dove lanciare: la palla ci mette un attimo ad arrivare, quindi mira in anticipo. Ogni elfo colpito vale 10 punti, quello dorato 30, e dai 20 secondi passa sul balcone una renna che ne vale 40. Ma se colpisci Babbo Natale si offende: perdi 25 punti e la serie. Non tirare alle finestre vuote. Hai 60 secondi."
 
 ## 7. Motore comune (`lib/giochi/motore.ts`) e file
 - Canvas 2D a tutto schermo; risoluzione = dimensione CSS × min(devicePixelRatio, 2); ridimensionamento con `ResizeObserver` (la barra di Safari cambia l'altezza).
