@@ -1,0 +1,502 @@
+@import "tailwindcss";
+
+/*
+  Base grafica approvata (reference/17 e 18):
+  verde abete in tinta unita, feltro cucito, etichette di stoffa,
+  toppe rotonde, tasti a pillola di stoffa, bottoni di legno per le icone.
+*/
+@theme {
+  --color-abete: #2c4a32;
+  --color-abete-scuro: #1e3826;
+  --color-vermiglio: #e5481e;
+  --color-vermiglio-scuro: #c93b14;
+  --color-crema: #f3e8cf;
+  --color-feltro: #f1e4c8;
+  --color-kraft: #cdb48a;
+  --color-senape: #e9a81c;
+  --color-rosa: #f4a9c4;
+  --color-inchiostro: #1c241d;
+
+  --font-titolo: var(--font-basteleur), Georgia, serif;
+  --font-sans: var(--font-bricolage), system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-abete-scuro);
+}
+
+body {
+  /* Tinta unita con una luce morbida in alto */
+  background:
+    radial-gradient(120% 60% at 30% 0%, #355a3c 0%, #284530 55%, var(--color-abete-scuro) 100%) fixed,
+    var(--color-abete-scuro);
+  color: var(--color-crema);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  /* Safe area dell'iPhone */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* Grana leggera su tutta la pagina */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Input almeno 16px: evita lo zoom automatico su iOS */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem);
+}
+
+/* Focus sempre visibile, anche da tastiera */
+:focus-visible {
+  outline: 3px solid var(--color-senape);
+  outline-offset: 3px;
+}
+
+/*
+  ================= SISTEMA (regole fisse) =================
+  Spaziature: multipli di 4 (4, 8, 12, 16, 20, 24, 32, 40).
+  Testi: titolo pagina 32 · titolo riquadro 24 · tasti e voci cliccabili 18 (Basteleur) · testo 16 · nota 14 (Bricolage).
+  Raggi: riquadro 28 · tasti e bottoni tondi alti 56 (pillola = raggio 28) · campi 16.
+  Le cuciture stanno dentro il bordo e seguono lo stesso centro (raggio − distanza).
+  Tre tipi di tasto, tutti alti 56:
+    1. primario   = pillola vermiglio, a tutta larghezza, uno solo per riquadro;
+    2. secondario = pillola chiara con testo verde, a tutta larghezza;
+    3. tondo      = cerchio chiaro con icona verde, per azioni piccole.
+  Cliccabile = in rilievo; non cliccabile = piatto.
+  ==========================================================
+*/
+
+/* ---------- Riquadro di feltro (NON cliccabile) ---------- */
+.feltro {
+  position: relative;
+  border-radius: 28px;
+  background: var(--fondo-feltro, var(--color-feltro));
+  color: var(--testo-feltro, var(--color-inchiostro));
+  box-shadow:
+    inset 0 -4px 10px rgba(120, 90, 40, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 8px 16px -10px rgba(0, 0, 0, 0.5);
+}
+.feltro::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 20px;
+  border: 2px dashed var(--cucitura-feltro, rgb(229 72 30 / 0.7));
+  pointer-events: none;
+}
+
+/* ---------- Etichetta di stoffa cucita (NON cliccabile: piatta, cucita sulla stoffa) ---------- */
+.etichetta-stoffa {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.06) 0 1px, transparent 1px 3px);
+}
+.etichetta-stoffa::before,
+.etichetta-stoffa::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-left: 2px dotted currentColor;
+  opacity: 0.7;
+}
+.etichetta-stoffa::before {
+  left: 5px;
+}
+.etichetta-stoffa::after {
+  right: 5px;
+}
+
+/*
+  ---------- Tutto ciò che è CLICCABILE ----------
+  Regola unica: è "in rilievo" (ha uno spessore sotto, come un bottone imbottito),
+  si solleva un poco al passaggio del mouse e si schiaccia al tocco.
+  Ciò che non è cliccabile è piatto (niente spessore).
+*/
+.cliccabile {
+  --spessore: #b59a6a;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.12),
+    0 4px 0 var(--spessore),
+    0 10px 16px -8px rgba(0, 0, 0, 0.6);
+}
+@media (hover: hover) {
+  .cliccabile:hover,
+  .tasto-toppa:hover > .cliccabile {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 -3px 6px rgba(0, 0, 0, 0.12),
+      0 6px 0 var(--spessore),
+      0 14px 18px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+.cliccabile:active,
+.tasto-toppa:active > .cliccabile {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.12),
+    0 1px 0 var(--spessore),
+    0 4px 8px -6px rgba(0, 0, 0, 0.6);
+}
+.cliccabile:disabled,
+.cliccabile[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* Stoffe dei pezzi cliccabili (colore + spessore più scuro) */
+.stoffa-vermiglio {
+  background-color: var(--color-vermiglio);
+  color: var(--color-crema);
+  --spessore: #9e2a0b;
+}
+.stoffa-chiara {
+  background-color: #fbf6ea;
+  color: var(--color-abete);
+  --spessore: #c9b48a;
+}
+
+/* Cucitura tratteggiata interna dei tasti, a 5px dal bordo.
+   Raggio interno = raggio esterno − distanza (stesso centro): chi non è una pillola
+   dichiara il suo raggio con --raggio (es. [--raggio:20px] rounded-[20px]). */
+.cucitura::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: max(0px, calc(var(--raggio, 9999px) - 5px));
+  border: 2px dashed currentColor;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Tasti 1 e 2: pillola alta 56, a tutta larghezza, testo centrato */
+.tasto {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0 24px;
+  border-radius: 28px;
+  font-family: var(--font-titolo);
+  font-size: 18px;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* Basteleur ha più spazio sotto le lettere: lo compensiamo */
+.tasto > span {
+  display: block;
+  padding-top: 0.14em;
+}
+@supports (text-box: trim-both cap alphabetic) {
+  .tasto > span {
+    padding-top: 0;
+    text-box: trim-both cap alphabetic;
+  }
+}
+
+/* Toppa-tasto con il nome sotto (cassetto della bacheca): largo quanto la toppa,
+   il nome può sporgere un poco ai lati. Si schiaccia toccando anche il nome. */
+.tasto-toppa {
+  display: flex;
+  width: 56px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* Tasto 3: cerchio alto 56 con icona */
+.tasto-tondo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+}
+.tasto-tondo svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Campo di testo cucito (NON in rilievo: è incavato) */
+.campo-cucito {
+  position: relative;
+  border-radius: 16px;
+  background: #fbf6ea;
+  box-shadow: inset 0 2px 4px rgba(120, 90, 40, 0.2);
+}
+.campo-cucito::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 11px;
+  border: 2px dashed rgb(44 74 50 / 0.3);
+  pointer-events: none;
+  transition: border-color 140ms ease;
+}
+.campo-cucito:focus-within::after {
+  border-color: var(--color-vermiglio);
+}
+.campo-cucito input {
+  width: 100%;
+  height: 56px;
+  padding: 0 20px;
+  background: transparent;
+  color: var(--color-inchiostro);
+  outline: none;
+}
+
+/* Tela da ricamo (aida): crema con la trama a quadretti */
+.tela-aida {
+  background-color: #f6eedb;
+  background-image:
+    linear-gradient(rgb(44 74 50 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(44 74 50 / 0.07) 1px, transparent 1px),
+    radial-gradient(circle at center, rgb(120 90 40 / 0.1) 0.8px, transparent 1.2px);
+  background-size: var(--cella, 6px) var(--cella, 6px);
+  touch-action: pan-y;
+}
+
+/* Pallina che dondola */
+@keyframes dondola {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(14deg); }
+  35% { transform: rotate(-11deg); }
+  55% { transform: rotate(7deg); }
+  75% { transform: rotate(-4deg); }
+  100% { transform: rotate(0); }
+}
+.dondola {
+  animation: dondola 1.4s ease-out;
+}
+
+/* Premi del personaggio */
+/* capelli olografici: i colori scorrono piano */
+@keyframes olografico {
+  to { filter: hue-rotate(360deg); }
+}
+.capelli-olografici {
+  animation: olografico 6s linear infinite;
+}
+/* taglio Esplosione (premio del gioco 2): ondeggia appena */
+@keyframes esplosione {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.03); }
+}
+.esplosione {
+  transform-origin: 50px 36px;
+  animation: esplosione 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .esplosione { animation: none; }
+}
+/* cartellino del lupetto "da portare indietro" che dondola */
+@keyframes cartellino {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+.cartellino {
+  transform-box: view-box;
+  transform-origin: 60px 68px;
+  animation: cartellino 2.6s ease-in-out infinite;
+}
+
+/* Lampadine della slot machine */
+@keyframes lampeggia {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px 2px rgb(255 214 107 / 0.9); }
+  50% { opacity: 0.35; box-shadow: none; }
+}
+.lampadina {
+  animation: lampeggia 1.2s ease-in-out infinite;
+}
+
+/* ---------- Toppa rotonda (membri) ---------- */
+/* con una cucitura "di lusso" (premio) la filza tratteggiata non c'è */
+.toppa-senza-cucitura::before {
+  display: none;
+}
+.toppa {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-feltro);
+  box-shadow:
+    inset 0 -3px 6px rgba(120, 90, 40, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.toppa::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1.5px dashed rgb(44 74 50 / 0.55); /* stesso filo delle cuciture premio (FILO_CUCITURA in avatar.tsx) */
+}
+
+/* ---------- Santa Chat: fumetti di stoffa (NON cliccabili: piatti, cuciti) ----------
+   Babbo Natale = vermiglio con testo crema; chi riceve = feltro crema con testo inchiostro.
+   Il colore dice CHI scrive (uguale per tutti e due), il lato dice se sei tu (destra) o l'altro (sinistra). */
+.fumetto {
+  position: relative;
+  max-width: 82%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.035) 0 1px, transparent 1px 3px);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fumetto::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 16px;
+  border: 1.5px dashed;
+  pointer-events: none;
+}
+.fumetto-babbo {
+  background-color: var(--color-vermiglio);
+  color: var(--color-crema);
+}
+.fumetto-babbo::before {
+  border-color: rgb(243 232 207 / 0.55);
+}
+.fumetto-pescato {
+  background-color: var(--color-feltro);
+  color: var(--color-inchiostro);
+}
+.fumetto-pescato::before {
+  border-color: rgb(44 74 50 / 0.35);
+}
+/* la "punta" del fumetto: angolo stretto verso chi scrive */
+.fumetto-mio {
+  border-bottom-right-radius: 6px;
+}
+.fumetto-mio::before {
+  border-bottom-right-radius: 2px;
+}
+.fumetto-altro {
+  border-bottom-left-radius: 6px;
+}
+.fumetto-altro::before {
+  border-bottom-left-radius: 2px;
+}
+/* campo del messaggio: cresce con il testo (stessa cucitura dei campi) */
+.campo-cucito textarea {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  max-height: 160px;
+  padding: 15px 20px;
+  background: transparent;
+  color: var(--color-inchiostro);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* PROVA cassettiera (/prove/cassetto): legno, fondo di feltro, pomelli */
+.cassettiera-piano {
+  background: linear-gradient(180deg, #c48b52, #9c6534);
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 0.25), 0 3px 0 #6e4420;
+}
+.cassettiera-corpo {
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.06) 0 2px, transparent 2px 12px),
+    linear-gradient(180deg, #7d5027, #6a4220);
+  box-shadow: inset 0 0 0 4px #8a5a2b, 0 16px 24px -12px rgb(0 0 0 / 0.7);
+}
+.cassettiera-piede {
+  background: linear-gradient(180deg, #6a4220, #4a2d14);
+}
+.cassetto-frontale {
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.07) 0 2px, transparent 2px 13px),
+    linear-gradient(180deg, #b47c45 0%, #93602f 100%);
+  box-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.22),
+    inset 0 -3px 0 rgb(0 0 0 / 0.15),
+    0 4px 0 #4f3017;
+  transition: box-shadow 200ms cubic-bezier(.4, 0, .2, 1);
+}
+.cassetto-frontale-aperto {
+  box-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.22),
+    inset 0 -3px 0 rgb(0 0 0 / 0.15),
+    0 6px 0 #4f3017,
+    0 14px 18px -6px rgb(0 0 0 / 0.6);
+}
+.cassetto-bordo-frontale {
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.12), inset 0 2px 0 3px rgb(255 255 255 / 0.06);
+}
+/* parete in fondo al cassetto (la più lontana) e pareti laterali che si stringono verso il fondo */
+.cassetto-parete-fondo {
+  background: linear-gradient(180deg, #4f3017, #6a4220);
+  box-shadow: inset 0 -6px 8px -4px rgb(0 0 0 / 0.5);
+}
+.cassetto-pareti {
+  background: linear-gradient(90deg, #5e3a1b 0%, #8a5a2b 3%, #8a5a2b 97%, #5e3a1b 100%);
+}
+.cassetto-fondo {
+  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  background-color: #1e3826;
+  background-image:
+    linear-gradient(180deg, rgb(0 0 0 / 0.45), transparent 22%),
+    radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1.4px);
+  background-size: 100% 100%, 5px 5px;
+}
+.cassetto-rosetta {
+  background: radial-gradient(circle at 50% 40%, #9c6534, #6e4420 70%);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 0 rgb(255 255 255 / 0.2);
+}
+.cassetto-pomello {
+  background: radial-gradient(circle at 34% 30%, #fff4cf 0%, #f0c35a 22%, #c9931c 55%, #7e560c 100%);
+  box-shadow:
+    0 4px 3px rgb(0 0 0 / 0.5),
+    0 1px 0 #7e560c,
+    inset 0 -3px 4px rgb(0 0 0 / 0.3);
+}
