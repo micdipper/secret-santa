@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { EditorToppeGruppo } from "@/components/editor-toppe";
 import { TestataInterna } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 export default async function PaginaToppeGruppo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
   const { data: gruppo } = await supabase.from("groups").select("name, organizer_id").eq("id", id).maybeSingle();
-  if (!gruppo) notFound();
+  if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
   if (gruppo.organizer_id !== userId) redirect(`/gruppo/${id}`);
 
   return (

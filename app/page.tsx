@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { ElencoGruppi } from "@/components/elenco-gruppi";
 import { Stellina } from "@/components/ornamenti";
-import { Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { Feltro, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -24,34 +24,11 @@ export default async function Home() {
         <p className="mt-2 pr-16 text-crema/80">Il Babbo Natale segreto tra amici, con la bacheca di ognuno.</p>
       </header>
 
-      {gruppi.length > 0 && (
-        <section className="mt-8">
-          <h2 className="font-titolo text-2xl">I tuoi gruppi</h2>
-          <ul className="mt-4 flex flex-col gap-4">
-            {gruppi.map((g) =>
-              g.groups ? (
-                <li key={g.id}>
-                  <Link href={`/gruppo/${g.groups.id}`} className="feltro cliccabile flex items-center gap-4 p-4 pl-5">
-                    <span className="relative min-w-0 flex-1">
-                      <span className="block truncate font-titolo text-lg text-abete">{g.groups.name}</span>
-                      <span className="block text-sm text-inchiostro/70">
-                        {g.groups.status === "aperto" ? "In attesa dell'estrazione" : "Estrazione fatta"}
-                      </span>
-                    </span>
-                    <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">
-                      {Icone.avanti}
-                    </span>
-                  </Link>
-                </li>
-              ) : null,
-            )}
-          </ul>
-        </section>
-      )}
+      <ElencoGruppi attuali={gruppi.flatMap((g) => (g.groups ? [{ id: g.groups.id, nome: g.groups.name, stato: g.groups.status }] : []))} />
 
       <Feltro className="mt-8">
         <TitoloRiquadro>{gruppi.length > 0 ? "Un nuovo gruppo?" : "Organizza il tuo"}</TitoloRiquadro>
-        <p className="mt-2">Scegli data e budget, scrivi i nomi degli amici e mandagli il link.</p>
+        <p className="mt-2">Scegli data e budget, scrivi i nomi degli amici e mandagli il link. Ogni gruppo ha il suo personaggio e la sua password.</p>
         <TastoLink href="/nuovo" className="mt-5">
           Crea un gruppo
         </TastoLink>

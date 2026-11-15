@@ -110,7 +110,7 @@ export function AvvisoPremi() {
                 className="mt-6"
                 onClick={() => {
                   setPremio(null);
-                  router.push(gruppo ? `/profilo?gruppo=${gruppo}` : "/profilo");
+                  router.push(gruppo ? `/gruppo/${gruppo}/guardaroba` : "/");
                 }}
               >
                 Vai al guardaroba

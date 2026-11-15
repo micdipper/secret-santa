@@ -6,6 +6,7 @@ import { ToppaAvatar, normalizzaLook } from "@/components/avatar";
 import { CampoPassword } from "@/components/scelte";
 import { Errore, Feltro, Tasto, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
+import { passaAlGruppo, salvaAccessoCorrente } from "@/lib/portachiavi";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Posto = {
@@ -46,18 +47,17 @@ export default function Invito() {
     carica();
   }, [carica]);
 
-  // Se sono già dentro questo gruppo, vado direttamente alla sua pagina.
+  // Se sono già dentro questo gruppo (con l'accesso di adesso o con uno nel portachiavi del telefono),
+  // vado direttamente alla sua pagina.
   useEffect(() => {
-    if (!posti?.length || !mioId) return;
-    supabase
-      .from("group_members")
-      .select("id")
-      .eq("group_id", posti[0].group_id)
-      .eq("user_id", mioId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) router.replace(`/gruppo/${posti[0].group_id}`);
-      });
+    if (!posti?.length) return;
+    const gruppo = posti[0].group_id;
+    (async () => {
+      const { data } = mioId
+        ? await supabase.from("group_members").select("id").eq("group_id", gruppo).eq("user_id", mioId).maybeSingle()
+        : { data: null };
+      if (data || (await passaAlGruppo(supabase, gruppo))) router.replace(`/gruppo/${gruppo}`);
+    })();
   }, [posti, mioId, supabase, router]);
 
   if (posti === null) {
@@ -79,6 +79,8 @@ export default function Invito() {
     if (!scelto) return;
     setErrore("");
     setInvio(true);
+    // ogni gruppo ha un accesso suo: metto via quello di adesso (di un altro gruppo) nel portachiavi
+    await salvaAccessoCorrente(supabase);
 
     if (scelto.claimed) {
       // Rientro: nome già preso da me in passato → password
@@ -94,17 +96,15 @@ export default function Invito() {
       return router.replace(`/gruppo/${gruppo.group_id}`);
     }
 
-    // Primo ingresso: se non ho ancora un accesso, lo creo con la password
-    if (!mioId) {
-      if (!passwordValida(password)) {
-        setInvio(false);
-        return setErrore("La password deve avere almeno 8 caratteri.");
-      }
-      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
-      if (error) {
-        setInvio(false);
-        return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
-      }
+    // Primo ingresso: sempre un accesso nuovo, solo per questo gruppo, con la sua password
+    if (!passwordValida(password)) {
+      setInvio(false);
+      return setErrore("La password deve avere almeno 8 caratteri.");
+    }
+    const { error: errAccesso } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
+    if (errAccesso) {
+      setInvio(false);
+      return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
     }
     const { error } = await supabase.rpc("claim_member", { p_invite_code: codice, p_member_id: scelto.member_id, p_avatar: null });
     if (error) {
@@ -113,7 +113,7 @@ export default function Invito() {
       return setErrore(error.message);
     }
     // Appena entrato: prima si veste il personaggio, poi si va al gruppo
-    router.replace(`/profilo?gruppo=${gruppo.group_id}`);
+    router.replace(`/gruppo/${gruppo.group_id}/guardaroba?nuovo=1`);
   }
 
   return (
@@ -154,16 +154,14 @@ export default function Invito() {
         <Feltro className="mt-6">
           <TitoloRiquadro>{scelto.claimed ? `Bentornato, ${scelto.display_name}` : `Ciao, ${scelto.display_name}!`}</TitoloRiquadro>
           <div className="mt-5 flex flex-col gap-5">
-            {(scelto.claimed || !mioId) && (
-              <CampoPassword
+            <CampoPassword
                 id="password"
                 nuova={!scelto.claimed}
                 etichetta={scelto.claimed ? "La tua password" : "Scegli una password"}
                 valore={password}
                 onCambia={setPassword}
-                aiuto={scelto.claimed ? undefined : "Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno."}
-              />
-            )}
+                aiuto={scelto.claimed ? undefined : "Almeno 8 caratteri, solo per questo gruppo. Ti servirà per rientrare da un altro telefono: non dirla a nessuno."}
+            />
             <Errore>{errore}</Errore>
             <Tasto onClick={entra} disabled={invio}>
               {invio ? "Un momento…" : "Entra"}

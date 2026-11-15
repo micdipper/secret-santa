@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
-import { PallinoChat } from "@/components/pallino-chat";
 import { FeedGruppo } from "@/components/feed-gruppo";
-import { ToppaBabbo } from "@/components/santa-chat";
+import { MenuGruppo } from "@/components/menu-gruppo";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giorniMancanti } from "@/lib/date";
 import { utenteCollegato } from "@/lib/supabase/server";
 
@@ -19,13 +17,13 @@ type Membro = { id: string; display_name: string; user_id: string | null; envelo
 export default async function PaginaGruppo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
-    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id").eq("id", id).maybeSingle(),
+    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
   ]);
-  if (!gruppo) notFound();
+  if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
 
   const membri = (membriDati as Membro[]) ?? [];
   // I personaggi di chi è entrato (le regole del database mostrano solo quelli dei miei gruppi)
@@ -49,6 +47,22 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const organizzatore = gruppo.organizer_id === userId;
   const entrati = membri.filter((m) => m.user_id).length;
   const giorni = giorniMancanti(gruppo.exchange_date);
+  // Santa Chat: si apre quando TUTTI hanno aperto la busta. Giochi: dal giorno T−4, se il gruppo li ha.
+  const chatAperta = gruppo.status !== "aperto" && membri.every((m) => m.envelope_opened_at);
+  const giochiAperti = gruppo.giochi_attivi && giorni !== null && giorni <= 4 && giorni >= -1;
+
+  // A che punto è il gruppo (riquadro dell'organizzatore, in alto)
+  const mancanti = membri.filter((m) => !m.user_id);
+  const daAprire = membri.filter((m) => !m.envelope_opened_at).length;
+  const statoOrganizzatore = !gruppo.quiz_salvato_at
+    ? "Prima crea il sondaggio: poi arriva il link d'invito da mandare agli amici."
+    : gruppo.status === "aperto"
+      ? mancanti.length > 0
+        ? `Sono entrati ${entrati} su ${membri.length}: manda il link a chi manca. Quando ci sono tutti fai l'estrazione.`
+        : "Ci sono tutti: puoi fare l'estrazione!"
+      : daAprire > 0
+        ? `Estrazione fatta. ${daAprire === 1 ? "Manca 1 persona" : `Mancano ${daAprire} persone`} ad aprire la busta.`
+        : "Estrazione fatta e buste aperte da tutti. Puoi sempre cambiare data, budget e tema.";
 
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
@@ -58,7 +72,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-36">
       <header className="relative pt-24">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
         <Profondita intensita={8} className="absolute top-[88px] right-0 w-16">
@@ -75,13 +89,27 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         {gruppo.theme && <p className="mt-3 text-crema/80">Tema: {gruppo.theme}</p>}
       </header>
 
+      {organizzatore && (
+        <Feltro className="mt-6">
+          <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
+          <TitoloRiquadro className="mt-1">Organizza il gruppo</TitoloRiquadro>
+          <p className="mt-2">{statoOrganizzatore}</p>
+          <TastoLink href={`/gruppo/${id}/organizza`} className="mt-5">
+            {!gruppo.quiz_salvato_at ? "Crea il sondaggio" : gruppo.status === "aperto" ? "Invito ed estrazione" : "Data, budget e tema"}
+          </TastoLink>
+        </Feltro>
+      )}
+
       {gruppo.status === "aperto" ? (
+        // l'organizzatore lo legge già nel suo riquadro qui sopra
+        !organizzatore && (
         <Feltro className="mt-6">
           <TitoloRiquadro>In attesa dell&apos;estrazione</TitoloRiquadro>
           <p className="mt-2">
             Sono entrati {entrati} su {membri.length}. Quando ci sono tutti, l&apos;organizzatore fa l&apos;estrazione e qui troverai la tua busta.
           </p>
         </Feltro>
+        )
       ) : destinatario ? (
         <Feltro className="mt-6">
           <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
@@ -111,55 +139,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             Apri la busta
           </TastoLink>
         </Feltro>
-      )}
-
-      {io && (
-        <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-          <span className="toppa tela-aida size-11 flex-none text-vermiglio [&_svg]:relative [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.2]">{Icone.ago}</span>
-          <span className="relative min-w-0 flex-1">
-            <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
-            <span className="block text-sm text-inchiostro/70">Fai capire cosa ti piace</span>
-          </span>
-          <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
-        </Link>
-      )}
-
-      {io && (
-        <Link href={`/profilo?gruppo=${id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-          <ToppaAvatar look={look(io)} dimensione={44} totem={totemDi(io)} />
-          <span className="relative min-w-0 flex-1">
-            <span className="block font-titolo text-lg leading-tight text-abete">Il tuo personaggio</span>
-            <span className="block text-sm text-inchiostro/70">Vestilo e sblocca gli accessori</span>
-          </span>
-          <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
-        </Link>
-      )}
-
-      {io && gruppo.status !== "aperto" && (
-        <section className="mt-8">
-          <h2 className="font-titolo text-2xl">Santa Chat</h2>
-          <p className="mt-1 text-sm text-crema/75">Messaggi segreti: chi regala non si rivela mai.</p>
-          {destinatario && (
-            <Link href={`/gruppo/${id}/chat?con=pescato`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-              <ToppaAvatar look={look(destinatario)} dimensione={44} />
-              <span className="relative min-w-0 flex-1">
-                <span className="block font-titolo text-lg leading-tight text-abete">Scrivi a {destinatario.display_name.split(" ")[0]}</span>
-                <span className="block text-sm text-inchiostro/70">Non saprà che sei tu</span>
-              </span>
-              <PallinoChat receiverId={destinatario.id} ruolo="babbo" />
-              <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
-            </Link>
-          )}
-          <Link href={`/gruppo/${id}/chat?con=babbo`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
-            <ToppaBabbo dimensione={44} />
-            <span className="relative min-w-0 flex-1">
-              <span className="block font-titolo text-lg leading-tight text-abete">Il tuo Babbo Natale</span>
-              <span className="block text-sm text-inchiostro/70">Lui sa chi sei, tu no</span>
-            </span>
-            <PallinoChat receiverId={io.id} ruolo="pescato" />
-            <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>
-          </Link>
-        </section>
       )}
 
       {io && (
@@ -202,11 +181,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         <p className="mt-2 text-sm text-crema/70">Tocca una persona per vedere la sua bacheca. Chi non è ancora entrato ha la toppa vuota.</p>
       </section>
 
-      {organizzatore && (
-        <TastoLink href={`/gruppo/${id}/organizza`} tipo="secondario" className="mt-8">
-          Organizza il gruppo
-        </TastoLink>
-      )}
+      {io && <MenuGruppo groupId={id} mioMembro={io.id} chatBloccata={!chatAperta} giochiBloccati={!giochiAperti} />}
     </main>
   );
 }

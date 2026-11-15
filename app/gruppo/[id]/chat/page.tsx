@@ -37,12 +37,14 @@ function Chat() {
     (async () => {
       const { data: s } = await supabase.auth.getSession();
       const uid = s.session?.user.id;
-      if (!uid) return router.replace("/");
-      const [{ data: g }, { data: io }] = await Promise.all([
+      if (!uid) return;
+      const [{ data: g }, { data: membri }] = await Promise.all([
         supabase.from("groups").select("name, status").eq("id", id).maybeSingle(),
-        supabase.from("group_members").select("id, envelope_opened_at").eq("group_id", id).eq("user_id", uid).maybeSingle(),
+        supabase.from("group_members").select("id, user_id, envelope_opened_at").eq("group_id", id),
       ]);
-      if (!g || !io || g.status === "aperto") return router.replace(`/gruppo/${id}`);
+      const io = membri?.find((m) => m.user_id === uid);
+      // la Santa Chat si apre solo quando tutti hanno aperto la busta: prima la sua pagina spiega perché
+      if (!g || !io || g.status === "aperto" || membri!.some((m) => !m.envelope_opened_at)) return router.replace(`/gruppo/${id}/santa-chat`);
 
       if (con === "babbo") {
         setConv({ ruolo: "pescato", receiverId: io.id, nomeAltro: "Babbo Natale", lookAltro: null, nomeGruppo: g.name });
@@ -144,8 +146,8 @@ function Chat() {
       lookAltro={conv.lookAltro}
       messaggi={messaggi}
       onInvia={invia}
-      indietro={`/gruppo/${id}`}
-      etichettaIndietro="Torna al gruppo"
+      indietro={`/gruppo/${id}/santa-chat`}
+      etichettaIndietro="Torna alla Santa Chat"
       contesto={conv.nomeGruppo}
     />
   );

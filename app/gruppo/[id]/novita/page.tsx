@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { lookDi } from "@/components/avatar";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { TestataInterna } from "@/components/ui";
@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 export default async function PaginaNovita({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: membri }, { data: nomiTotem }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id").eq("group_id", id),
     supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
   ]);
-  if (!gruppo || !membri) notFound();
+  if (!gruppo || !membri) return null; // non è un mio gruppo: ci pensa il layout
   const io = membri.find((m) => m.user_id === userId);
   if (!io) redirect(`/gruppo/${id}`);
   const { data: profili } = await supabase

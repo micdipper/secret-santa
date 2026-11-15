@@ -35,6 +35,8 @@ for (const [x, n] of [[A, "Anna"], [B, "Bruno"], [C, "Carla"]]) {
   x.nome = n; x.mid = mid[n];
   x.dest = (await x.c.from("assignments").select("receiver_member_id").eq("group_id", gid).single()).data.receiver_member_id;
 }
+// dal 17/11 la chat si apre solo quando tutti hanno aperto la busta (collaudato in gruppi-separati.mjs)
+for (const x of [A, B, C]) await x.c.from("group_members").update({ envelope_opened_at: new Date().toISOString() }).eq("id", x.mid);
 const per = (memberId) => u.find((x) => x.mid === memberId);
 const R = per(A.dest);           // chi riceve da Anna
 const T = u.find((x) => x !== A && x !== R); // il terzo

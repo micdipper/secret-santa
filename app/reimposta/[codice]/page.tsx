@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CampoPassword } from "@/components/scelte";
 import { Errore, Feltro, Tasto, TitoloRiquadro } from "@/components/ui";
 import { passwordValida } from "@/lib/accesso";
+import { salvaAccessoCorrente } from "@/lib/portachiavi";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 // Pagina aperta dal link usa-e-getta: la persona sceglie da sola la nuova password.
@@ -25,8 +26,9 @@ export default function Reimposta() {
       setInvio(false);
       return setErrore(error?.message ?? "Questo link non è più valido.");
     }
-    // Entro subito con la nuova password
-    await supabase.auth.signOut();
+    // Entro subito con la nuova password (l'accesso di un eventuale altro gruppo resta nel portachiavi;
+    // niente signOut: chiuderebbe per sempre quell'accesso)
+    await salvaAccessoCorrente(supabase);
     const { error: errAccesso } = await supabase.auth.signInWithPassword({ email: data[0].login_email, password });
     if (errAccesso) {
       setInvio(false);

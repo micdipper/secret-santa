@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { lookDi } from "@/components/avatar";
 import { BigliettoOlografico } from "@/components/biglietto-olografico";
 import { TastoLink, TestataInterna } from "@/components/ui";
@@ -11,13 +11,13 @@ export const dynamic = "force-dynamic";
 export default async function PaginaBiglietto({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: io }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, envelope_opened_at").eq("group_id", id).eq("user_id", userId).maybeSingle(),
   ]);
-  if (!gruppo || !io) notFound();
+  if (!gruppo || !io) return null; // non è un mio gruppo: ci pensa il layout
   if (!io.envelope_opened_at) redirect(`/gruppo/${id}/busta`); // prima si apre la busta
 
   const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).eq("giver_member_id", io.id).maybeSingle();

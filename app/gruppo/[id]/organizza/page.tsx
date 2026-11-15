@@ -1,5 +1,6 @@
 "use client";
 
+import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -65,6 +66,10 @@ function Organizza() {
   } | null>(null);
   const [nuovoNome, setNuovoNome] = useState("");
   const [estrazioneInCorso, setEstrazioneInCorso] = useState(false);
+  // data e tema si scrivono qui e si salvano con il tasto (la data) o uscendo dal campo (il tema)
+  const [nuovaData, setNuovaData] = useState("");
+  const [nuovoTema, setNuovoTema] = useState("");
+  const [avvisoData, setAvvisoData] = useState(false);
 
   const carica = useCallback(async () => {
     const [{ data: s }, { data: g }, { data: m }, { data: c }] =
@@ -89,6 +94,8 @@ function Organizza() {
       ]);
     setMioId(s.session?.user.id ?? null);
     setGruppo(g as Gruppo | null);
+    setNuovaData((g as Gruppo | null)?.exchange_date ?? "");
+    setNuovoTema((g as Gruppo | null)?.theme ?? "");
     setMembri((m as Membro[]) ?? []);
     setCoppie((c as Coppia[]) ?? []);
     const ids = ((m as Membro[]) ?? []).flatMap((x) =>
@@ -145,6 +152,15 @@ function Organizza() {
     if (error) carica();
     setErrore(error ? (error.message.includes("bloccata") ? error.message : "Non sono riuscito a salvare. Riprova.") : "");
     setSalvataggio(error ? "" : "salvato");
+  }
+
+  // Salva la data: se è a meno di 6 giorni prima si avvisa che i minigiochi non partirebbero
+  function salvaData(senzaGiochi = false) {
+    const g = giorniMancanti(nuovaData || null);
+    if (g !== null && g < 0) return setErrore("Il giorno dello scambio è già passato: scegline un altro.");
+    if (dataTroppoVicina(nuovaData) && !senzaGiochi) return setAvvisoData(true);
+    setAvvisoData(false);
+    salva({ exchange_date: nuovaData || null });
   }
 
   async function aggiungiPersona() {
@@ -307,18 +323,27 @@ function Organizza() {
             id="data"
             type="date"
             etichetta="Giorno dello scambio"
-            value={gruppo.exchange_date ?? ""}
-            disabled={!modificabile || dataBloccata}
+            value={nuovaData}
+            disabled={dataBloccata}
             aiuto={notaGiochi}
-            onChange={(e) => salva({ exchange_date: e.target.value || null })}
+            onChange={(e) => setNuovaData(e.target.value)}
           />
+          {!dataBloccata && (
+            <Tasto
+              tipo="secondario"
+              disabled={nuovaData === (gruppo.exchange_date ?? "")}
+              onClick={() => salvaData()}
+            >
+              {gruppo.exchange_date ? "Cambia la data" : "Salva la data"}
+            </Tasto>
+          )}
           <div className="flex flex-col gap-2">
             <span className="font-medium">Budget a persona</span>
             <div className="flex items-center justify-between gap-3">
               <TastoTondo
                 etichetta="Diminuisci il budget"
                 icona={Icone.meno}
-                disabled={!modificabile || (gruppo.budget_eur ?? 0) <= 5}
+                disabled={(gruppo.budget_eur ?? 0) <= 5}
                 onClick={() =>
                   salva({ budget_eur: (gruppo.budget_eur ?? 0) - 5 })
                 }
@@ -329,22 +354,28 @@ function Organizza() {
               <TastoTondo
                 etichetta="Aumenta il budget"
                 icona={Icone.piu}
-                disabled={!modificabile}
                 onClick={() =>
                   salva({ budget_eur: (gruppo.budget_eur ?? 0) + 5 })
                 }
               />
             </div>
           </div>
-          {modificabile && (
-            <p className="text-sm text-inchiostro/70" aria-live="polite">
-              {salvataggio === "salvo"
-                ? "Salvo…"
-                : salvataggio === "salvato"
-                  ? "Salvato ✓"
-                  : "Si salva da solo appena cambi qualcosa."}
-            </p>
-          )}
+          <Campo
+            id="tema"
+            etichetta="Tema (facoltativo)"
+            placeholder="Regali fatti a mano"
+            value={nuovoTema}
+            maxLength={200}
+            onChange={(e) => setNuovoTema(e.target.value)}
+            onBlur={() => nuovoTema.trim() !== (gruppo.theme ?? "") && salva({ theme: nuovoTema.trim() || null })}
+          />
+          <p className="text-sm text-inchiostro/70" aria-live="polite">
+            {salvataggio === "salvo"
+              ? "Salvo…"
+              : salvataggio === "salvato"
+                ? "Salvato ✓ Tutti lo vedono nella pagina del gruppo."
+                : "Budget e tema si salvano da soli, la data con il suo tasto. Puoi cambiarli anche dopo l'estrazione."}
+          </p>
         </div>
       </Feltro>
 
@@ -511,6 +542,15 @@ function Organizza() {
           <Errore>{errore}</Errore>
         </div>
       )}
+
+      <AvvisoDataVicina
+        aperto={avvisoData}
+        onAltraData={() => {
+          setAvvisoData(false);
+          document.getElementById("data")?.focus();
+        }}
+        onContinua={() => salvaData(true)}
+      />
 
       {/* Per andare alla pagina del gruppo (la tua bacheca, il tuo personaggio…) anche prima dell'estrazione */}
       <TastoLink href={`/gruppo/${id}`} tipo="secondario" className="mt-8">

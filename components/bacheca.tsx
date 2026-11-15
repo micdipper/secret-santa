@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CATALOGO, toppaPersonalizzata, trovaToppa, type ContenutoPersonalizzato, type RigaPersonalizzata, type TipoToppa, type Toppa } from "@/components/toppe";
-import { Cassettiera, PillolaNome, mescola, oggettoDaToppa, type ContenutoCassetto, type OggettoCassetto } from "@/components/cassettiera";
+import { Cassettiera, PillolaNome, mescola, oggettoDaToppa, type ContenutoCassetto } from "@/components/cassettiera";
 import { EditorParola, EditorSimbolo } from "@/components/editor-toppe";
 import { AnimatePresence, motion } from "framer-motion";
 import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
@@ -35,7 +35,7 @@ export type Elemento = {
 const ALTEZZA = (100 * 4) / 3;
 const COLONNE = 60;
 const RIGHE = 80;
-const MAX_COPIE = 5; // copie della stessa toppa sulla bacheca
+const MAX_FOTO = 5; // foto e immagini da link sulla bacheca (ogni toppa invece una sola volta)
 
 
 // Ogni toppa nuova arriva un po' storta e un po' spostata dal centro, come attaccata a mano
@@ -241,24 +241,25 @@ export function Bacheca({
     kind: Elemento["kind"],
     content: Elemento["content"],
     width: number,
-    dove?: { x: number; y: number; rotation: number }, // per i duplicati: accanto all'originale
   ) {
     const z = Math.max(0, ...elementi.map((e) => e.z)) + 1;
     const nuovo = {
       member_id: memberId,
       kind,
       content,
-      x: dove?.x ?? 50 + spostamentoCasuale(18),
-      y: dove?.y ?? ALTEZZA / 2 + spostamentoCasuale(24),
+      x: 50 + spostamentoCasuale(18),
+      y: ALTEZZA / 2 + spostamentoCasuale(24),
       width,
       height: width / (content.rapporto ?? toppaDi(content.toppa ?? "")?.rapporto ?? 1),
-      rotation: dove?.rotation ?? inclinazioneCasuale(),
+      rotation: inclinazioneCasuale(),
       z,
     };
     const { data, error } = prova
       ? { data: { id: crypto.randomUUID(), kind, content, x: nuovo.x, y: nuovo.y, width, rotation: nuovo.rotation, z }, error: null }
       : await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
-    if (error || !data) return setErrore("Non sono riuscito ad attaccarlo. Riprova.");
+    if (error || !data) {
+      return setErrore(error?.message?.includes("5 foto") ? `Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto.` : "Non sono riuscito ad attaccarlo. Riprova.");
+    }
     setErrore("");
     setElementi((l) => [...l, data as Elemento]);
     setSelezionato(data.id);
@@ -271,18 +272,9 @@ export function Bacheca({
     setSelezionato(null);
     if (prova) return;
     await traccia(supabase.from("moodboard_items").delete().eq("id", id));
-    // la foto si cancella dall'archivio solo se nessun duplicato la usa ancora
+    // la foto si cancella dall'archivio solo se nessun'altra (vecchie copie) la usa ancora
     const usataAncora = elementi.some((x) => x.id !== id && x.content.path && x.content.path === e?.content.path);
     if (e?.kind === "foto" && e.content.path && !usataAncora) await traccia(supabase.storage.from("moodboard").remove([e.content.path]));
-  }
-
-  // Duplica: una copia identica, appena spostata, che passa davanti
-  function duplica(e: Elemento) {
-    if (e.kind === "toppa" && elementi.filter((x) => x.content.toppa === e.content.toppa).length >= MAX_COPIE) {
-      return setErrore(`Di questa toppa ne puoi attaccare al massimo ${MAX_COPIE}.`);
-    }
-    suoni.toppa();
-    aggiungi(e.kind, e.content, e.width, { x: Math.min(95, e.x + 6), y: Math.min(ALTEZZA - 5, e.y + 6), rotation: e.rotation + 4 });
   }
 
   // quello che tocchi passa davanti agli altri
@@ -297,6 +289,7 @@ export function Bacheca({
   }
 
   async function aggiungiFoto(file: File) {
+    if (fotoPiene) return setErrore(`Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto: togline una per metterne un'altra.`);
     setCaricamento(true);
     try {
       const { blob, rapporto } = await riduciFoto(file);
@@ -320,6 +313,7 @@ export function Bacheca({
 
   async function aggiungiDaLink() {
     const url = linkImmagine.trim();
+    if (fotoPiene) return setErrore(`Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto: togline una per metterne un'altra.`);
     if (!/^https?:\/\//i.test(url)) return setErrore("Incolla un indirizzo che inizia con https://");
     try {
       const rapporto = await caricaDimensioni(url);
@@ -427,17 +421,15 @@ export function Bacheca({
   // cosa c'è in un cassetto: tutte le toppe mescolate; quelle del mio totem e del gruppo non ancora scoperte
   // stanno nel doppio fondo
   function cassetto(tipo: TipoToppa): ContenutoCassetto {
-    const conNota = (t: Toppa, extra: Partial<OggettoCassetto> = {}) => {
-      const usate = elementi.filter((e) => e.kind === "toppa" && e.content.toppa === t.id).length; // massimo 5 copie per toppa
-      return oggettoDaToppa(t, { nota: usate ? `${usate}/${MAX_COPIE}` : undefined, spento: usate >= MAX_COPIE, ...extra });
-    };
-    const speciali = [...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []), ...delGruppo.filter((t) => t.tipo === tipo)];
-    const base = CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo);
-    const mia = mie.filter((x) => x.r.tipo === tipo).map((x) => conNota(x.t, { segno: "mio", nome: tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola" }));
+    // ogni toppa si attacca una volta sola: appena è sulla tela sparisce dal cassetto (togliendola ritorna)
+    const libera = (t: Toppa) => !elementi.some((e) => e.kind === "toppa" && e.content.toppa === t.id);
+    const speciali = [...(totem ? CATALOGO.filter((t) => t.totem === totem.profilo && !t.ritirata && t.tipo === tipo) : []), ...delGruppo.filter((t) => t.tipo === tipo)].filter(libera);
+    const base = CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo && libera(t));
+    const mia = mie.filter((x) => x.r.tipo === tipo && libera(x.t)).map((x) => oggettoDaToppa(x.t, { segno: "mio", nome: tipo === "simbolo" ? "Il tuo simbolo" : "La tua parola" }));
     const giaScoperte = speciali.filter((t) => scoperte?.includes(t.id));
     return {
-      visibili: mescola([...base, ...giaScoperte].map((t) => conNota(t))).concat(mia),
-      nascosti: speciali.filter((t) => !scoperte?.includes(t.id)).map((t) => conNota(t)),
+      visibili: mescola([...base, ...giaScoperte].map((t) => oggettoDaToppa(t))).concat(mia),
+      nascosti: speciali.filter((t) => !scoperte?.includes(t.id)).map((t) => oggettoDaToppa(t)),
     };
   }
 
@@ -465,6 +457,8 @@ export function Bacheca({
   }
 
   const ordinati = [...elementi].sort((a, b) => a.z - b.z);
+  const numFoto = elementi.filter((e) => e.kind === "foto" || e.kind === "immagine_link").length;
+  const fotoPiene = numFoto >= MAX_FOTO;
   const sel = elementi.find((e) => e.id === selezionato);
 
   return (
@@ -602,7 +596,6 @@ export function Bacheca({
           {/* Comandi per la toppa toccata sulla tela (attaccare e ricamare si fa dalla cassettiera qui sotto) */}
           {!modoRicamo && (
             <div className="mt-4 flex items-center justify-center gap-3">
-              <TastoTondo etichetta="Duplica" icona={Icone.sopra} disabled={!sel} onClick={() => sel && duplica(sel)} />
               <TastoTondo etichetta="Togli dalla bacheca" icona={Icone.cestino} disabled={!sel} onClick={() => sel && togli(sel.id)} />
             </div>
           )}
@@ -632,13 +625,16 @@ export function Bacheca({
                 }}
                 foto={
                   <div className="flex flex-col gap-4 rounded-2xl bg-feltro p-4 text-inchiostro shadow-[0_3px_6px_rgba(0,0,0,.35)]">
-                    <label className="tasto cucitura cliccabile stoffa-vermiglio relative cursor-pointer">
+                    <p className="text-center text-sm text-inchiostro/70">
+                      {fotoPiene ? `Hai già ${MAX_FOTO} foto sulla tela: togline una per metterne un'altra.` : `Foto sulla tela: ${numFoto} di ${MAX_FOTO}`}
+                    </p>
+                    <label className={`tasto cucitura cliccabile stoffa-vermiglio relative ${fotoPiene ? "pointer-events-none opacity-50" : "cursor-pointer"}`} aria-disabled={fotoPiene}>
                       <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>
                       <input
                         type="file"
                         accept="image/*"
                         className="sr-only"
-                        disabled={caricamento}
+                        disabled={caricamento || fotoPiene}
                         onChange={(ev) => {
                           const f = ev.target.files?.[0];
                           if (f) aggiungiFoto(f);
@@ -653,7 +649,7 @@ export function Bacheca({
                           <input value={linkImmagine} onChange={(ev) => setLinkImmagine(ev.target.value)} placeholder="https://…" inputMode="url" />
                         </span>
                       </label>
-                      <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim()} onClick={aggiungiDaLink} />
+                      <TastoTondo etichetta="Aggiungi l'immagine dal link" icona={Icone.piu} disabled={!linkImmagine.trim() || fotoPiene} onClick={aggiungiDaLink} />
                     </div>
                   </div>
                 }

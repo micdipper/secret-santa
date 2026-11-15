@@ -1,19 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ToppaAvatar, LOOK_BASE, normalizzaLook, type Look } from "@/components/avatar";
+import { useState } from "react";
+import { ToppaAvatar, LOOK_BASE, type Look } from "@/components/avatar";
+import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { CampoPassword } from "@/components/scelte";
 import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
+import { giorniMancanti } from "@/lib/date";
+import { salvaAccessoCorrente } from "@/lib/portachiavi";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 export default function NuovoGruppo() {
   const router = useRouter();
   const supabase = clientSoloBrowser();
 
-  const [collegato, setCollegato] = useState(false);
   const [nome, setNome] = useState("");
   const [data, setData] = useState("");
   const [budget, setBudget] = useState(30);
@@ -24,24 +26,9 @@ export default function NuovoGruppo() {
   const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [invio, setInvio] = useState(false);
+  // ogni gruppo è a sé: personaggio nuovo, nessun premio, password nuova
   const [look, setLook] = useState<Look>(LOOK_BASE);
-  const [sbloccati, setSbloccati] = useState<string[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      const uid = data.session?.user.id;
-      setCollegato(!!uid);
-      if (!uid) return;
-      // Ho già un personaggio: parto da quello
-      const [{ data: p }, { data: acc }] = await Promise.all([
-        supabase.from("profiles").select("look").eq("user_id", uid).maybeSingle(),
-        supabase.rpc("my_unlocked_accessories"),
-      ]);
-      if (p) setLook(normalizzaLook(p.look, uid));
-      setSbloccati((acc as string[] | null) ?? []);
-    })();
-  }, [supabase]);
+  const [avvisoData, setAvvisoData] = useState(false);
 
   function aggiungiNome() {
     const n = nuovoNome.trim();
@@ -56,21 +43,24 @@ export default function NuovoGruppo() {
     setErrore("");
   }
 
-  async function crea(ev: React.FormEvent) {
-    ev.preventDefault();
+  async function crea(ev?: React.FormEvent, senzaGiochi = false) {
+    ev?.preventDefault();
     setErrore("");
     if (!nome.trim()) return setErrore("Dai un nome al gruppo.");
     if (!mioNome.trim()) return setErrore("Scrivi il tuo nome.");
     if (altri.length < 2) return setErrore("Servono almeno altre 2 persone oltre a te.");
-    if (!collegato && !passwordValida(password)) return setErrore("La password deve avere almeno 8 caratteri.");
+    if (!passwordValida(password)) return setErrore("La password deve avere almeno 8 caratteri.");
+    if (data && giorniMancanti(data)! < 0) return setErrore("Il giorno dello scambio è già passato: scegline un altro.");
+    // data a meno di 6 giorni: prima si avvisa che i minigiochi non partirebbero
+    if (dataTroppoVicina(data) && !senzaGiochi) return setAvvisoData(true);
 
     setInvio(true);
-    if (!collegato) {
-      const { error } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
-      if (error) {
-        setInvio(false);
-        return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
-      }
+    // ogni gruppo ha un accesso suo: quello di adesso (di un altro gruppo) resta nel portachiavi del telefono
+    await salvaAccessoCorrente(supabase);
+    const { error: errAccesso } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
+    if (errAccesso) {
+      setInvio(false);
+      return setErrore("Non riesco a creare il tuo accesso. Riprova tra un momento.");
     }
     const { data: risultato, error } = await supabase.rpc("create_group", {
       p_name: nome,
@@ -103,7 +93,14 @@ export default function NuovoGruppo() {
           <TitoloRiquadro>Il gruppo</TitoloRiquadro>
           <div className="mt-5 flex flex-col gap-5">
             <Campo id="nome" etichetta="Come si chiama?" placeholder="Natale tra amici" value={nome} onChange={(e) => setNome(e.target.value)} maxLength={80} />
-            <Campo id="data" type="date" etichetta="Giorno dello scambio" value={data} onChange={(e) => setData(e.target.value)} />
+            <Campo
+              id="data"
+              type="date"
+              etichetta="Giorno dello scambio"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              aiuto="Puoi sceglierlo anche dopo. Con almeno 6 giorni di anticipo partono i minigiochi dell'avvento."
+            />
             <div className="flex flex-col gap-2">
               <span className="font-medium">Budget a persona</span>
               <div className="flex items-center justify-between gap-3">
@@ -131,10 +128,15 @@ export default function NuovoGruppo() {
               <ToppaAvatar look={look} dimensione={128} nome="Il tuo personaggio" />
             </span>
             </div>
-            <EditorPersonaggio look={look} sbloccati={sbloccati} onCambia={(campi) => setLook({ ...look, ...campi })} />
-            {!collegato && (
-              <CampoPassword id="password" nuova etichetta="Scegli una password" valore={password} onCambia={setPassword} aiuto="Almeno 8 caratteri. Ti servirà per rientrare da un altro telefono: non dirla a nessuno." />
-            )}
+            <EditorPersonaggio look={look} sbloccati={[]} onCambia={(campi) => setLook({ ...look, ...campi })} />
+            <CampoPassword
+              id="password"
+              nuova
+              etichetta="Scegli una password"
+              valore={password}
+              onCambia={setPassword}
+              aiuto="Almeno 8 caratteri, solo per questo gruppo. Ti servirà per rientrare da un altro telefono: non dirla a nessuno."
+            />
           </div>
         </Feltro>
 
@@ -180,6 +182,18 @@ export default function NuovoGruppo() {
           {invio ? "Un momento…" : "Crea il gruppo"}
         </Tasto>
       </form>
+
+      <AvvisoDataVicina
+        aperto={avvisoData}
+        onAltraData={() => {
+          setAvvisoData(false);
+          document.getElementById("data")?.focus();
+        }}
+        onContinua={() => {
+          setAvvisoData(false);
+          crea(undefined, true);
+        }}
+      />
     </main>
   );
 }

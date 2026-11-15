@@ -1,4 +1,3 @@
-import { notFound, redirect } from "next/navigation";
 import { AperturaBusta, type Persona } from "@/components/apertura-busta";
 import { lookDi } from "@/components/avatar";
 import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
@@ -9,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function Busta({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: membri }, { data: abbinamento }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
@@ -17,7 +16,7 @@ export default async function Busta({ params }: { params: Promise<{ id: string }
     // Le regole del database restituiscono solo il MIO abbinamento.
     supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
   ]);
-  if (!gruppo || !membri) notFound();
+  if (!gruppo || !membri) return null; // non è un mio gruppo: ci pensa il layout
 
   const io = membri.find((m) => m.user_id === userId);
   const { data: profili } = await supabase

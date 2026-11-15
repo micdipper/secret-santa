@@ -263,6 +263,31 @@ export const Icone = {
       <path d="M5 19c-2 1-2-2 1-3 4-1 6 2 9 1" />
     </svg>
   ),
+  gruccia: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M10 6.5a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.3V11" />
+      <path d="M12 11l-8.5 6.2c-.8.6-.4 1.8.6 1.8h15.8c1 0 1.4-1.2.6-1.8z" />
+    </svg>
+  ),
+  campanella: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z" />
+      <path d="M10 20.5a2 2 0 0 0 4 0M12 3v2" />
+    </svg>
+  ),
+  calendario: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect x="4" y="5.5" width="16" height="14.5" rx="3" />
+      <path d="M4 10h16M9 3.5v4M15 3.5v4" />
+      <path d="M12 12.5l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" />
+    </svg>
+  ),
+  lucchetto: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <rect x="5" y="11" width="14" height="9.5" rx="2.5" />
+      <path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3" />
+    </svg>
+  ),
 };
 
 // Messaggio d'errore vicino a ciò che l'ha causato (non cliccabile).

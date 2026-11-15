@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Bacheca, type Elemento } from "@/components/bacheca";
 import { SondaggioPerBacheca } from "@/components/sondaggio-totem";
 import { FrancobolloTotem } from "@/components/totem";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function PaginaBacheca({ params }: { params: Promise<{ id: string; membro: string }> }) {
   const { id, membro } = await params;
   const { supabase, userId } = await utenteCollegato();
-  if (!userId) redirect("/");
+  if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
@@ -20,7 +20,8 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
     supabase.from("moodboard_items").select("id, kind, content, x, y, width, rotation, z").eq("member_id", membro),
     supabase.from("group_toppe").select("id, tipo, ordine, contenuto, member_id").eq("group_id", id).order("ordine"),
   ]);
-  if (!gruppo || !persona) notFound();
+  if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
+  if (!persona) notFound();
   const mia = persona.user_id === userId;
   const nome = persona.display_name.split(" ")[0];
 
