@@ -22,6 +22,7 @@ begin
   -- 1) giochi attivi solo con almeno 6 giorni
   r := r || E'\n1a attivi con 19 giorni: ' || (select giochi_attivi from public.groups where id = g);
   insert into public.groups (name, exchange_date, organizer_id) values ('Test giochi SQL 2', '2026-12-04', u1) returning id into g2;
+  insert into public.group_members (group_id, display_name, user_id, joined_at) values (g2, 'Uno', u1, now());
   r := r || E'\n1b NON attivi con 3 giorni: ' || (select not giochi_attivi from public.groups where id = g2);
   update public.groups set exchange_date = '2026-12-20' where id = g2;
   r := r || E'\n1c senza giochi la data si sposta e i giochi partono: ' || (select giochi_attivi from public.groups where id = g2);
@@ -176,7 +177,18 @@ begin
   exception when others then
     r := r || E'\n9e orologio non chiamabile dal sito: true';
   end;
+  -- 10) la data la cambia l'organizzatore dal sito (con i permessi di un utente, non di postgres):
+  --     il 15/11 il trigger dei giochi rispondeva "permission denied for function oggi_roma"
+  begin
+    update public.groups set exchange_date = '2027-01-20' where id = g2;
+    r := r || E'\n10a l''organizzatore cambia la data dal sito e i giochi si ricalcolano: ' || coalesce((select exchange_date = '2027-01-20' and giochi_attivi from public.groups where id = g2), false);
+  exception when others then
+    r := r || E'\n10a l''organizzatore cambia la data dal sito: false (' || sqlerrm || ')';
+  end;
+  perform set_config('request.jwt.claims', jsonb_build_object('sub', u2)::text, true);
+  update public.groups set exchange_date = '2027-02-01' where id = g2;
   perform set_config('role', 'postgres', true);
+  r := r || E'\n10b chi non organizza non cambia la data: ' || (select exchange_date = '2027-01-20' from public.groups where id = g2);
 
   raise exception 'RISULTATI (tutto annullato): %', r;
 end $$;

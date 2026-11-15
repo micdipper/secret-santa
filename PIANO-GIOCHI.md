@@ -184,7 +184,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 3. ✅ (16/11) Giochi 1 e 2 (Palline al volo, Campanelli).
 4. ✅ (16/11) Giochi 3 e 4 (Impila i regali, Slitta slalom). Valori veri = costanti in cima a `lib/giochi/regali.ts` e `lib/giochi/slitta.ts` (riassunto in STATO.md); punteggio del gioco 3: 10 a piano + 10 in più per un perfetto.
 5. ✅ (17/11) Gioco 5 (Palle di neve, `lib/giochi/neve.ts`) + annuncio del vincitore (`components/giochi/annuncio.tsx`). (Premi grafici e sistemazione delle cuciture: ✅ fatti il 16/11 durante il blocco 3.) Insidia in più rispetto alla 6.5: dai 25 s un elfo può lasciare il posto a Babbo Natale nella stessa finestra.
-6. **Collaudo completo** (sezione 8), con Marzia al computer (ogni SQL chiede la sua conferma). Metodo: **viaggio nel tempo** con `test-e2e/giochi-tempo.mjs` (gruppo di prova, si sposta la data dello scambio con SQL, telefoni simulati, schermate mandate a Marzia), così non si aspettano i giorni veri.
+6. ✅ (15/11, manca solo la taratura) **Collaudo completo** (sezione 8), con Marzia al computer (ogni SQL chiede la sua conferma). Metodo: **viaggio nel tempo** con `test-e2e/giochi-tempo.mjs` (gruppo di prova, si sposta la data dello scambio con SQL, telefoni simulati, schermate mandate a Marzia), così non si aspettano i giorni veri.
    - Già fatto il 15/11 (blocco 5): calendario chiuso → apertura → gioco 1 in diretta → gioco 1 chiuso con annuncio e premio nel guardaroba → giorno dello scambio col gioco 5; test dei bot (`giochi-logica.ts`) tutti OK.
    - Da fare, in ordine:
      1. Cancellare il gruppo di prova rimasto (vedi STATO.md, Marzia ha già detto sì).
