@@ -1,8 +1,7 @@
 // I 5 giochi del calendario: nomi, regole, premi e limiti (gli stessi di private.regole_gioco nel database).
-// Finché un gioco vero non è pronto si usa il gioco provvisorio "Stelline" (blocchi 3-5 di PIANO-GIOCHI.md).
 import type { Gioco } from "./base.ts";
 import { campanelli } from "./campanelli.ts";
-import { stelline } from "./finto.ts";
+import { neve } from "./neve.ts";
 import { palline } from "./palline.ts";
 import { regali } from "./regali.ts";
 import { PESO_REGALO, slitta } from "./slitta.ts";
@@ -20,10 +19,7 @@ export type InfoGioco = {
   durataMax: number; // secondi (serve anche per "sta giocando…")
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ogni gioco ha il suo stato
   gioco: Gioco<any>;
-  provvisorio: boolean;
 };
-
-const STORIA_PROVVISORIA = "Gioco provvisorio, quello vero arriva presto: tocca le stelline prima che la cucitura intorno si chiuda. Ogni stellina vale 10 punti e hai 20 secondi.";
 
 export const GIOCHI: InfoGioco[] = [
   {
@@ -36,7 +32,6 @@ export const GIOCHI: InfoGioco[] = [
     nomePremio: "Capelli neon",
     durataMax: 50,
     gioco: palline,
-    provvisorio: false,
   },
   {
     n: 2,
@@ -48,7 +43,6 @@ export const GIOCHI: InfoGioco[] = [
     nomePremio: "Taglio Esplosione",
     durataMax: 600,
     gioco: campanelli,
-    provvisorio: false,
   },
   {
     n: 3,
@@ -60,7 +54,6 @@ export const GIOCHI: InfoGioco[] = [
     nomePremio: "Maglione GODO",
     durataMax: 600,
     gioco: regali,
-    provvisorio: false,
   },
   {
     n: 4,
@@ -74,9 +67,18 @@ export const GIOCHI: InfoGioco[] = [
     gioco: slitta,
     sfondoChiaro: true,
     formatta: (p) => [`🎁 ${Math.floor(p / PESO_REGALO)}`, `${p % PESO_REGALO} m`],
-    provvisorio: false,
   },
-  { n: 5, nome: "Palle di neve", indizio: "Qualcosa da mettere in testa.", storia: STORIA_PROVVISORIA, premio: "cowboy", nomePremio: "Cappello da cowboy", durataMax: 65, gioco: stelline, provvisorio: true },
+  {
+    n: 5,
+    nome: "Palle di neve",
+    indizio: "Qualcosa da mettere in testa.",
+    storia:
+      "Gli elfi si affacciano alla finestra per spiarti: tocca dove lanciare e prendili con una palla di neve, ma la palla ci mette un attimo ad arrivare. Gli elfi d'oro e la renna valgono di più. Babbo Natale invece non va colpito: si offende (e ti toglie punti). Hai un minuto.",
+    premio: "cowboy",
+    nomePremio: "Cappello da cowboy",
+    durataMax: 65,
+    gioco: neve,
+  },
 ];
 
 export const TENTATIVI = 3;

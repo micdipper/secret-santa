@@ -115,6 +115,7 @@ export default function PaginaGiocoVera() {
   return (
     <PaginaGioco
       info={info}
+      gruppo={id}
       contesto={`${nomeGruppo} · gioco ${n} di 5`}
       indietro={`/gruppo/${id}/giochi`}
       etichettaIndietro="Torna al calendario"

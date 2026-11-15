@@ -39,8 +39,12 @@ export function finestreDa(dati: DatiGiochi, persone: Persona[]): Finestra[] {
       apre: new Date(g.apre_alle).getTime(),
       chiude: new Date(g.chiude_alle).getTime(),
       deciso: g.deciso,
-      vincitore: v ? { nome: v.nome, look: v.look } : null,
+      vincitore: v ? { nome: v.nome, look: v.look, mio: v.memberId === dati.mio_member_id } : null,
       mieiTentativi: g.miei_tentativi,
     };
   });
 }
+
+// I vincitori da annunciare (giochi chiusi con un vincitore deciso)
+export const vittorieDa = (finestre: Finestra[]) =>
+  finestre.flatMap((f) => (f.deciso && f.vincitore ? [{ n: f.n, nome: f.vincitore.nome, look: f.vincitore.look, mio: !!f.vincitore.mio }] : []));

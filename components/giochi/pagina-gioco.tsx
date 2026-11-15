@@ -3,6 +3,7 @@
 import confetti from "canvas-confetti";
 import { useEffect, useRef, useState } from "react";
 import { ToppaAvatar } from "@/components/avatar";
+import { AnnunciVincitori } from "@/components/giochi/annuncio";
 import { Classifica, Pallini, posizioni, type Riga } from "@/components/giochi/classifica";
 import { Partita, type Esito } from "@/components/giochi/partita";
 import { Errore, Feltro, Tasto, TestataInterna, TitoloRiquadro } from "@/components/ui";
@@ -19,6 +20,7 @@ export type Avvio = { seme: number; fine: (punteggio: number, stats: Record<stri
 */
 export function PaginaGioco({
   info,
+  gruppo = null,
   contesto,
   indietro,
   etichettaIndietro,
@@ -34,6 +36,7 @@ export function PaginaGioco({
   avvia,
 }: {
   info: InfoGioco;
+  gruppo?: string | null; // per ricordare nel telefono l'annuncio del vincitore già visto
   contesto: string;
   indietro: string;
   etichettaIndietro: string;
@@ -156,6 +159,8 @@ export function PaginaGioco({
           <Classifica righe={righe} io={io} n={info.n} />
         </div>
       </section>
+
+      {vincitore && <AnnunciVincitori gruppo={gruppo} vittorie={[{ n: info.n, nome: vincitore.nome, look: vincitore.look, mio: vincitore.memberId === io }]} />}
 
       {partita && (
         <Partita

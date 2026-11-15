@@ -26,8 +26,21 @@ export function controllaPremi() {
   window.dispatchEvent(new Event("controlla-premi"));
 }
 
+// Segna un premio come già visto (es. annunciato dal pop-up del vincitore dei giochi), così non compare due volte.
+// Se su questo telefono non c'è ancora l'elenco, non serve: al primo controllo i premi già vinti non si annunciano.
+export async function segnaPremioVisto(premio: string) {
+  const { data: s } = await clientSoloBrowser().auth.getSession();
+  const uid = s.session?.user.id;
+  if (!uid) return;
+  try {
+    const visti = JSON.parse(localStorage.getItem(`premi-visti:${uid}`) ?? "null") as string[] | null;
+    if (visti && !visti.includes(premio)) localStorage.setItem(`premi-visti:${uid}`, JSON.stringify([...visti, premio]));
+  } catch {}
+}
+
 // Pop-up "Hai vinto un premio!": compare appena si sblocca qualcosa.
-// Non durante l'apertura della busta (lì si aspetta di tornare indietro) né nella sala prove.
+// Non durante l'apertura della busta (lì si aspetta di tornare indietro), nei mini giochi (lì il premio
+// lo annuncia il pop-up del vincitore, components/giochi/annuncio.tsx) né nella sala prove.
 // I premi già visti sono ricordati nel telefono.
 export function AvvisoPremi() {
   const supabase = clientSoloBrowser();
@@ -36,7 +49,7 @@ export function AvvisoPremi() {
   const [premio, setPremio] = useState<{ id: string; look: Look } | null>(null);
 
   const controlla = useCallback(async () => {
-    if (!supabase || pathname.includes("/busta") || pathname.startsWith("/prove") || pathname.startsWith("/prova") || pathname.startsWith("/stile")) return;
+    if (!supabase || pathname.includes("/busta") || pathname.includes("/giochi") || pathname.startsWith("/prove") || pathname.startsWith("/prova") || pathname.startsWith("/stile")) return;
     const { data: s } = await supabase.auth.getSession();
     const uid = s.session?.user.id;
     if (!uid) return;

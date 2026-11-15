@@ -2,9 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnnunciVincitori } from "@/components/giochi/annuncio";
 import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
 import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { caricaGiochi, caricaPersone, finestreDa } from "@/lib/giochi/dati";
+import { caricaGiochi, caricaPersone, finestreDa, vittorieDa } from "@/lib/giochi/dati";
 import { aperturaCalendario, benvenutoVisto, giorniAlloScambio, segnaBenvenuto } from "@/lib/giochi/avvento";
 import { durataBreve, scartoDa, statoDa, useOraServer } from "@/lib/giochi/ora";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -95,6 +96,8 @@ export default function PaginaCalendario() {
           </Feltro>
         )}
       </div>
+      {/* chi ha vinto i giochi chiusi (dopo il benvenuto, se c'è) */}
+      {!benvenuto && <AnnunciVincitori gruppo={id} vittorie={vittorieDa(dati.finestre)} />}
       {aperto && (
         <Benvenuto
           giorni={giorniAlloScambio(dati.finestre[4].apre, ora)}

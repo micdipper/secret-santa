@@ -5,7 +5,7 @@
 import { PASSO, casuale, type Mondo, type Tocco } from "../lib/giochi/base.ts";
 import { geometria, type StatoCampanelli } from "../lib/giochi/campanelli.ts";
 import { GIOCHI, REGOLE_SERVER } from "../lib/giochi/elenco.ts";
-import type { StatoStelline } from "../lib/giochi/finto.ts";
+import { VOLO, casa, colpibile, fuori, xRenna, type StatoNeve } from "../lib/giochi/neve.ts";
 import type { StatoPalline } from "../lib/giochi/palline.ts";
 import { velocita as velocitaRegali, type StatoRegali } from "../lib/giochi/regali.ts";
 import { corridoio, type StatoSlitta } from "../lib/giochi/slitta.ts";
@@ -26,8 +26,6 @@ const errore = (msg: string) => {
 type Bot = (s: never, m: Mondo, caso: () => number, bravura: number) => Tocco[];
 const tocco = (x: number, y: number): Tocco => ({ tipo: "giu", id: 1, x, y });
 
-const botStelline: Bot = (s: StatoStelline, _m, caso, bravura) =>
-  s.stelle.filter((o) => o.viva && caso() < bravura * 0.08).map((o) => tocco(o.x + (caso() - 0.5) * 20, o.y + (caso() - 0.5) * 20));
 
 const botPalline: Bot = (s: StatoPalline, m, caso, bravura) => {
   const out: Tocco[] = [];
@@ -89,8 +87,36 @@ const botSlitta: Bot = (s: StatoSlitta, _m, caso, bravura) => {
   return [{ tipo: "muovi", id: 1, x: s.dito.x0 + (meta - s.dito.meta0) / 1.2, y: 500 }];
 };
 
-const BOT: Record<string, Bot> = { stelline: botStelline, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta };
-const nomeBot = (n: number) => (GIOCHI[n - 1].provvisorio ? "stelline" : ["palline", "campanelli", "regali", "slitta"][n - 1]);
+// Gioco 5: il bot vede chi è alla finestra da almeno un tempo di reazione e lancia solo se all'arrivo
+// della palla sarà ancora fuori (il fortissimo lo sa esattamente; il medio a volte sbaglia i tempi,
+// a volte colpisce Babbo Natale per sbaglio). Mira alla renna dove sarà tra VOLO secondi.
+const botNeve: Bot = (s: StatoNeve, m, caso, bravura) => {
+  if (s.t - s.ultimoLancio < 0.2) return [];
+  const c = casa(m);
+  const reazione = bravura === 1 ? 0.2 : 0.38;
+  const mira = bravura === 1 ? 5 : 16;
+  if (caso() > (bravura === 1 ? 0.5 : 0.12)) return [];
+  const r = s.renna;
+  if (r && r.colpita < 0 && r.x > 0 && r.x < m.w) {
+    const x = xRenna(r, s.t, bravura === 1 ? VOLO : VOLO * (0.6 + caso() * 0.8));
+    return [tocco(x + (caso() - 0.5) * mira, c.yRenna - 22 + (caso() - 0.5) * mira)];
+  }
+  for (let i = 0; i < 9; i++) {
+    const p = s.finestre[i].chi;
+    if (!p || s.t - p.t0 < reazione) continue;
+    const errore = bravura === 1 ? 0 : (caso() - 0.3) * 0.3;
+    const buono = p.tipo !== "babbo" || (bravura < 1 && caso() < 0.03);
+    if (!buono || !colpibile(p, s.t)) continue;
+    // all'arrivo sarà ancora fuori? (il medio a volte si sbaglia: errore sui tempi)
+    if (fuori(p, s.t + VOLO + errore) < 0.6) continue;
+    const w = c.finestre[i];
+    return [tocco(w.cx + (caso() - 0.5) * mira, w.cy + (caso() - 0.5) * mira)];
+  }
+  return [];
+};
+
+const BOT: Record<string, Bot> = { neve: botNeve, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta };
+const nomeBot = (n: number) => ["palline", "campanelli", "regali", "slitta", "neve"][n - 1];
 
 function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
   const { gioco } = GIOCHI[n - 1];
@@ -118,6 +144,7 @@ for (const info of GIOCHI) {
   const partite = info.n === 2 || info.n === 4 ? 400 : PARTITE; // i campanelli durano molto: meno partite
   const punti: number[] = [];
   const dettagli: Record<string, number[]> = { medio: [], forte: [] };
+  const puntiBot: Record<string, number[]> = { medio: [], forte: [] };
   let maxPs = 0;
   for (let i = 0; i < partite; i++) {
     const seme = (i * 2654435761) >>> 0;
@@ -137,15 +164,16 @@ for (const info of GIOCHI) {
     }
     punti.push(punteggio);
     dettagli[bravura === 1 ? "forte" : "medio"].push(Math.round(secondi));
+    puntiBot[bravura === 1 ? "forte" : "medio"].push(punteggio);
     maxPs = Math.max(maxPs, punteggio / Math.max(1, secondi));
   }
   punti.sort((a, b) => a - b);
   const mediana = punti[Math.floor(punti.length / 2)];
-  // DETTAGLI=1: secondi di gioco del bot medio e del fortissimo (mediana)
+  // DETTAGLI=1: secondi di gioco e punti del bot medio e del fortissimo (mediana)
   const med = (a: number[]) => a.sort((x, y) => x - y)[Math.floor(a.length / 2)];
-  if (process.env.DETTAGLI) console.log(`  secondi: medio ${med(dettagli.medio)}, fortissimo ${med(dettagli.forte)}`);
+  if (process.env.DETTAGLI) console.log(`  secondi: medio ${med(dettagli.medio)}, fortissimo ${med(dettagli.forte)} · punti: medio ${med(puntiBot.medio)}, fortissimo ${med(puntiBot.forte)}`);
   console.log(
-    `gioco ${info.n} (${info.provvisorio ? "provvisorio" : info.nome}): mediana ${mediana}, record ${punti.at(-1)} (limite ${r.scoreMax}), punti/s max ${maxPs.toFixed(0)} (limite ${r.puntiAlSecondo})`,
+    `gioco ${info.n} (${info.nome}): mediana ${mediana}, record ${punti.at(-1)} (limite ${r.scoreMax}), punti/s max ${maxPs.toFixed(0)} (limite ${r.puntiAlSecondo})`,
   );
 }
 

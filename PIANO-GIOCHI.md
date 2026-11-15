@@ -183,5 +183,5 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 2. ✅ (16/11) Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
 3. ✅ (16/11) Giochi 1 e 2 (Palline al volo, Campanelli).
 4. ✅ (16/11) Giochi 3 e 4 (Impila i regali, Slitta slalom). Valori veri = costanti in cima a `lib/giochi/regali.ts` e `lib/giochi/slitta.ts` (riassunto in STATO.md); punteggio del gioco 3: 10 a piano + 10 in più per un perfetto.
-5. Gioco 5 + annuncio vincitore. (Premi grafici e sistemazione delle cuciture: ✅ fatti il 16/11 durante il blocco 3.)
+5. ✅ (17/11) Gioco 5 (Palle di neve, `lib/giochi/neve.ts`) + annuncio del vincitore (`components/giochi/annuncio.tsx`). (Premi grafici e sistemazione delle cuciture: ✅ fatti il 16/11 durante il blocco 3.) Insidia in più rispetto alla 6.5: dai 25 s un elfo può lasciare il posto a Babbo Natale nella stessa finestra.
 6. Collaudo completo (sezione 8), aggiornare STATO.md, commit, anteprima Vercel, prova di Marzia sul telefono.

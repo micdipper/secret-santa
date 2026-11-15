@@ -230,6 +230,20 @@ export const suoni = {
     rumore(0.45, { volume: 0.32, filtro: 700, scendi: 0.3 });
     rumore(0.2, { volume: 0.1, filtro: 4000, tipoFiltro: "highpass", ritardo: 0.03 });
   },
+  // gioco 5: palla di neve lanciata (soffio che sale)
+  lancio() {
+    rumore(0.16, { volume: 0.08, filtro: 900, tipoFiltro: "bandpass", q: 1.4, scendi: 2.4 });
+  },
+  // gioco 5: palla che si schiaccia ("sploff" morbido)
+  splat() {
+    rumore(0.2, { volume: 0.22, filtro: 1200, scendi: 0.25 });
+    nota(130, 0.1, { volume: 0.12, scivola: 0.6 });
+  },
+  // gioco 5: Babbo Natale colpito, offeso ("oh-oh!" che scende)
+  offeso() {
+    nota(240, 0.18, { tipo: "triangle", volume: 0.16, scivola: 0.85 });
+    nota(180, 0.3, { tipo: "triangle", volume: 0.16, scivola: 0.7, ritardo: 0.2 });
+  },
   fineGioco() {
     [784, 659, 523, 659].forEach((f, i) => nota(f, 0.28, { tipo: "triangle", volume: 0.1, ritardo: i * 0.12 }));
   },

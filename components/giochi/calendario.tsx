@@ -17,7 +17,7 @@ export type Finestra = {
   apre: number;
   chiude: number;
   deciso: boolean;
-  vincitore: { nome: string; look: Look | null } | null;
+  vincitore: { nome: string; look: Look | null; mio?: boolean } | null;
   mieiTentativi: number;
 };
 
