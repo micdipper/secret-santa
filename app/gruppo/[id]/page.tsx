@@ -8,6 +8,7 @@ import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
+import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
-    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi").eq("id", id).maybeSingle(),
+    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
@@ -93,6 +94,15 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
     </Feltro>
   );
 
+  // Sondaggio della disponibilità aperto: chi ha risposto e il giorno più probabile
+  let sondaggio: { risposto: boolean; risposte: number; migliori: string[]; max: number } | null = null;
+  if (gruppo.giorni_proposti) {
+    const { data: disp } = await supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id);
+    const risposte = Object.fromEntries((disp ?? []).map((r) => [r.member_id as string, r.giorni as string[]]));
+    const { migliori, max } = conteggi([...(gruppo.giorni_proposti as string[])].sort(), risposte);
+    sondaggio = { risposto: !!io && !!risposte[io.id], risposte: Object.keys(risposte).length, migliori, max };
+  }
+
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
@@ -162,6 +172,24 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
       )}
       {/* dopo l'estrazione l'organizzatore ha ancora il suo riquadro, subito sotto */}
       {organizzatore && gruppo.status !== "aperto" && riquadroOrganizzatore}
+
+      {/* Quando facciamo lo scambio? (finché l'organizzatore non fissa la data) */}
+      {io && sondaggio && (
+        <Feltro className="mt-4">
+          <TitoloRiquadro>Quando facciamo lo scambio?</TitoloRiquadro>
+          <p className="mt-2">
+            {sondaggio.migliori.length === 0
+              ? "Nessuno ha ancora detto quando c'è."
+              : sondaggio.migliori.length === 1
+                ? `Per ora il più probabile è ${dataLunga(sondaggio.migliori[0])} (${sondaggio.max} ${sondaggio.max === 1 ? "persona" : "persone"}).`
+                : `Per ora pari merito: ${sondaggio.migliori.map(dataLunga).join(", ")}.`}{" "}
+            Hanno risposto {sondaggio.risposte} su {membri.length}.
+          </p>
+          <TastoLink href={`/gruppo/${id}/disponibilita`} tipo={sondaggio.risposto ? "secondario" : "primario"} className="mt-5">
+            {organizzatore ? "Risposte e data" : sondaggio.risposto ? "Cambia i tuoi giorni" : "Dimmi quando ci sei"}
+          </TastoLink>
+        </Feltro>
+      )}
 
       {io && (
         <>

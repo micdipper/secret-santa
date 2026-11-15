@@ -13,11 +13,11 @@ const PROVE = [
   { titolo: "Toppe del gruppo", testo: "Crea simboli (ricamo o foto) e parole come l'organizzatore: poi li trovi nel cassetto della bacheca di prova.", href: "/prove/toppe" },
   { titolo: "Santa Chat", testo: "Scrivi come Babbo Natale o come chi riceve: dall'altra parte risponde un amico inventato.", href: "/prove/chat" },
   { titolo: "Novità", testo: "Il feed del gruppo con post, foto e reazioni. Prova a scrivere i nomi degli amici inventati: diventano asterischi.", href: "/prove/novita" },
+  { titolo: "Quando facciamo lo scambio?", testo: "La disponibilità per scegliere il giorno: proponi i giorni, rispondi, guarda gli amici inventati che cambiano idea e fissa la data.", href: "/prove/disponibilita" },
   { titolo: "Mini giochi dell'avvento", testo: "Il calendario coi regali da scartare, il benvenuto e la pagina di ogni gioco con la classifica in diretta (amici inventati).", href: "/prove/giochi" },
   { titolo: "Personaggio", testo: "L'editor completo con tutti i premi già sbloccati.", href: "/prove/personaggio" },
   { titolo: "Galleria dello stile", testo: "Personaggi, premi, olografie, tasti e colori del sito.", href: "/stile" },
 ];
-const IN_ARRIVO = ["Rivelazione finale"];
 
 export default function SalaProve() {
   return (
@@ -34,14 +34,6 @@ export default function SalaProve() {
             </TastoLink>
           </Feltro>
         ))}
-        <Feltro>
-          <TitoloRiquadro>In arrivo</TitoloRiquadro>
-          <ul className="mt-2 list-inside list-disc text-inchiostro/80">
-            {IN_ARRIVO.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        </Feltro>
       </div>
     </main>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
+import { ProponiGiorni } from "@/components/disponibilita";
 import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -30,6 +31,7 @@ type Gruppo = {
   organizer_id: string;
   quiz_salvato_at: string | null;
   giochi_attivi: boolean;
+  giorni_proposti: string[] | null; // sondaggio della disponibilità aperto
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
 type Coppia = Esclusione;
@@ -78,7 +80,7 @@ function Organizza() {
         supabase
           .from("groups")
           .select(
-            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi",
+            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -142,7 +144,7 @@ function Organizza() {
     modificabile && mancanti.length === 0 && membri.length >= 3;
 
   async function salva(
-    campi: Partial<Pick<Gruppo, "budget_eur" | "exchange_date" | "theme">>,
+    campi: Partial<Pick<Gruppo, "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
   ) {
     setGruppo((g) => (g ? { ...g, ...campi } : g));
     setSalvataggio("salvo");
@@ -319,23 +321,60 @@ function Organizza() {
       <Feltro className="mt-4">
         <TitoloRiquadro>Quando e quanto</TitoloRiquadro>
         <div className="mt-5 flex flex-col gap-5">
-          <Campo
-            id="data"
-            type="date"
-            etichetta="Giorno dello scambio"
-            value={nuovaData}
-            disabled={dataBloccata}
-            aiuto={notaGiochi}
-            onChange={(e) => setNuovaData(e.target.value)}
-          />
-          {!dataBloccata && (
-            <Tasto
-              tipo="secondario"
-              disabled={nuovaData === (gruppo.exchange_date ?? "")}
-              onClick={() => salvaData()}
-            >
-              {gruppo.exchange_date ? "Cambia la data" : "Salva la data"}
-            </Tasto>
+          {gruppo.giorni_proposti ? (
+            // sondaggio della disponibilità aperto: la data la fissa l'organizzatore dalla pagina del sondaggio
+            <div className="flex flex-col gap-3">
+              <span className="font-medium">Giorno dello scambio</span>
+              <p>Il gruppo sta dicendo in quali giorni c&apos;è. Quando vuoi, fissa la data dalla pagina delle risposte: il sondaggio si chiude.</p>
+              <TastoLink href={`/gruppo/${id}/disponibilita`} tipo="primario">
+                Risposte e data
+              </TastoLink>
+              <ProponiGiorni
+                key={gruppo.giorni_proposti.join()}
+                iniziali={[...gruppo.giorni_proposti].sort()}
+                testoTasto="Aggiorna i giorni proposti"
+                onSalva={(giorni) => salva({ giorni_proposti: giorni })}
+              />
+            </div>
+          ) : (
+            <>
+              <Campo
+                id="data"
+                type="date"
+                etichetta="Giorno dello scambio"
+                value={nuovaData}
+                disabled={dataBloccata}
+                aiuto={notaGiochi}
+                onChange={(e) => setNuovaData(e.target.value)}
+              />
+              {!dataBloccata && (
+                <>
+                  <Tasto
+                    tipo="secondario"
+                    disabled={nuovaData === (gruppo.exchange_date ?? "")}
+                    onClick={() => salvaData()}
+                  >
+                    {gruppo.exchange_date ? "Cambia la data" : "Salva la data"}
+                  </Tasto>
+                  {/* oppure la data si sceglie insieme: si propongono alcuni giorni e ognuno dice in quali c'è */}
+                  <div className="flex flex-col gap-3 border-t-2 border-dashed border-abete/15 pt-5">
+                    <span className="font-medium">Oppure decidetela insieme</span>
+                    <p className="text-sm text-inchiostro/70">
+                      Proponi alcuni giorni: ognuno dirà in quali c&apos;è, tutti vedranno le risposte e alla fine fissi tu la data.
+                      {gruppo.exchange_date ? " La data di adesso viene tolta finché non ne fissi una nuova." : ""}
+                    </p>
+                    <ProponiGiorni
+                      iniziali={[]}
+                      testoTasto="Chiedi la disponibilità al gruppo"
+                      onSalva={(giorni) => {
+                        setNuovaData("");
+                        salva({ giorni_proposti: giorni, exchange_date: null });
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </>
           )}
           <div className="flex flex-col gap-2">
             <span className="font-medium">Budget a persona</span>
