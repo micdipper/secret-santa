@@ -4,7 +4,8 @@
 // Il carbone cade spesso attaccato a una dorata ("trappola"), sempre di più verso la fine.
 // 5 dorate di fila alzano il moltiplicatore (fino a ×5). Rara cometa che attraversa: +50.
 // Rara meteora di carbone che attraversa come la cometa: toccarla costa un cuore.
-// Insidie: dorate che zigzagano e dorate che si spengono a metà caduta e diventano carbone (lampeggiano prima).
+// Insidie: dorate che zigzagano e "carbone travestito": dorate che a metà caduta lampeggiano e diventano carbone.
+// Il carbone travestito fa perdere un cuore anche se lo tocchi quando è ancora d'oro.
 import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
@@ -155,7 +156,8 @@ export const palline: Gioco<StatoPalline> = {
       }
       if (!presa) continue; // tocco a vuoto: niente
       presa.viva = false;
-      if (presa.tipo === "carbone" || presa.tipo === "meteora") {
+      // carbone travestito: la dorata che diventerà carbone fa perdere un cuore anche quando è ancora d'oro
+      if (presa.tipo === "carbone" || presa.tipo === "meteora" || presa.spegne >= 0) {
         s.vite--;
         s.combo = 0;
         if (presa.tipo === "meteora") s.conti.meteore++;

@@ -27,7 +27,7 @@ export const GIOCHI: InfoGioco[] = [
   {
     n: 1,
     nome: "Palline al volo",
-    regole: ["Tocca le palline dorate prima che cadano sulla neve: ogni dorata persa costa uno dei 3 cuori.", "Mai toccare il carbone, neanche la meteora. Attento: certe dorate lampeggiano e diventano carbone!", "5 dorate di fila alzano il moltiplicatore. La cometa d'oro vale 50!"],
+    regole: ["Tocca le palline dorate prima che cadano sulla neve: ogni dorata persa costa uno dei 3 cuori.", "Mai toccare il carbone, neanche la meteora. Attento al carbone travestito da pallina dorata: prima o poi lampeggia e si scopre!", "5 dorate di fila alzano il moltiplicatore. La cometa d'oro vale 50!"],
     premio: "neon",
     nomePremio: "Capelli neon",
     durataMax: 50,
