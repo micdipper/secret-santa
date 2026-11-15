@@ -196,3 +196,8 @@ Verdetti ("totem", titolo surreale + consiglio vero): Piccione con un mutuo · P
   - Novità: le pillole delle reazioni sono tasti: toccandone una reagisci con la stessa emoji (ritoccando la togli); tenere premuto resta per scegliere un'emoji nuova. L'estrazione compariva già nelle Novità ("Estrazione fatta! Le buste sono pronte").
   - SLOT: ogni casella è una busta con il personaggio al posto del sigillo; si parte da un personaggio "a caso" (fisso per persona); l'ultima è la busta vera col sigillo S.
   - BIGLIETTO: l'olografia (bande, brina, bordi gelati) è stampata anche sul biglietto 3D, e la card vera è già accesa quando prende il suo posto (niente scatto). "Ricorda chi hai pescato" legge il personaggio aggiornato a ogni apertura.
+- 15/11 sera (correzioni):
+  - Cuciture: si salvavano già, ma l'anteprima grande del personaggio (profilo, Crea un gruppo, sala prove) era una toppa disegnata a parte senza cucitura → ora è ToppaAvatar (128px).
+  - Slot: le caselle usano come sfondo una "foto" della busta 3D vera senza sigillo (scattata una volta dalla scena appena pronta: `onFotoBusta` in scena-busta.tsx, striscia alta 120px centrata sul sigillo) → buste identiche, cambia solo il sigillo/personaggio. Senza 3D resta il disegno semplice.
+  - Biglietto: il biglietto 3D, appena girato, segue il giroscopio con la stessa formula della card olografica (che è montata fin dall'inizio e segue già il giroscopio) → nessuno stacco quando la card vera prende il posto.
+  - Reazioni ai propri post: il database e il menu funzionavano; la mia reazione era una pillola vermiglio, invisibile sui post vermigli (colore a sorte). Ora le pillole sono sempre chiare e la mia ha un anello del colore del testo del post.

@@ -213,10 +213,9 @@ export function VoceFeed({
               onClick={() => reagisci(e)}
               aria-pressed={mia === e}
               aria-label={mia === e ? `${e} ${n}: c'è anche la tua, tocca per toglierla` : `${e} ${n}: tocca per reagire anche tu`}
-              className={`cliccabile relative inline-flex h-10 items-center gap-1 rounded-full px-3 text-sm font-semibold tabular-nums ${
-                mia === e ? "stoffa-vermiglio" : "stoffa-chiara text-inchiostro"
-              }`}
-              style={{ ["--spessore" as string]: mia === e ? "#9e2a0b" : "#c9b48a" }}
+              // sempre chiara (si vede su ogni colore di post); la mia ha un anello del colore del testo del post
+              className="cliccabile stoffa-chiara relative inline-flex h-10 items-center gap-1 rounded-full px-3 text-sm font-semibold text-inchiostro tabular-nums"
+              style={mia === e ? { outline: `3px solid ${stoffa.testo}`, outlineOffset: 2 } : undefined}
             >
               <span className="text-base leading-none">{e}</span>
               {n}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ACCESSORI, Avatar, LOOK_BASE, type Look } from "@/components/avatar";
+import { ACCESSORI, LOOK_BASE, ToppaAvatar, type Look } from "@/components/avatar";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { TestataInterna } from "@/components/ui";
 
@@ -20,9 +20,9 @@ export default function ProvaPersonaggio() {
         sottotitolo="Tutti i premi sono sbloccati. Non si salva niente."
       />
       <div className="sticky top-[calc(env(safe-area-inset-top)+8px)] z-10 mt-6 flex justify-center">
-        <span className="toppa size-32 overflow-hidden shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
-          <Avatar look={look} className="relative top-[8%] h-full w-full" titolo="Personaggio di prova" />
-        </span>
+        <span className="rounded-full shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
+              <ToppaAvatar look={look} dimensione={128} nome="Personaggio di prova" />
+            </span>
       </div>
       <div className="mt-6">
         <EditorPersonaggio look={look} sbloccati={TUTTI} onCambia={(c) => setLook({ ...look, ...c })} riquadri />

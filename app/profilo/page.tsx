@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Avatar, CAPELLI_SUPER, COLORE_OLOGRAFICO, normalizzaLook, type Look } from "@/components/avatar";
+import { ToppaAvatar, CAPELLI_SUPER, COLORE_OLOGRAFICO, normalizzaLook, type Look } from "@/components/avatar";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { Errore, Tasto, TestataInterna } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -78,8 +78,8 @@ function Profilo() {
       ) : (
         <>
           <div className="sticky top-[calc(env(safe-area-inset-top)+8px)] z-10 mt-6 flex flex-col items-center">
-            <span className="toppa size-32 overflow-hidden shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
-              <Avatar look={look} className="relative top-[8%] h-full w-full" titolo="Il tuo personaggio" />
+            <span className="rounded-full shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
+              <ToppaAvatar look={look} dimensione={128} nome="Il tuo personaggio" />
             </span>
           </div>
           <div className="mt-6">
