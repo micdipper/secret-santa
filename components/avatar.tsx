@@ -241,11 +241,18 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
           <path d="M71 38c3 6 4 16 4 28l1 30-3-4-2 5-2-6-2 4-1-28c0-10-1-19-2-26z" />
         </g>
       );
-    case 14: // riga in mezzo: due tende che incorniciano il viso, fino alle spalle
+    case 14: // riga in mezzo, a tendina: corta e mossa, volume sopra, ciocche fino alle tempie che si aprono sopra le orecchie
       return dietro ? (
-        <path d="M28 44c0-16 10-24 22-24s22 8 22 24v24c0 2-2 3-4 3H32c-2 0-4-1-4-3z" fill={c} />
+        <path d="M28 42c-1-13 9-24 22-24s23 11 22 24l-1 6H29z" fill={c} />
       ) : (
-        <path d="M50 21c-11 0-20 8-21 22v23h6V46c1-11 7-17 15-19 8 2 14 8 15 19v20h6V43c-1-14-10-22-21-22z" fill={c} />
+        <g>
+          <path
+            d="M50 25C45 23 39 26 36 32C34 36 34 40 35 44C32 45 29 47 25.5 46.5C27.5 44.5 27.5 42 27 40C24 34 25 25 31 20C36 15 43 14 50 16C57 14 64 15 69 20C75 25 76 34 73 40C72.5 42 72.5 44.5 74.5 46.5C71 47 68 45 65 44C66 40 66 36 64 32C61 26 55 23 50 25Z"
+            fill={c}
+          />
+          {/* la riga e le onde (filo più scuro) */}
+          <path d="M50 17c-.6 3-.6 5.5 0 8M44 18c-5 2-9 7-10 13M56 18c5 2 9 7 10 13M37 22c-4 4-6 9-6 15M63 22c4 4 6 9 6 15" fill="none" stroke="#000" strokeOpacity=".2" strokeWidth="1.1" strokeLinecap="round" />
+        </g>
       );
     default: // super (premio): punte enormi a ventaglio
       return dietro ? (
