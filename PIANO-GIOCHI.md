@@ -2,9 +2,20 @@
 
 Scritto il 15/11/2026 (pianificazione con Opus), approvato da Marzia nelle decisioni qui sotto.
 **Chi lo esegue**: leggere prima `CLAUDE.md` e `STATO.md`, poi questo file. Lavorare a blocchi (sezione 9), una sessione per blocco.
+**Ramo**: partire dal ramo che contiene tutto il lavoro (vedi "Rami git" in STATO.md, oggi `ccr-f135f3c8-c3chko`), non da `main` né da `confident-sagan`.
 Tutte le regole di interfaccia di CLAUDE.md restano valide (mobile first, tre tasti, feltro, contrasto, tasto finale chiaro, animazioni fluide, un solo tasto audio, suoni da `lib/suoni.ts`).
 
 ---
+
+## 0. Autorizzazioni: TUTTE INSIEME, ALL'INIZIO (richiesta di Marzia)
+Marzia vuole dare tutti i permessi una volta sola all'inizio e poi lasciar lavorare senza interruzioni. Quindi, **prima di qualsiasi altro lavoro** (all'inizio del blocco 1, e all'inizio di ogni sessione nuova se qualcosa manca):
+1. Fare l'elenco completo di tutto ciò che chiederà conferma durante TUTTI i blocchi e mostrarlo a Marzia in un unico messaggio, in parole semplici. Come minimo:
+   - Supabase: `apply_migration` (modifiche al database), `execute_sql` (test SQL in transazioni annullate, preparazione e pulizia dei gruppi "Test E2E Natale"), `get_advisors`, `list_tables`;
+   - comandi: `npm ci`, `npx next build`, `npx next start`, `node` (test della logica dei giochi e test e2e con Playwright, che è già installato), `git add/commit/push` sul ramo di lavoro;
+   - Vercel: lettura dello stato delle anteprime.
+2. Con un'unica richiesta (skill `update-config`) aggiungere queste regole `allow` in `.claude/settings.json` del progetto, così Marzia approva una volta sola. Niente regole più larghe del necessario (niente `Bash(*)`, niente permessi di cancellazione generici).
+3. Le azioni che restano comunque da confermare caso per caso, dirle subito a Marzia: **cancellare dati** (anche quelli di test: chiedere prima, come da STATO.md), **unire in `main`/pubblicare**, **aprire una PR**.
+4. Solo dopo il via di Marzia lavorare in autonomia fino alla fine del blocco, senza altre domande salvo dubbi veri sul risultato (in quel caso raggrupparle in un solo messaggio).
 
 ## 1. Decisioni di Marzia (definitive)
 - 5 minigiochi, **semplici da capire ma già mediamente difficili dal primo**, poi sempre più difficili. Belli, "catchy", senza errori.
@@ -57,8 +68,9 @@ Tutte le funzioni dei giochi usano `private.adesso()` e `private.oggi_roma()` (`
 - `public.start_game_run(p_group_id, p_game)` → controlla: accesso fatto, membro del gruppo, giochi attivi, gioco aperto ora, tentativi < 3. Inserisce la partita con `seme` casuale; restituisce `id`, `seme`, `tentativo`.
 - `public.finish_game_run(p_run_id, p_score, p_stats)` → controlla: partita mia, non ancora finita, `adesso <= started_at + durata_max + 60 s`, `adesso - started_at >= durata_min`, `0 <= score <= punteggio_max`, `score <= punti_al_secondo × secondi trascorsi + margine`. Se un controllo fallisce: salva `score = 0` e restituisce l'errore "Partita non valida" (niente dettagli). Restituisce posizione in classifica e se è il nuovo record personale.
 - Trigger `before insert or update of exchange_date on groups`: blocco della data (sezione 2) + ricalcolo di `giochi_attivi`. Vale anche per `create_group`.
-- `private.unlocked_accessories`: aggiungere (lasciando invariato il resto e l'elenco delle 22 toppe):
-  `neon` = vincitore del gioco 1 in un suo gruppo · `pazzo` = gioco 2 · `godo` = gioco 3 · `cornici` = gioco 4 · `cowboy` = gioco 5. **Non** contano per "tutti e 5" (capelli olografici / occhiali olografici).
+- `private.unlocked_accessories`: partire SEMPRE dalla sua **ultima versione** nelle migrazioni (cercarla con grep in `supabase/migrations/`; il 15/11 era `20261115100000_chat_censura_premi`) e lasciare invariato tutto il resto. Aggiungere:
+  `neon` = vincitore del gioco 1 in un suo gruppo · `pazzo` = gioco 2 · `godo` = gioco 3 · `cornici` = gioco 4 · `cowboy` = gioco 5. **Non** contano per i premi olografici ("tutti e 6").
+  Stessa regola per `public.save_avatar`: partire dall'ultima versione (`20261115200000_cuciture_e_cornici`).
 - `public.save_avatar`: rifiutare `coloreCapelli = 8` senza `neon`, `capelli = 13` senza `pazzo`, `maglione = 6` senza `godo`, `cucitura` 2, 3 o 4 senza `cornici` (GIÀ FATTO il 15/11, migrazione `20261115200000_cuciture_e_cornici`), `cowboy` negli accessori senza sbloccarlo (già coperto dal ciclo sugli accessori).
 - Revoke/grant come le altre funzioni (solo `authenticated`).
 
@@ -68,7 +80,13 @@ Tutte le funzioni dei giochi usano `private.adesso()` e `private.oggi_roma()` (`
 - `NOMI_CAPELLI[13]` = **"Esplosione"** (taglio pazzo): ciocche a saetta e molle che sparano in tutte le direzioni, con un leggero ondeggiare (fermo con "riduci movimento"). Costante `CAPELLI_PAZZO = 13`. Deve funzionare con tutti i colori, compresi olografico e neon.
 - `MAGLIONI[6]` = **maglione "GODO"**: crema con scritta GODO a punto croce rossa + fila di rombi nordici. Costante `MAGLIONE_GODO = 6`.
   ⚠ `lookIniziale` oggi usa `% MAGLIONI.length`: cambiarlo in `% MAGLIONE_GODO` (altrimenti qualcuno nascerebbe col premio). Stessa attenzione per capelli e colori: restare sotto `CAPELLI_SUPER` e `COLORE_OLOGRAFICO`.
-- **Cornici** (GIÀ FATTE il 15/11: `Cucitura` in components/avatar.tsx, filo dorato): anello ricamato attorno a `ToppaAvatar` (ovunque compare): Tulip = tulipani a punto pieno alternati; Fern = punto felce (spighe a V) continuo; Cross = crocette a punto croce. Fili ben contrastati sul verde abete. Si sceglie una cornice alla volta nel profilo (riquadro "Cornice", visibile solo se sbloccate).
+- **Cornici: già esistono, vanno solo SISTEMATE** (richiesta di Marzia, 16/11). Oggi: la filza (default) è il tratteggio CSS `.toppa::before` in `app/globals.css` (`inset: 4px`, `border: 1.5px dashed rgb(44 74 50 / 0.55)`, cioè verde abete al 55%); le altre 4 (catenella, tulipano, felce, punto croce) sono il componente `Cucitura` in `components/avatar.tsx`, in SVG con `viewBox 0 0 100 100`, raggio 43, filo dorato `#c9931c`, tratti 1.4–1.8 unità e `z-[1]`. Correzioni:
+  1. **Colore**: tutte verdi come la filza (`rgb(44 74 50 / 0.55)`, stesso valore, meglio da una variabile CSS condivisa). Via l'oro.
+  2. **Spessore**: tutti i tratti uguali alla filza, **1.5 px veri a ogni dimensione della toppa** (usare `vector-effect="non-scaling-stroke"` con `strokeWidth={1.5}`, oppure calcolare in px dalla dimensione). Oggi in SVG lo spessore cresce con la toppa (a 128 px è circa 2,2 px, a 56 px circa 1 px).
+  3. **Stesso cerchio**: centro e raggio uguali alla filza (`inset 4px` → raggio = metà dimensione − 4 px − 0,75 px); oggi il raggio 43/100 si allontana dal bordo quando la toppa è grande. Passare la `dimensione` a `Cucitura` per calcolarlo. I motivi (tulipani, felce, crocette) restano proporzionati e non devono uscire dalla toppa.
+  4. **Sotto il busto**: la cucitura deve stare SOTTO il personaggio, come la filza (che è `::before` e quindi resta dietro). Togliere `z-[1]` e mettere l'SVG prima dell'Avatar nel DOM con il personaggio sopra (`relative`, z maggiore). Controllare che il busto copra la cucitura in basso come succede con la filza.
+  5. Verificare tutte e 5 le cuciture a 40, 56, 72 e 128 px (galleria `/stile` e `/prove/personaggio`) e nel profilo, confrontandole affiancate con la filza.
+  Il premio non cambia: catenella = `cuciture` (post + 5 reazioni); tulipano, felce, punto croce = `cornici` (gioco 4).
 - **Cappello da cowboy** (accessorio `cowboy`, si somma agli altri, non esclusivo): cuoio marrone, tesa curva, fascia a punto croce con stellina d'oro, leggermente inclinato. Con il cappello i capelli vanno tagliati sotto la tesa (clipPath) e restano visibili ai lati: provarlo con **tutti i 14 tagli**.
 - Premi visibili nel profilo SOLO se sbloccati (regola esistente). `/prove/personaggio` e la galleria in `/stile` li mostrano tutti.
 - `avviso-premi.tsx`: aggiungere i nomi (`neon` "Capelli neon", `pazzo` "Taglio Esplosione", `godo` "Maglione GODO", `cornici` "Cornici ricamate", `cowboy` "Cappello da cowboy").
@@ -156,9 +174,9 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 4. **Taratura sul telefono vero di Marzia** (sala prove): ogni gioco deve essere difficile ma onesto; le costanti in cima ai file si cambiano senza toccare la logica.
 
 ## 9. Ordine dei lavori (una sessione per blocco)
-1. Database (sezione 3) + test SQL + avviso/blocco data in Organizza.
+1. **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
 2. Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
 3. Giochi 1 e 2.
 4. Giochi 3 e 4.
-5. Gioco 5 + premi grafici (neon, Esplosione, GODO, cornici, cowboy) + annuncio vincitore.
+5. Gioco 5 + premi grafici (neon, Esplosione, GODO, cowboy) + **sistemazione delle cornici/cuciture** (sezione 4) + annuncio vincitore.
 6. Collaudo completo (sezione 8), aggiornare STATO.md, commit, anteprima Vercel, prova di Marzia sul telefono.

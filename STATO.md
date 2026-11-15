@@ -8,6 +8,7 @@ Aggiornato al 15 novembre 2026 (sera). Da leggere insieme a `CLAUDE.md` (brief e
   1. **Debug completo dell'app vera** (chiesto da Marzia: "prenditi tutto il tempo"), in una sessione nuova.
   2. **Calendario dei giochi**: piano completo e approvato in `PIANO-GIOCHI.md` (scritto in un'altra sessione sul ramo `ccr-07e8e8f4-13gan0`, ora copiato anche qui). Marzia vuole eseguirlo con Fable, a blocchi (sezione 9 del piano).
      ✅ Deciso da Marzia (15/11): il premio del post con reazioni (`cuciture`) dà SOLO la catenella (look.cucitura = 1); Tulipano, Felce, Punto croce (look.cucitura = 2, 3, 4) sono il premio `cornici` del gioco 4. Sono già disegnate e già controllate da `save_avatar` (migrazione `20261115200000_cuciture_e_cornici`): per il gioco 4 basta far comparire `cornici` in `private.unlocked_accessories` per il vincitore (vedi nota in PIANO-GIOCHI.md).
+     ✅ 16/11 (Marzia): nel piano aggiunte la **sezione 0 – autorizzazioni tutte insieme all'inizio** e la **sistemazione delle cuciture/cornici** (verdi come la filza, stesso spessore e stesso cerchio, SOTTO il busto del personaggio), nel blocco 5.
   3. Rivelazione finale ("Chi era il Babbo Natale di chi").
   4. **Pubblicazione**: unire il ramo in `main` → Production su Vercel (PR quando Marzia lo chiede).
 - Dati di prova da ripulire (chiedere a Marzia): gruppi "Test E2E Natale" elencati nelle sezioni Santa Chat e Novità.
