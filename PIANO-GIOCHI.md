@@ -122,13 +122,13 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 (I limiti sono larghi; vanno ricontrollati dopo la taratura con partite vere: devono stare almeno al doppio del record realistico.)
 
 ### 6.1 Palline al volo (gioco 1)
-- Dall'alto cadono palline. **Tocca le palline dorate** (+10). **Non toccare il carbone** (perdi 1 dei 3 cuori, la combo si azzera). Pallina dorata che tocca terra = combo azzerata **e un cuore perso** (Marzia, 16/11). Da 12 s il carbone cade sempre più spesso attaccato a una dorata (trappola). Rara **stella cometa** (3%) che attraversa in diagonale veloce: +50.
+- Dall'alto cadono palline. **Tocca le palline dorate** (+10). **Non toccare il carbone** (perdi 1 dei 3 cuori, la combo si azzera). Pallina dorata che tocca terra = combo azzerata **e un cuore perso** (Marzia, 16/11). Da 12 s il carbone cade sempre più spesso attaccato a una dorata (trappola). Rara **stella cometa** (3%) che attraversa in diagonale veloce: +50. Rara **meteora di carbone** (4%, da 8 s) che attraversa allo stesso modo: −1 cuore (Marzia, 16/11).
 - Combo: ogni 5 dorate di fila il moltiplicatore sale (×1 → ×5).
 - Difficoltà: velocità di caduta da 230 a 560 px/s in 45 s; una nuova ogni 650 ms → 280 ms; dai 15 s a volte ne cadono 2 insieme; il carbone passa dal 20% al 35%. Area di tocco = raggio pallina + 12 px.
 - Effetti: pallina che scoppia in brillantini, "+10 ×3" che vola, carbone che fa polvere nera e scuote lo schermo, cuore che si scuce.
 
 ### 6.2 Campanelli (gioco 2)
-- 4 campanelli 2×2 (colori diversi + nota di una scala pentatonica, suono generato dal codice). Il gioco suona e illumina una sequenza; ripetila toccando. Si parte da **3 note** (medio da subito), +1 a ogni turno.
+- 4 campanelli 2×2 (colori diversi + nota di una scala pentatonica, suono generato dal codice). Il gioco suona e illumina una sequenza; ripetila toccando. Si parte da **4 note** (Marzia, 16/11), +1 a ogni turno **e una nota già sentita cambia** (dal turno 2); mai 3 note uguali di fila.
 - Velocità della sequenza: 600 ms a nota → 280 ms dal turno 10. Dal turno 6 le note sono più brevi. Dal turno 7 (Marzia, 16/11; prima era 9) un campanello "birichino" scambia posto con un altro (animazione di 0,5 s) **prima** della sequenza: la posizione conta, il colore resta.
 - Un errore = fine. 5 s per ogni tocco, altrimenti fine.
 - Punteggio: 10 × lunghezza della sequenza completata + bonus rapidità (fino a +5 per nota se rispondi entro 400 ms).

@@ -1,11 +1,14 @@
 // Gioco 2 · CAMPANELLI (PIANO-GIOCHI.md 6.2)
-// 4 campanelli 2×2: il gioco suona una sequenza, tu la ripeti. Si parte da 3 note, +1 a ogni giro.
+// 4 campanelli 2×2: il gioco suona una sequenza, tu la ripeti. Si parte da 4 note; a ogni giro
+// si aggiunge una nota E una nota già sentita cambia (non basta ricordare: bisogna riascoltare).
+// Le sequenze non hanno mai 3 note uguali di fila.
 // Un errore (o 5 secondi senza toccare) = fine. Dal giro 7 due campanelli cambiano posto prima della sequenza.
 import { casuale, curve, limita, mescola, stile, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
-const NOTE_INIZIO = 3;
-const PASSO = [0.6, 0.28]; // s per nota: dal giro 1 al giro 10 (poi resta 0.28)
+const NOTE_INIZIO = 4;
+const CAMBI_DAL_GIRO = 2; // da qui, a ogni giro una nota della sequenza cambia campanello
+const PASSO = [0.5, 0.28]; // s per nota: dal giro 1 al giro 10 (poi resta 0.28)
 const GIRO_VELOCE = 10;
 const GIRO_NOTE_CORTE = 6; // da qui la luce dura meno
 const GIRO_SCAMBI = 7; // da qui un campanello "birichino" cambia posto
@@ -56,6 +59,18 @@ function casellaDa(x: number, y: number, m: Mondo) {
   return centri.findIndex((c) => Math.abs(x - c.x) <= lato / 2 && Math.abs(y - c.y) <= lato / 2);
 }
 
+// una nota per la posizione i: mai 3 uguali di fila (e diversa da "evita", se c'è)
+function notaNuova(caso: () => number, seq: number[], i: number, evita = -1) {
+  for (;;) {
+    const n = Math.floor(caso() * 4);
+    if (n === evita) continue;
+    if (i >= 2 && seq[i - 1] === n && seq[i - 2] === n) continue;
+    if (i >= 1 && i + 1 < seq.length && seq[i - 1] === n && seq[i + 1] === n) continue;
+    if (i + 2 < seq.length && seq[i + 1] === n && seq[i + 2] === n) continue;
+    return n;
+  }
+}
+
 function accendi(s: StatoCampanelli, i: number, durata: number) {
   s.luce[i] = 0;
   s.durataLuce[i] = durata;
@@ -66,7 +81,7 @@ export const campanelli: Gioco<StatoCampanelli> = {
   crea(seme) {
     const caso = casuale(seme);
     const seq: number[] = [];
-    for (let i = 0; i < NOTE_INIZIO; i++) seq.push(Math.floor(caso() * 4));
+    for (let i = 0; i < NOTE_INIZIO; i++) seq.push(notaNuova(caso, seq, i));
     return {
       caso,
       t: 0,
@@ -160,7 +175,12 @@ export const campanelli: Gioco<StatoCampanelli> = {
           s.punti += premio;
           s.eventi.push({ tipo: "giro", x: m.w / 2, y: geometria(m).testoY + 40, testo: `+${premio}`, livello: s.giro });
           s.giro++;
-          s.seq.push(Math.floor(s.caso() * 4));
+          if (s.giro >= CAMBI_DAL_GIRO) {
+            // una nota già sentita cambia campanello
+            const i = Math.floor(s.caso() * s.seq.length);
+            s.seq[i] = notaNuova(s.caso, s.seq, i, s.seq[i]);
+          }
+          s.seq.push(notaNuova(s.caso, s.seq, s.seq.length));
           s.fase = "pausa";
           s.tFase = 0;
           return;

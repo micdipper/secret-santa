@@ -31,7 +31,7 @@ const botPalline: Bot = (s: StatoPalline, m, caso, bravura) => {
   const out: Tocco[] = [];
   for (const p of s.palline) {
     if (!p.viva || p.y < m.sopra) continue;
-    const giusta = p.tipo !== "carbone";
+    const giusta = p.tipo === "oro" || p.tipo === "cometa";
     // il bot medio a volte tocca il carbone per sbaglio o si perde una dorata
     if (giusta && caso() < bravura * 0.12) out.push(tocco(p.x + (caso() - 0.5) * 16, p.y + (caso() - 0.5) * 16));
     if (!giusta && caso() < (1 - bravura) * 0.004) out.push(tocco(p.x, p.y));

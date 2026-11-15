@@ -1,31 +1,37 @@
 // Gioco 1 · PALLINE AL VOLO (PIANO-GIOCHI.md 6.1)
 // Dall'alto cadono palline: tocca quelle dorate, mai il carbone. 3 cuori: si perde un cuore toccando
 // il carbone o lasciando cadere una dorata sulla neve. 45 secondi.
-// Più avanti il carbone cade sempre più spesso attaccato a una dorata ("trappola").
+// Il carbone cade spesso attaccato a una dorata ("trappola"), sempre di più verso la fine.
 // 5 dorate di fila alzano il moltiplicatore (fino a ×5). Rara cometa che attraversa: +50.
+// Rara meteora di carbone che attraversa come la cometa: toccarla costa un cuore.
 import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
 const DURATA = 45; // s
 const VITE = 3;
 const RAGGIO = 26; // px
-const MARGINE_TOCCO = 12; // px in più intorno alla pallina
-const VELOCITA = [230, 560]; // px/s, dall'inizio alla fine
-const OGNI = [0.65, 0.28]; // s tra una pallina e l'altra
-const DOPPIE_DA = 15; // s: da qui a volte ne cadono 2 insieme
+const MARGINE_TOCCO = 12; // px in più intorno alla pallina…
+const MARGINE_VELOCITA = 0.02; // …più 2 px ogni 100 px/s (le palline veloci si prendono meglio)
+const RITARDO_TOCCO = 0.1; // s: il dito "arriva" un attimo dopo l'occhio: vale anche dove la pallina era 0,1 s fa
+const VELOCITA = [300, 560]; // px/s, dall'inizio alla fine
+const OGNI = [0.55, 0.28]; // s tra una pallina e l'altra
+const DOPPIE_DA = 8; // s: da qui a volte ne cadono 2 insieme
 const P_DOPPIA = 0.3;
-const CARBONE = [0.2, 0.35]; // probabilità del carbone
-const TRAPPOLE_DA = 12; // s: da qui il carbone può cadere attaccato a una dorata…
-const P_TRAPPOLA = [0.35, 0.8]; // …con questa probabilità (da TRAPPOLE_DA alla fine)
+const CARBONE = [0.32, 0.4]; // probabilità del carbone
+const TRAPPOLE_DA = 3; // s: da qui il carbone può cadere attaccato a una dorata…
+const P_TRAPPOLA = [0.45, 0.8]; // …con questa probabilità (da TRAPPOLE_DA alla fine)
 const DISTANZA_TRAPPOLA = [2.2, 2.6]; // centro-centro, in raggi (le aree di tocco si toccano)
 const P_COMETA = 0.03;
+const METEORE_DA = 8; // s: da qui può passare la meteora di carbone
+const P_METEORA = 0.04;
 const VELOCITA_COMETA = 640; // px/s
 const PUNTI = 10;
 const PUNTI_COMETA = 50;
 const COMBO_PASSO = 5; // ogni 5 dorate di fila il moltiplicatore sale
 const MOLT_MAX = 5;
 
-type Tipo = "oro" | "carbone" | "cometa";
+type Tipo = "oro" | "carbone" | "cometa" | "meteora";
+const attraversa = (t: Tipo) => t === "cometa" || t === "meteora"; // vanno in diagonale
 type Pallina = { tipo: Tipo; x0: number; x: number; y: number; vx: number; vy: number; fase: number; viva: boolean };
 
 export type StatoPalline = {
@@ -37,7 +43,7 @@ export type StatoPalline = {
   vite: number;
   combo: number; // dorate di fila
   ultimaX: number;
-  conti: { oro: number; carbone: number; comete: number; cadute: number; tocchi: number };
+  conti: { oro: number; carbone: number; comete: number; meteore: number; cadute: number; tocchi: number };
   fine: boolean;
   eventi: Evento[];
 };
@@ -52,10 +58,11 @@ function aggiungi(s: StatoPalline, p: Omit<Pallina, "viva">) {
 
 function nasce(s: StatoPalline, m: Mondo) {
   const k = limita(s.t / DURATA, 0, 1);
-  if (s.caso() < P_COMETA) {
+  const sorte = s.caso();
+  if (sorte < P_COMETA || (s.t >= METEORE_DA && sorte < P_COMETA + P_METEORA)) {
     const daSinistra = s.caso() < 0.5;
     const y = m.sopra + s.caso() * m.h * 0.25;
-    aggiungi(s, { tipo: "cometa", x0: 0, x: daSinistra ? -RAGGIO : m.w + RAGGIO, y, vx: (daSinistra ? 1 : -1) * VELOCITA_COMETA * 0.85, vy: VELOCITA_COMETA * 0.42, fase: 0 });
+    aggiungi(s, { tipo: sorte < P_COMETA ? "cometa" : "meteora", x0: 0, x: daSinistra ? -RAGGIO : m.w + RAGGIO, y, vx: (daSinistra ? 1 : -1) * VELOCITA_COMETA * 0.85, vy: VELOCITA_COMETA * 0.42, fase: 0 });
     return;
   }
   const quante = s.t >= DOPPIE_DA && s.caso() < P_DOPPIA ? 2 : 1;
@@ -95,7 +102,7 @@ export const palline: Gioco<StatoPalline> = {
       vite: VITE,
       combo: 0,
       ultimaX: -999,
-      conti: { oro: 0, carbone: 0, comete: 0, cadute: 0, tocchi: 0 },
+      conti: { oro: 0, carbone: 0, comete: 0, meteore: 0, cadute: 0, tocchi: 0 },
       fine: false,
       eventi: [],
     };
@@ -109,33 +116,29 @@ export const palline: Gioco<StatoPalline> = {
       s.prossima = s.t + mescola(OGNI[0], OGNI[1], limita(s.t / DURATA, 0, 1));
     }
 
-    // movimento: le palline dondolano un poco mentre cadono, la cometa va dritta
-    for (const p of s.palline) {
-      if (!p.viva) continue;
-      p.y += p.vy * dt;
-      if (p.tipo === "cometa") p.x += p.vx * dt;
-      else p.x = p.x0 + Math.sin(s.t * 2.2 + p.fase) * 7;
-    }
-
     for (const tc of tocchi) {
       if (tc.tipo !== "giu") continue;
       s.conti.tocchi++;
+      // la pallina più vicina al dito, misurando dal tratto che ha percorso negli ultimi 0,1 s
+      // (il dito arriva sempre un attimo dopo: senza questo le palline veloci "scappano")
       let presa: Pallina | null = null;
-      let meglio = (RAGGIO + MARGINE_TOCCO) ** 2;
+      let meglio = Infinity;
       for (const p of s.palline) {
         if (!p.viva) continue;
-        const d = (p.x - tc.x) ** 2 + (p.y - tc.y) ** 2;
-        if (d <= meglio) {
+        const v = Math.hypot(p.vx, p.vy);
+        const d = distanzaDalTratto(tc.x, tc.y, p.x, p.y, p.x - p.vx * RITARDO_TOCCO, p.y - p.vy * RITARDO_TOCCO);
+        if (d <= RAGGIO + MARGINE_TOCCO + v * MARGINE_VELOCITA && d < meglio) {
           meglio = d;
           presa = p;
         }
       }
       if (!presa) continue; // tocco a vuoto: niente
       presa.viva = false;
-      if (presa.tipo === "carbone") {
+      if (presa.tipo === "carbone" || presa.tipo === "meteora") {
         s.vite--;
         s.combo = 0;
-        s.conti.carbone++;
+        if (presa.tipo === "meteora") s.conti.meteore++;
+        else s.conti.carbone++;
         s.eventi.push({ tipo: "carbone", x: presa.x, y: presa.y });
         if (s.vite <= 0) {
           s.fine = true;
@@ -155,11 +158,19 @@ export const palline: Gioco<StatoPalline> = {
       }
     }
 
+    // movimento: le palline dondolano un poco mentre cadono, la cometa va dritta
+    for (const p of s.palline) {
+      if (!p.viva) continue;
+      p.y += p.vy * dt;
+      if (attraversa(p.tipo)) p.x += p.vx * dt;
+      else p.x = p.x0 + Math.sin(s.t * 2.2 + p.fase) * 7;
+    }
+
     // a terra (sulla neve) o fuori dallo schermo
     const terra = m.h - m.sotto - 18;
     for (const p of s.palline) {
       if (!p.viva) continue;
-      if (p.tipo === "cometa") {
+      if (attraversa(p.tipo)) {
         if (p.x < -RAGGIO * 2 || p.x > m.w + RAGGIO * 2 || p.y > m.h + RAGGIO) p.viva = false;
       } else if (p.y > terra) {
         p.viva = false;
@@ -190,11 +201,12 @@ export const palline: Gioco<StatoPalline> = {
     const sprite = sprites();
     for (const p of s.palline) {
       if (!p.viva) continue;
-      if (p.tipo === "cometa") {
-        // scia dorata
+      if (attraversa(p.tipo)) {
+        const meteora = p.tipo === "meteora";
+        // scia: dorata per la cometa, fumo con le braci per la meteora
         const coda = ctx.createLinearGradient(p.x, p.y, p.x - p.vx * 0.22, p.y - p.vy * 0.22);
-        coda.addColorStop(0, "rgba(246,201,74,.9)");
-        coda.addColorStop(1, "rgba(246,201,74,0)");
+        coda.addColorStop(0, meteora ? "rgba(229,72,30,.85)" : "rgba(246,201,74,.9)");
+        coda.addColorStop(1, meteora ? "rgba(30,30,30,0)" : "rgba(246,201,74,0)");
         ctx.strokeStyle = coda;
         ctx.lineWidth = 10;
         ctx.lineCap = "round";
@@ -205,7 +217,8 @@ export const palline: Gioco<StatoPalline> = {
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(s.t * 6);
-        ctx.drawImage(sprite.cometa, -RAGGIO, -RAGGIO, RAGGIO * 2, RAGGIO * 2);
+        if (meteora) ctx.drawImage(sprite.carbone, -RAGGIO - 6, -RAGGIO - 14, RAGGIO * 2 + 12, RAGGIO * 2 + 20);
+        else ctx.drawImage(sprite.cometa, -RAGGIO, -RAGGIO, RAGGIO * 2, RAGGIO * 2);
         ctx.restore();
       } else {
         const img = p.tipo === "oro" ? sprite.oro : sprite.carbone;
@@ -244,6 +257,15 @@ export const palline: Gioco<StatoPalline> = {
     }
   },
 };
+
+// distanza del punto (px, py) dal tratto da (ax, ay) a (bx, by)
+function distanzaDalTratto(px: number, py: number, ax: number, ay: number, bx: number, by: number) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const l = dx * dx + dy * dy;
+  const t = l ? limita(((px - ax) * dx + (py - ay) * dy) / l, 0, 1) : 0;
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
 
 // ---------- disegni (preparati una volta in canvas fuori schermo) ----------
 let cache: { oro: HTMLCanvasElement; carbone: HTMLCanvasElement; cometa: HTMLCanvasElement } | null = null;
