@@ -182,7 +182,7 @@ function Sondaggio() {
                       role="radio"
                       aria-checked={d.parametro === p}
                       onClick={() => cambiaDomanda(i, { parametro: p })}
-                      className={`cucitura cliccabile relative flex h-14 items-center justify-center rounded-[28px] font-titolo text-lg ${d.parametro === p ? "stoffa-vermiglio" : "stoffa-chiara"}`}
+                      className={`cucitura cliccabile relative flex h-14 items-center justify-center [--raggio:28px] rounded-[28px] font-titolo text-lg ${d.parametro === p ? "stoffa-vermiglio" : "stoffa-chiara"}`}
                     >
                       {p === "impegno" ? "Impegno" : "Esigenza"}
                     </button>

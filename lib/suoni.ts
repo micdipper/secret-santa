@@ -198,6 +198,13 @@ export const suoni = {
     nota(220, 0.28, { tipo: "sawtooth", volume: 0.05, scivola: 0.55 });
     rumore(0.12, { volume: 0.1, filtro: 600 });
   },
+  // campanelli del gioco 2: scala pentatonica (do re mi sol), suono di campana
+  campanello(i = 0, lungo = 1) {
+    const f = [523.25, 587.33, 659.25, 783.99][i % 4];
+    nota(f, 0.9 * lungo, { volume: 0.2 });
+    nota(f * 2.76, 0.4 * lungo, { volume: 0.06 });
+    nota(f * 2, 0.5 * lungo, { tipo: "triangle", volume: 0.05 });
+  },
   fineGioco() {
     [784, 659, 523, 659].forEach((f, i) => nota(f, 0.28, { tipo: "triangle", volume: 0.1, ritardo: i * 0.12 }));
   },

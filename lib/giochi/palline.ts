@@ -1,0 +1,325 @@
+// Gioco 1 · PALLINE AL VOLO (PIANO-GIOCHI.md 6.1)
+// Dall'alto cadono palline: tocca quelle dorate, mai il carbone (3 cuori). 45 secondi.
+// 5 dorate di fila alzano il moltiplicatore (fino a ×5). Rara cometa che attraversa: +50.
+import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
+
+// ----- costanti (taratura) -----
+const DURATA = 45; // s
+const VITE = 3;
+const RAGGIO = 26; // px
+const MARGINE_TOCCO = 12; // px in più intorno alla pallina
+const VELOCITA = [230, 560]; // px/s, dall'inizio alla fine
+const OGNI = [0.65, 0.28]; // s tra una pallina e l'altra
+const DOPPIE_DA = 15; // s: da qui a volte ne cadono 2 insieme
+const P_DOPPIA = 0.3;
+const CARBONE = [0.2, 0.35]; // probabilità del carbone
+const P_COMETA = 0.03;
+const VELOCITA_COMETA = 640; // px/s
+const PUNTI = 10;
+const PUNTI_COMETA = 50;
+const COMBO_PASSO = 5; // ogni 5 dorate di fila il moltiplicatore sale
+const MOLT_MAX = 5;
+
+type Tipo = "oro" | "carbone" | "cometa";
+type Pallina = { tipo: Tipo; x0: number; x: number; y: number; vx: number; vy: number; fase: number; viva: boolean };
+
+export type StatoPalline = {
+  caso: () => number;
+  t: number;
+  prossima: number;
+  palline: Pallina[];
+  punti: number;
+  vite: number;
+  combo: number; // dorate di fila
+  ultimaX: number;
+  conti: { oro: number; carbone: number; comete: number; cadute: number; tocchi: number };
+  fine: boolean;
+  eventi: Evento[];
+};
+
+const molt = (combo: number) => Math.min(MOLT_MAX, 1 + Math.floor(combo / COMBO_PASSO));
+
+function aggiungi(s: StatoPalline, p: Omit<Pallina, "viva">) {
+  const libera = s.palline.find((x) => !x.viva);
+  if (libera) Object.assign(libera, p, { viva: true });
+  else s.palline.push({ ...p, viva: true });
+}
+
+function nasce(s: StatoPalline, m: Mondo) {
+  const k = limita(s.t / DURATA, 0, 1);
+  if (s.caso() < P_COMETA) {
+    const daSinistra = s.caso() < 0.5;
+    const y = m.sopra + s.caso() * m.h * 0.25;
+    aggiungi(s, { tipo: "cometa", x0: 0, x: daSinistra ? -RAGGIO : m.w + RAGGIO, y, vx: (daSinistra ? 1 : -1) * VELOCITA_COMETA * 0.85, vy: VELOCITA_COMETA * 0.42, fase: 0 });
+    return;
+  }
+  const quante = s.t >= DOPPIE_DA && s.caso() < P_DOPPIA ? 2 : 1;
+  for (let i = 0; i < quante; i++) {
+    const largo = Math.max(1, m.w - 2 * (RAGGIO + 12));
+    let x = RAGGIO + 12 + s.caso() * largo;
+    // lontane dall'ultima, così due palline non si sovrappongono
+    if (Math.abs(x - s.ultimaX) < RAGGIO * 3) x = RAGGIO + 12 + ((x - RAGGIO - 12 + largo / 2) % largo);
+    s.ultimaX = x;
+    const tipo: Tipo = s.caso() < mescola(CARBONE[0], CARBONE[1], k) ? "carbone" : "oro";
+    const v = mescola(VELOCITA[0], VELOCITA[1], k) * (0.9 + s.caso() * 0.2);
+    aggiungi(s, { tipo, x0: x, x, y: -RAGGIO - i * RAGGIO * 2.5, vx: 0, vy: v, fase: s.caso() * 6.28 });
+  }
+}
+
+export const palline: Gioco<StatoPalline> = {
+  crea(seme) {
+    return {
+      caso: casuale(seme),
+      t: 0,
+      prossima: 0.4,
+      palline: [],
+      punti: 0,
+      vite: VITE,
+      combo: 0,
+      ultimaX: -999,
+      conti: { oro: 0, carbone: 0, comete: 0, cadute: 0, tocchi: 0 },
+      fine: false,
+      eventi: [],
+    };
+  },
+
+  aggiorna(s, dt, tocchi, m) {
+    if (s.fine) return;
+    s.t += dt;
+    if (s.t >= s.prossima && s.t < DURATA - 0.6) {
+      nasce(s, m);
+      s.prossima = s.t + mescola(OGNI[0], OGNI[1], limita(s.t / DURATA, 0, 1));
+    }
+
+    // movimento: le palline dondolano un poco mentre cadono, la cometa va dritta
+    for (const p of s.palline) {
+      if (!p.viva) continue;
+      p.y += p.vy * dt;
+      if (p.tipo === "cometa") p.x += p.vx * dt;
+      else p.x = p.x0 + Math.sin(s.t * 2.2 + p.fase) * 7;
+    }
+
+    for (const tc of tocchi) {
+      if (tc.tipo !== "giu") continue;
+      s.conti.tocchi++;
+      let presa: Pallina | null = null;
+      let meglio = (RAGGIO + MARGINE_TOCCO) ** 2;
+      for (const p of s.palline) {
+        if (!p.viva) continue;
+        const d = (p.x - tc.x) ** 2 + (p.y - tc.y) ** 2;
+        if (d <= meglio) {
+          meglio = d;
+          presa = p;
+        }
+      }
+      if (!presa) continue; // tocco a vuoto: niente
+      presa.viva = false;
+      if (presa.tipo === "carbone") {
+        s.vite--;
+        s.combo = 0;
+        s.conti.carbone++;
+        s.eventi.push({ tipo: "carbone", x: presa.x, y: presa.y });
+        if (s.vite <= 0) {
+          s.fine = true;
+          return;
+        }
+      } else if (presa.tipo === "cometa") {
+        s.punti += PUNTI_COMETA;
+        s.conti.comete++;
+        s.eventi.push({ tipo: "cometa", x: presa.x, y: presa.y, testo: `+${PUNTI_COMETA}` });
+      } else {
+        const mm = molt(s.combo);
+        s.combo++;
+        s.punti += PUNTI * mm;
+        s.conti.oro++;
+        s.eventi.push({ tipo: "oro", x: presa.x, y: presa.y, testo: mm > 1 ? `+${PUNTI * mm} ×${mm}` : `+${PUNTI}`, livello: s.combo });
+        if (molt(s.combo) > mm) s.eventi.push({ tipo: "molt", x: presa.x, y: presa.y - 40, testo: `×${molt(s.combo)}!` });
+      }
+    }
+
+    // a terra (sulla neve) o fuori dallo schermo
+    const terra = m.h - m.sotto - 18;
+    for (const p of s.palline) {
+      if (!p.viva) continue;
+      if (p.tipo === "cometa") {
+        if (p.x < -RAGGIO * 2 || p.x > m.w + RAGGIO * 2 || p.y > m.h + RAGGIO) p.viva = false;
+      } else if (p.y > terra) {
+        p.viva = false;
+        if (p.tipo === "oro") {
+          if (s.combo > 0) s.eventi.push({ tipo: "persa", x: p.x, y: terra });
+          s.combo = 0;
+          s.conti.cadute++;
+        } else s.eventi.push({ tipo: "fumo", x: p.x, y: terra });
+      }
+    }
+    if (s.t >= DURATA) s.fine = true;
+  },
+
+  finito: (s) => s.fine,
+  hud: (s) => ({ punteggio: s.punti, tempo: Math.max(0, DURATA - s.t), vite: s.vite, viteMax: VITE, molt: molt(s.combo) }),
+  eventi: (s) => s.eventi,
+  stats: (s) => ({ ...s.conti }),
+
+  disegna(ctx, s, m) {
+    ctx.clearRect(-20, -20, m.w + 40, m.h + 40);
+    disegnaNeve(ctx, m);
+    const sprite = sprites();
+    for (const p of s.palline) {
+      if (!p.viva) continue;
+      if (p.tipo === "cometa") {
+        // scia dorata
+        const coda = ctx.createLinearGradient(p.x, p.y, p.x - p.vx * 0.22, p.y - p.vy * 0.22);
+        coda.addColorStop(0, "rgba(246,201,74,.9)");
+        coda.addColorStop(1, "rgba(246,201,74,0)");
+        ctx.strokeStyle = coda;
+        ctx.lineWidth = 10;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 0.22, p.y - p.vy * 0.22);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(s.t * 6);
+        ctx.drawImage(sprite.cometa, -RAGGIO, -RAGGIO, RAGGIO * 2, RAGGIO * 2);
+        ctx.restore();
+      } else {
+        const img = p.tipo === "oro" ? sprite.oro : sprite.carbone;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.sin(s.t * 2.2 + p.fase) * 0.18);
+        ctx.drawImage(img, -RAGGIO - 6, -RAGGIO - 14, RAGGIO * 2 + 12, RAGGIO * 2 + 20);
+        ctx.restore();
+      }
+    }
+  },
+
+  effetto(e, fx) {
+    if (e.tipo === "oro") {
+      fx.scoppio(e.x!, e.y!, ["#f6c94a", "#fbf6ea", "#e9a81c"], 18);
+      fx.testo(e.x!, e.y! - 36, e.testo!);
+      fx.suono("colpo", e.livello ?? 0);
+    } else if (e.tipo === "molt") {
+      fx.testo(e.x!, e.y! - 30, e.testo!, "#e9a81c", 30);
+    } else if (e.tipo === "cometa") {
+      fx.scoppio(e.x!, e.y!, ["#f6c94a", "#fbf6ea", "#e5481e"], 36, { velocita: 320 });
+      fx.testo(e.x!, e.y! - 36, e.testo!, "#f6c94a", 30);
+      fx.suono("record");
+    } else if (e.tipo === "carbone") {
+      fx.scoppio(e.x!, e.y!, ["#1c1c1c", "#3a3a3a", "#555"], 22, { velocita: 180, gravita: 120, dimensione: 4.5, durata: 0.9 });
+      fx.testo(e.x!, e.y! - 36, "−♥", "#e5481e", 28);
+      fx.trema(12);
+      fx.suono("sbaglio");
+    } else if (e.tipo === "persa") {
+      fx.scoppio(e.x!, e.y!, ["#fbf6ea"], 8, { velocita: 120, gravita: 300, dimensione: 3 });
+      fx.suono("puff");
+    } else if (e.tipo === "fumo") {
+      fx.scoppio(e.x!, e.y!, ["rgba(40,40,40,.6)"], 5, { velocita: 70, gravita: -40, dimensione: 4 });
+    }
+  },
+};
+
+// ---------- disegni (preparati una volta in canvas fuori schermo) ----------
+let cache: { oro: HTMLCanvasElement; carbone: HTMLCanvasElement; cometa: HTMLCanvasElement } | null = null;
+
+function tela(w: number, h: number, disegna: (c: CanvasRenderingContext2D) => void) {
+  const c = document.createElement("canvas");
+  c.width = w * 2;
+  c.height = h * 2;
+  const x = c.getContext("2d")!;
+  x.scale(2, 2);
+  disegna(x);
+  return c;
+}
+
+function sprites() {
+  if (cache) return cache;
+  const L = RAGGIO * 2 + 12;
+  const H = RAGGIO * 2 + 20;
+  const cx = L / 2;
+  const cy = 14 + RAGGIO;
+  cache = {
+    // pallina dorata dell'albero, con il cappuccio e una fascia a punto croce
+    oro: tela(L, H, (c) => {
+      c.strokeStyle = "#cdb48a";
+      c.lineWidth = 1.6;
+      c.beginPath();
+      c.arc(cx, 5, 3.5, 0, Math.PI * 2);
+      c.stroke();
+      c.fillStyle = "#cdb48a";
+      c.fillRect(cx - 6, 8, 12, 8);
+      const g = c.createRadialGradient(cx - 8, cy - 9, 2, cx, cy, RAGGIO);
+      g.addColorStop(0, "#fff1b8");
+      g.addColorStop(0.35, "#f6c94a");
+      g.addColorStop(1, "#b97c0c");
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(cx, cy, RAGGIO, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = "rgba(229,72,30,.85)";
+      c.lineWidth = 1.6;
+      for (let k = -4; k <= 4; k++) {
+        const x = cx + k * 5.5;
+        c.beginPath();
+        c.moveTo(x - 2, cy - 2);
+        c.lineTo(x + 2, cy + 2);
+        c.moveTo(x + 2, cy - 2);
+        c.lineTo(x - 2, cy + 2);
+        c.stroke();
+      }
+    }),
+    // carbone: un sasso nero spigoloso con riflessi grigi
+    carbone: tela(L, H, (c) => {
+      c.fillStyle = "#151515";
+      c.beginPath();
+      const punti = [[-1, -0.7], [-0.2, -1], [0.7, -0.85], [1, -0.1], [0.75, 0.75], [0, 1], [-0.8, 0.7], [-1, 0]];
+      punti.forEach(([a, b], i) => (i ? c.lineTo(cx + a * RAGGIO, cy + b * RAGGIO * 0.92) : c.moveTo(cx + a * RAGGIO, cy + b * RAGGIO * 0.92)));
+      c.closePath();
+      c.fill();
+      c.strokeStyle = "rgba(243,232,207,.55)";
+      c.lineWidth = 2;
+      c.setLineDash([4, 3]);
+      c.stroke();
+      c.setLineDash([]);
+      c.fillStyle = "rgba(255,255,255,.18)";
+      c.beginPath();
+      c.arc(cx - 8, cy - 8, 5, 0, Math.PI * 2);
+      c.arc(cx + 6, cy + 2, 3, 0, Math.PI * 2);
+      c.fill();
+    }),
+    // cometa: stella a 4 punte d'oro
+    cometa: tela(RAGGIO * 2, RAGGIO * 2, (c) => {
+      const r = RAGGIO;
+      const k = 0.16 * r;
+      c.translate(r, r);
+      c.fillStyle = "#f6c94a";
+      c.strokeStyle = "#fbf6ea";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(0, -r);
+      c.bezierCurveTo(k, -k, k, -k, r, 0);
+      c.bezierCurveTo(k, k, k, k, 0, r);
+      c.bezierCurveTo(-k, k, -k, k, -r, 0);
+      c.bezierCurveTo(-k, -k, -k, -k, 0, -r);
+      c.fill();
+      c.stroke();
+    }),
+  };
+  return cache;
+}
+
+// la neve in basso, dove cadono le palline
+function disegnaNeve(ctx: CanvasRenderingContext2D, m: Mondo) {
+  const y = m.h - m.sotto - 18;
+  ctx.fillStyle = "#f3e8cf";
+  ctx.beginPath();
+  ctx.moveTo(0, m.h);
+  ctx.lineTo(0, y + 8);
+  const onde = 5;
+  for (let i = 0; i < onde; i++) {
+    const x0 = (m.w / onde) * i;
+    ctx.quadraticCurveTo(x0 + m.w / onde / 2, y - 6 + (i % 2) * 6, x0 + m.w / onde, y + 6);
+  }
+  ctx.lineTo(m.w, m.h);
+  ctx.fill();
+}

@@ -1,7 +1,7 @@
 // Motore comune dei giochi (solo nel browser): canvas a tutto schermo, passo fisso a 60 Hz,
 // tocchi, pausa quando si esce dall'app, particelle, testi che volano e tremolio.
 import { suoni } from "@/lib/suoni";
-import { PASSO, type Gioco, type Hud, type Mondo, type Tocco } from "./base.ts";
+import { PASSO, stile, type Gioco, type Hud, type Mondo, type Tocco } from "./base.ts";
 
 const MAX_PASSI = 5; // al massimo 5 passi di logica per fotogramma (telefono lento = gioco più lento, non a scatti)
 
@@ -93,7 +93,7 @@ export class Effetti {
       const k = t.vita / t.durata;
       ctx.globalAlpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
       const scala = k < 0.15 ? 0.6 + (k / 0.15) * 0.5 : 1.1 - Math.min(0.1, (k - 0.15) * 0.3);
-      ctx.font = `700 ${Math.round(t.dimensione * scala)}px ${FONT_TITOLI}`;
+      ctx.font = `700 ${Math.round(t.dimensione * scala)}px ${stile.fontTitoli}`;
       ctx.lineWidth = 4;
       ctx.strokeStyle = "rgba(30,56,38,.85)";
       ctx.strokeText(t.testo, t.x, t.y);
@@ -103,9 +103,6 @@ export class Effetti {
     ctx.globalAlpha = 1;
   }
 }
-
-// il font dei titoli (Basteleur) caricato da Next: lo leggo dalla variabile CSS
-export let FONT_TITOLI = "Georgia, serif";
 
 // ---------------- motore ----------------
 export type Controllo = {
@@ -128,7 +125,7 @@ export function avviaMotore<S>(
   const ctx = canvas.getContext("2d")!;
   const fx = new Effetti(op.riduci);
   const famiglia = getComputedStyle(document.body).getPropertyValue("--font-basteleur").trim();
-  if (famiglia) FONT_TITOLI = `${famiglia}, Georgia, serif`;
+  if (famiglia) stile.fontTitoli = `${famiglia}, Georgia, serif`; // il font dei titoli caricato da Next
 
   // margini sicuri (notch, barra home) letti dal CSS
   const sonda = document.createElement("div");
@@ -219,7 +216,7 @@ export function avviaMotore<S>(
     fx.aggiorna(dt);
 
     const h = gioco.hud(s);
-    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.combo}`;
+    const chiave = `${h.punteggio}|${h.tempo === undefined ? "" : Math.ceil(h.tempo)}|${h.vite}|${h.molt}|${h.etichetta}`;
     if (chiave !== hudPrima) {
       hudPrima = chiave;
       op.onHud(h);

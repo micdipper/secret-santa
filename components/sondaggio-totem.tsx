@@ -203,7 +203,7 @@ export function SondaggioTotem({
                   type="button"
                   onClick={() => scegli(r.id)}
                   disabled={scelte.length > n}
-                  className={`cucitura cliccabile stoffa-chiara relative rounded-[28px] px-6 py-4 text-left text-inchiostro ${scelte[n] === r.id ? "outline-3 outline-offset-2 outline-senape" : ""}`}
+                  className={`cucitura cliccabile stoffa-chiara relative [--raggio:28px] rounded-[28px] px-6 py-4 text-left text-inchiostro ${scelte[n] === r.id ? "outline-3 outline-offset-2 outline-senape" : ""}`}
                 >
                   {r.testo}
                 </button>

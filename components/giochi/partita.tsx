@@ -39,6 +39,8 @@ export function Partita({
   const motore = useRef<Controllo | null>(null);
   const punti = useRef<HTMLSpanElement>(null);
   const tempo = useRef<HTMLSpanElement>(null);
+  const vite = useRef<HTMLSpanElement>(null);
+  const extra = useRef<HTMLSpanElement>(null);
   const riduci = useReducedMotion() ?? false;
   const [fase, setFase] = useState<"conto" | "gioco" | "pausa" | "invio" | "fine" | "errore">("conto");
   const [conto, setConto] = useState(3);
@@ -74,7 +76,15 @@ export function Partita({
       riduci,
       onHud: (h: Hud) => {
         if (punti.current) punti.current.textContent = String(h.punteggio);
-        if (tempo.current) tempo.current.textContent = h.tempo !== undefined ? `${Math.ceil(h.tempo)} s` : h.vite !== undefined ? "♥".repeat(h.vite) + "♡".repeat((h.viteMax ?? h.vite) - h.vite) : "";
+        // (il display dell'etichetta di stoffa vince su "empty:hidden": la nascondo a mano quando è vuota)
+        const scrivi = (el: HTMLSpanElement | null, testo: string) => {
+          if (!el) return;
+          el.textContent = testo;
+          el.style.display = testo ? "" : "none";
+        };
+        scrivi(tempo.current, h.tempo !== undefined ? `${Math.ceil(h.tempo)} s` : "");
+        scrivi(vite.current, h.vite !== undefined ? "♥".repeat(Math.max(0, h.vite)) + "♡".repeat(Math.max(0, (h.viteMax ?? h.vite) - h.vite)) : "");
+        scrivi(extra.current, h.molt && h.molt > 1 ? `×${h.molt}` : (h.etichetta ?? ""));
       },
       onPausa: () => setFase("pausa"),
       onFine: (punteggio, stats) => {
@@ -122,7 +132,9 @@ export function Partita({
           <span className="etichetta-stoffa bg-feltro font-titolo text-xl text-abete">
             <span ref={punti}>0</span>
           </span>
-          <span ref={tempo} className="etichetta-stoffa bg-vermiglio text-crema tabular-nums empty:hidden" />
+          <span ref={tempo} className="etichetta-stoffa bg-vermiglio text-crema tabular-nums" style={{ display: "none" }} />
+          <span ref={vite} className="etichetta-stoffa bg-feltro tracking-wider text-vermiglio" style={{ display: "none" }} />
+          <span ref={extra} className="etichetta-stoffa bg-senape font-titolo text-inchiostro" style={{ display: "none" }} />
         </div>
 
         <AnimatePresence>

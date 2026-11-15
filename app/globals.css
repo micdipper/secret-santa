@@ -180,12 +180,14 @@ textarea {
   --spessore: #c9b48a;
 }
 
-/* Cucitura tratteggiata interna dei tasti (raggio = quello del tasto) */
+/* Cucitura tratteggiata interna dei tasti, a 5px dal bordo.
+   Raggio interno = raggio esterno − distanza (stesso centro): chi non è una pillola
+   dichiara il suo raggio con --raggio (es. [--raggio:20px] rounded-[20px]). */
 .cucitura::before {
   content: "";
   position: absolute;
   inset: 5px;
-  border-radius: inherit;
+  border-radius: max(0px, calc(var(--raggio, 9999px) - 5px));
   border: 2px dashed currentColor;
   opacity: 0.4;
   pointer-events: none;
@@ -328,6 +330,30 @@ textarea {
 }
 .lampadina {
   animation: lampeggia 1.2s ease-in-out infinite;
+}
+
+/* ---------- Finestrelle del calendario dei giochi (raggio 24, cucitura a 6px → raggio 18) ---------- */
+.finestrella {
+  position: relative;
+  border-radius: 24px;
+}
+.finestrella::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 18px;
+  border: 2px dashed currentColor;
+  opacity: 0.4;
+  pointer-events: none;
+}
+/* non ancora aperta: solo la cucitura vermiglia (con la X disegnata sopra) */
+.finestrella-chiusa {
+  background: var(--color-feltro);
+  color: var(--color-inchiostro);
+}
+.finestrella-chiusa::before {
+  border-color: var(--color-vermiglio);
+  opacity: 0.75;
 }
 
 /* ---------- Toppa rotonda (membri) ---------- */

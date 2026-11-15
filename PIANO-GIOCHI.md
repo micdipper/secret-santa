@@ -114,7 +114,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 | # | Nome | Abilità | Durata | Controlli server (min s · max s · punteggio max · punti/s max) |
 |---|---|---|---|---|
 | 1 | Palline al volo | riflessi + scelta | 45 s o 3 vite | 3 · 50 · 8000 · 260 |
-| 2 | Campanelli | memoria + velocità | finché non sbagli | 5 · 600 · 12000 · 60 |
+| 2 | Campanelli | memoria + velocità | finché non sbagli | 2 · 600 · 12000 · 60 |
 | 3 | Impila i regali | tempismo preciso | finché non manchi | 2 · 600 · 6000 · 25 |
 | 4 | Slitta slalom | controllo continuo | finché non urti | 3 · 300 · 20000 · 120 |
 | 5 | Palle di neve alle finestre | mira con anticipo + scelta | 60 s | 5 · 65 · 6000 · 160 |
@@ -176,7 +176,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 ## 9. Ordine dei lavori (una sessione per blocco)
 1. ✅ (16/11) **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
 2. ✅ (16/11) Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
-3. Giochi 1 e 2.
+3. ✅ (16/11) Giochi 1 e 2.
 4. Giochi 3 e 4.
 5. Gioco 5 + premi grafici (neon, Esplosione, GODO, cowboy) + **sistemazione delle cornici/cuciture** (sezione 4) + annuncio vincitore.
 6. Collaudo completo (sezione 8), aggiornare STATO.md, commit, anteprima Vercel, prova di Marzia sul telefono.

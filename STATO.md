@@ -1,6 +1,6 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 16/11/2026 (blocco 2 dei giochi). Da leggere insieme a `CLAUDE.md` (brief e regole). Qui c'è solo **come stanno le cose oggi**: la cronologia completa delle giornate è nella storia di git (la versione lunga di questo file è nel commit `8fd57b6`).
+Aggiornato al 16/11/2026 (blocco 3 dei giochi). Da leggere insieme a `CLAUDE.md` (brief e regole). Qui c'è solo **come stanno le cose oggi**: la cronologia completa delle giornate è nella storia di git (la versione lunga di questo file è nel commit `8fd57b6`).
 **Aggiornarlo a fine blocco** riscrivendo le voci che cambiano, senza aggiungere diari giornalieri.
 
 ## ➡ Da fare (in ordine)
@@ -11,13 +11,17 @@ Aggiornato al 16/11/2026 (blocco 2 dei giochi). Da leggere insieme a `CLAUDE.md`
    - Per ora tutti e 5 usano il **gioco provvisorio "Stelline"** (`lib/giochi/finto.ts`, 20 s, sta nei limiti del server di tutti): nei blocchi 3-5 basta sostituire `gioco`, `regole` e `provvisorio` in `lib/giochi/elenco.ts`. I nuovi giochi vanno in `lib/giochi/<nome>.ts` (logica + disegno, niente JSX, import con estensione `.ts` così Node li legge; `tsconfig` ha `allowImportingTsExtensions`).
    - Collaudi del blocco 2: `node --experimental-strip-types test-e2e/giochi-logica.ts` (bot, 1500 partite per gioco: tutto OK) e `test-e2e/giochi-diretta.mjs` (due utenti finti, pagina vera: diretta "sta giocando…" e punteggio senza ricaricare, partita salvata, tentativi: 10/10 OK).
    - Scelte del blocco 2: il nome del gioco resta una sorpresa finché la finestrella non si apre (si vede solo il premio in palio); il gioco 5 è la finestrella larga "gran finale"; in sala prove tutte le finestrelle si aprono. L'annuncio del vincitore con fanfara resta per il blocco 5 (oggi la pagina e il calendario mostrano già il vincitore col personaggio).
-   - ➡ Prossimo: **blocco 3** (giochi 1 e 2).
+   - ✅ **Blocco 3 fatto (16/11)**: **gioco 1 "Palline al volo"** (`lib/giochi/palline.ts`: palline dorate +10, carbone −1 cuore, cometa +50, moltiplicatore ogni 5 dorate fino a ×5, 45 s) e **gioco 2 "Campanelli"** (`lib/giochi/campanelli.ts`: 4 campanelli di feltro 2×2 con le note do-re-mi-sol, si parte da 3 note, bonus rapidità, dal giro 9 due campanelli si scambiano di posto, 5 s per tocco). In alto durante la partita: punti, tempo, cuori e moltiplicatore/giro. Bot: gioco 1 mediana ~1460, record 4600 (limite 8000); gioco 2 mediana ~385, record ~4600 (limite 12000). Migrazione `20261116200000_giochi_durata_campanelli`: durata minima del gioco 2 da 5 a 2 s (chi sbagliava al primo giro aveva "partita non valida").
+   - Calendario sistemato (richiesta di Marzia): finestrelle chiuse in feltro pieno con SOLO la cucitura vermiglia e la X; finestrelle giocate con il numero a colore pieno.
+   - **Regola dei raggi** (Marzia, vale sempre): raggio esterno = raggio interno + distanza. `.cucitura::before` ora usa `--raggio` (default pillola): chi non è una pillola scrive `[--raggio:20px] rounded-[20px]` (corretti esclusioni e sondaggio).
+   - Dati di prova "Test E2E Natale" ripuliti il 16/11 (gruppi + accessi finti + l'accesso senza gruppo).
+   - ➡ Prossimo: **blocco 4** (giochi 3 e 4).
 2. **Debug completo dell'app vera** (chiesto da Marzia: "prenditi tutto il tempo"), in una sessione dedicata. Quasi tutto è stato provato solo su telefoni simulati.
 3. **Rivelazione finale** ("Chi era il Babbo Natale di chi", CLAUDE.md punto 11).
 4. **Pubblicazione**: unire il ramo di lavoro in `main` → Production su Vercel (solo quando Marzia lo chiede, con PR).
 
 Aperte, in attesa di Marzia:
-- Dati di prova da ripulire (chiedere prima): gruppi "Test E2E Natale" `dc309576-4f8b-4ea2-a87f-4e6de5a9b609`, `a988807a-23de-4270-b5fb-27be88a41257`, `534ccc39-31bf-4cae-a937-f74b0cfda4da`, `abddbc2d-d78c-4711-a69b-294a20318caa`, `2c0d903d-7e9a-4734-a44d-889483fbd7ca` (accessi `95ca0be6-…`, `c467a566-…`), `c2d726c3-f0b4-4b69-aa76-fb2ce753f042` (accessi `b31b6f60-…`, `82e10c6b-…`) con i loro accessi finti, più l'accesso senza gruppo `ea354d17-bcf7-4cdd-beb6-2b111b6ea253`. Un gruppo "A" di Marzia (creato il 10/11 alle 17:00): chiedere se tenerlo. Una vecchia foto di prova nello Storage `moodboard` (si toglie dalla dashboard).
+- Gruppi di prova di Marzia ancora nel database (non cancellati: chiedere): sei "A" (10/11 e 14/11), "d", "Fkejd", "Z", "D". Una vecchia foto di prova nello Storage `moodboard` (si toglie dalla dashboard).
 - Toppe: "chronically online" all'inglese (Marzia aveva scritto "cronically")? "iPhone duo" come due iPhone? Scelte libere da confermare: bradipo e cartello "NO!" (hater), uovo sodo con gli occhi a spirale (so cooked).
 - Bacheca: il bug del ricamo "dopo il doppio fondo" non si riproduce nel simulatore (ipotesi: zoom col pinch su iPhone, ora spento). Da verificare sul telefono vero.
 

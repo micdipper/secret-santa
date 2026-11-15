@@ -59,7 +59,7 @@ export function Classifica({ righe, io, tentativiMax = 3 }: { righe: Riga[]; io:
   const pos = posizioni(righe);
   return (
     <LayoutGroup>
-      <ol className="feltro flex flex-col gap-1 p-3">
+      <ol className="feltro flex flex-col gap-1 p-3">{/* raggio 28 − margine 12 = righe da 16 */}
         {righe.map((r) => {
           const mia = r.memberId === io;
           const p = pos[r.memberId];
@@ -68,7 +68,7 @@ export function Classifica({ righe, io, tentativiMax = 3 }: { righe: Riga[]; io:
               key={r.memberId}
               layout="position"
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
-              className={`relative flex items-center gap-3 rounded-[18px] px-3 py-2 ${mia ? "bg-senape/30" : ""} ${r.migliore === null ? "opacity-55" : ""}`}
+              className={`relative flex items-center gap-3 rounded-2xl px-3 py-2 ${mia ? "bg-senape/30" : ""} ${r.migliore === null ? "opacity-55" : ""}`}
             >
               <span className={`w-7 flex-none text-center font-titolo text-lg ${p === 1 ? "text-vermiglio" : "text-abete"}`}>{p ?? "–"}</span>
               <ToppaAvatar look={r.look} dimensione={40} nome={r.nome} />

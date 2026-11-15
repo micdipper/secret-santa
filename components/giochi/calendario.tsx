@@ -30,7 +30,7 @@ export function Calendario({ finestre, ora, href, sempreAperte = false }: { fine
         const info = GIOCHI[f.n - 1];
         const stato = statoDa(f.apre, f.chiude, ora);
         const finale = f.n === 5;
-        const classe = "relative flex h-full min-h-[156px] flex-col rounded-[24px] p-4";
+        const classe = "finestrella flex h-full min-h-[156px] flex-col p-4";
         const numero = (colore: string) => (
           <span className={`relative font-titolo text-[44px] leading-none ${colore}`}>
             {f.n}
@@ -44,9 +44,9 @@ export function Calendario({ finestre, ora, href, sempreAperte = false }: { fine
             <>
               <CuciturX />
               {numero("text-abete")}
-              <span className="relative mt-auto text-sm text-inchiostro/80">{giornoGioco(f.apre)}</span>
+              <span className="relative mt-auto text-sm text-inchiostro">{giornoGioco(f.apre)}</span>
               <span className="relative font-medium text-abete">tra {durataBreve(f.apre - ora)}</span>
-              <span className="relative mt-1 text-sm text-inchiostro/70">In palio: {info.nomePremio}</span>
+              <span className="relative mt-1 text-sm text-inchiostro/85">In palio: {info.nomePremio}</span>
             </>
           );
         } else if (stato === "aperto") {
@@ -65,7 +65,7 @@ export function Calendario({ finestre, ora, href, sempreAperte = false }: { fine
           contenuto = (
             <>
               <div className="flex items-start justify-between gap-2">
-                {numero("text-abete/60")}
+                {numero("text-abete")}
                 <span className="text-right text-sm text-inchiostro/70">{info.nome}</span>
               </div>
               {f.vincitore ? (
@@ -84,15 +84,15 @@ export function Calendario({ finestre, ora, href, sempreAperte = false }: { fine
         }
 
         const cliccabile = sempreAperte || stato !== "bloccato";
-        const stoffa = stato === "aperto" ? "stoffa-vermiglio" : "stoffa-chiara";
+        const stoffa = stato === "bloccato" ? "finestrella-chiusa" : stato === "aperto" ? "stoffa-vermiglio" : "stoffa-chiara";
         return (
           <li key={f.n} className={finale ? "col-span-2" : ""}>
             {cliccabile ? (
-              <Link href={href(f.n)} className={`${classe} cucitura cliccabile ${stoffa}`} aria-label={`Gioco ${f.n}`}>
+              <Link href={href(f.n)} className={`${classe} cliccabile ${stoffa}`} aria-label={`Gioco ${f.n}`}>
                 {contenuto}
               </Link>
             ) : (
-              <div className={`${classe} bg-[#e8d9b6] text-inchiostro`}>{contenuto}</div>
+              <div className={`${classe} ${stoffa}`}>{contenuto}</div>
             )}
           </li>
         );
@@ -101,12 +101,11 @@ export function Calendario({ finestre, ora, href, sempreAperte = false }: { fine
   );
 }
 
-// finestrella ancora cucita: una X di filo vermiglio
+// finestrella ancora cucita: una X di filo vermiglio (la cornice è la cucitura di .finestrella-chiusa)
 function CuciturX() {
   return (
     <svg className="pointer-events-none absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100" aria-hidden>
-      <rect x="4" y="4" width="92" height="92" rx="14" fill="none" stroke="rgb(229 72 30 / .55)" strokeWidth="2" strokeDasharray="5 4" vectorEffect="non-scaling-stroke" />
-      <path d="M14 14L86 86M86 14L14 86" stroke="rgb(229 72 30 / .3)" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" />
+      <path d="M12 12L88 88M88 12L12 88" stroke="var(--color-vermiglio)" strokeOpacity=".5" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
