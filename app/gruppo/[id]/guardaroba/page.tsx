@@ -2,7 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { ToppaAvatar, CAPELLI_SUPER, COLORE_OLOGRAFICO, normalizzaLook, type Look } from "@/components/avatar";
+import { ToppaAvatar, PREMI_COLORI, PREMI_MAGLIONI, PREMI_TAGLI, normalizzaLook, premioCucitura, type Look } from "@/components/avatar";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
 import { Errore, Tasto, TestataInterna } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -40,8 +40,10 @@ function Profilo() {
       setSbloccati(ok);
       setLook({
         ...l,
-        capelli: l.capelli === CAPELLI_SUPER && !ok.includes("super") ? 0 : l.capelli,
-        coloreCapelli: l.coloreCapelli === COLORE_OLOGRAFICO && !ok.includes("olografico") ? 0 : l.coloreCapelli,
+        capelli: PREMI_TAGLI[l.capelli] && !ok.includes(PREMI_TAGLI[l.capelli]) ? 0 : l.capelli,
+        coloreCapelli: PREMI_COLORI[l.coloreCapelli] && !ok.includes(PREMI_COLORI[l.coloreCapelli]) ? 0 : l.coloreCapelli,
+        maglione: PREMI_MAGLIONI[l.maglione] && !ok.includes(PREMI_MAGLIONI[l.maglione]) ? 0 : l.maglione,
+        cucitura: premioCucitura(l.cucitura ?? 0) && !ok.includes(premioCucitura(l.cucitura ?? 0)!) ? 0 : l.cucitura,
         accessori: l.accessori.filter((a) => ok.includes(a)),
       });
     })();

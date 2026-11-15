@@ -6,7 +6,10 @@
 
 let ctx: AudioContext | null = null;
 let generale: GainNode | null = null;
+let busMusica: GainNode | null = null; // la musica passa di qui (si abbassa durante le partite)
+let inMusica = false; // vero mentre si programmano le note della musica
 let muto = false;
+let musicaBassaOra = false;
 const ascoltatori = new Set<(m: boolean) => void>();
 
 try {
@@ -22,6 +25,9 @@ function audio() {
     generale = ctx.createGain();
     generale.gain.value = muto ? 0 : 0.6;
     generale.connect(ctx.destination);
+    busMusica = ctx.createGain();
+    busMusica.gain.value = musicaBassaOra ? 0.35 : 1;
+    busMusica.connect(generale);
   }
   if (ctx.state === "suspended") ctx.resume();
   return ctx;
@@ -62,7 +68,7 @@ function nota(freq: number, durata: number, { tipo = "sine" as OscillatorType, v
   g.gain.setValueAtTime(0, t);
   g.gain.linearRampToValueAtTime(volume, t + attacco);
   g.gain.exponentialRampToValueAtTime(0.0001, t + durata);
-  o.connect(g).connect(generale);
+  o.connect(g).connect(inMusica && busMusica ? busMusica : generale);
   o.start(t);
   o.stop(t + durata + 0.05);
 }
@@ -85,7 +91,7 @@ function rumore(durata: number, { volume = 0.2, filtro = 2000, tipoFiltro = "low
   const g = c.createGain();
   g.gain.setValueAtTime(volume, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + durata);
-  s.connect(f).connect(g).connect(generale);
+  s.connect(f).connect(g).connect(inMusica && busMusica ? busMusica : generale);
   s.start(t);
 }
 
@@ -171,7 +177,72 @@ export const suoni = {
   fanfara() {
     [784, 988, 1175, 1568].forEach((f, i) => campana(f, i * 0.11, 0.15));
   },
+
+  // ---------- giochi ----------
+  // 3-2-1
+  conto() {
+    nota(880, 0.14, { tipo: "triangle", volume: 0.12 });
+  },
+  via() {
+    campana(1318, 0, 0.14);
+    campana(1760, 0.07, 0.12);
+  },
+  // colpo riuscito: più sale la combo, più sale la nota
+  colpo(livello = 0) {
+    const f = 660 * Math.pow(2, Math.min(livello, 12) / 12);
+    nota(f, 0.12, { tipo: "triangle", volume: 0.12, scivola: 1.4 });
+    campana(f * 2, 0.02, 0.05);
+  },
+  // errore buffo (pernacchietta stonata)
+  sbaglio() {
+    nota(220, 0.28, { tipo: "sawtooth", volume: 0.05, scivola: 0.55 });
+    rumore(0.12, { volume: 0.1, filtro: 600 });
+  },
+  // campanelli del gioco 2: scala pentatonica (do re mi sol), suono di campana
+  campanello(i = 0, lungo = 1) {
+    const f = [523.25, 587.33, 659.25, 783.99][i % 4];
+    nota(f, 0.9 * lungo, { volume: 0.2 });
+    nota(f * 2.76, 0.4 * lungo, { volume: 0.06 });
+    nota(f * 2, 0.5 * lungo, { tipo: "triangle", volume: 0.05 });
+  },
+  // gioco 3: pacco appoggiato e tagliato (tonfo morbido + forbici sulla stoffa)
+  taglio() {
+    nota(150, 0.12, { volume: 0.2, scivola: 0.6 });
+    rumore(0.06, { volume: 0.1, filtro: 3000, tipoFiltro: "bandpass", q: 2, ritardo: 0.02 });
+    rumore(0.05, { volume: 0.08, filtro: 3600, tipoFiltro: "bandpass", q: 2, ritardo: 0.08 });
+  },
+  // gioco 3: perfetto (tonfo + campanella che sale con i perfetti di fila)
+  perfetto(livello = 1) {
+    nota(170, 0.1, { volume: 0.18, scivola: 0.7 });
+    const f = 1047 * Math.pow(2, (Math.min(livello, 8) - 1) / 12);
+    campana(f, 0.03, 0.14);
+    campana(f * 1.5, 0.1, 0.08);
+  },
+  // gioco 4: regalo preso (due sonagli che salgono)
+  regalo(livello = 0) {
+    const f = 880 * Math.pow(2, (livello % 5) / 12);
+    campana(f, 0, 0.11);
+    campana(f * 1.335, 0.07, 0.09);
+  },
+  // urto: botta sorda nella neve con lo sbuffo
+  urto() {
+    nota(90, 0.3, { volume: 0.3, scivola: 0.5 });
+    rumore(0.45, { volume: 0.32, filtro: 700, scendi: 0.3 });
+    rumore(0.2, { volume: 0.1, filtro: 4000, tipoFiltro: "highpass", ritardo: 0.03 });
+  },
+  fineGioco() {
+    [784, 659, 523, 659].forEach((f, i) => nota(f, 0.28, { tipo: "triangle", volume: 0.1, ritardo: i * 0.12 }));
+  },
+  record() {
+    [523, 659, 784, 1047, 1319].forEach((f, i) => campana(f, i * 0.09, 0.14));
+  },
 };
+
+// Durante le partite la musica si abbassa (resta i suoni del gioco in primo piano)
+export function musicaBassa(bassa: boolean) {
+  musicaBassaOra = bassa;
+  if (ctx && busMusica) busMusica.gain.setTargetAtTime(bassa ? 0.35 : 1, ctx.currentTime, 0.3);
+}
 
 // ---------- musica ----------
 // Due brani scritti da noi:
@@ -221,6 +292,7 @@ function suonaCarillon() {
       timerMusica = null;
       return;
     }
+    inMusica = true;
     const [m, durata] = MELODIA[i % MELODIA.length];
     const giri = Math.floor(tempo / giro);
     if (m) {
@@ -238,6 +310,7 @@ function suonaCarillon() {
       if (giri >= 2) campana(freq(basso + 36), 0, 0.05);
       if (giri >= 3 && battuta % 2 === 0) campana(freq(basso + 43), passo * 2, 0.035);
     }
+    inMusica = false;
     tempo += durata;
     i++;
     timerMusica = setTimeout(suona, passo * durata * 1000);
@@ -253,6 +326,7 @@ function suonaAttesa() {
       timerMusica = null;
       return;
     }
+    inMusica = true;
     const accordo = ACCORDI_ATTESA[n % ACCORDI_ATTESA.length];
     const sale = Math.min(1, n / 8); // cresce piano
     // tappeto: note lunghe con attacco morbido
@@ -265,6 +339,7 @@ function suonaAttesa() {
     // brillio in cima e un tremolo leggero
     campana(freq(note[note.length - 1] + 12), 0.5 + note.length * 0.38, 0.02 + 0.02 * sale);
     for (let k = 0; k < 8; k++) nota(freq(accordo[3] + 24), 0.12, { volume: 0.004 + 0.004 * sale, ritardo: 1.8 + k * 0.17 });
+    inMusica = false;
     n++;
     timerMusica = setTimeout(suona, durataAccordo * 1000);
   };

@@ -1,4 +1,6 @@
-# Piano – Calendario dei giochi (avvento a 5 giochi)
+# Piano – Mini giochi dell'avvento (calendario a 5 giochi)
+
+> ⚠ 16/11: il calendario, i premi (solo indizi) e il punteggio del gioco 4 sono cambiati su richiesta di Marzia: vale quello che c'è scritto in STATO.md.
 
 Scritto il 15/11/2026 (pianificazione con Opus), approvato da Marzia nelle decisioni qui sotto.
 **Chi lo esegue**: leggere prima `CLAUDE.md` e `STATO.md`, poi questo file. Lavorare a blocchi (sezione 9), una sessione per blocco.
@@ -113,8 +115,8 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 
 | # | Nome | Abilità | Durata | Controlli server (min s · max s · punteggio max · punti/s max) |
 |---|---|---|---|---|
-| 1 | Palline al volo | riflessi + scelta | 45 s o 3 vite | 3 · 50 · 8000 · 260 |
-| 2 | Campanelli | memoria + velocità | finché non sbagli | 5 · 600 · 12000 · 60 |
+| 1 | Palline al volo | riflessi + scelta | 45 s o 3 vite | 1 · 50 · 8000 · 260 |
+| 2 | Campanelli | memoria + velocità | finché non sbagli | 2 · 600 · 12000 · 60 |
 | 3 | Impila i regali | tempismo preciso | finché non manchi | 2 · 600 · 6000 · 25 |
 | 4 | Slitta slalom | controllo continuo | finché non urti | 3 · 300 · 20000 · 120 |
 | 5 | Palle di neve alle finestre | mira con anticipo + scelta | 60 s | 5 · 65 · 6000 · 160 |
@@ -122,14 +124,16 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 (I limiti sono larghi; vanno ricontrollati dopo la taratura con partite vere: devono stare almeno al doppio del record realistico.)
 
 ### 6.1 Palline al volo (gioco 1)
-- Dall'alto cadono palline. **Tocca le palline dorate** (+10). **Non toccare il carbone** (perdi 1 dei 3 cuori, la combo si azzera). Pallina dorata che tocca terra = combo azzerata (niente cuore perso). Rara **stella cometa** (3%) che attraversa in diagonale veloce: +50.
+- ⚠ Tarato con Marzia il 16/11: i valori qui sotto sono quelli di partenza. **Quelli veri sono le costanti in cima a `lib/giochi/palline.ts`** (e il riassunto in STATO.md).
+- Dall'alto cadono palline. **Tocca le palline dorate** (+10). **Non toccare il carbone** (perdi 1 dei 3 cuori, la combo si azzera). Pallina dorata che tocca terra = combo azzerata **e un cuore perso** (Marzia, 16/11). Da 12 s il carbone cade sempre più spesso attaccato a una dorata (trappola). Rara **stella cometa** (3%) che attraversa in diagonale veloce: +50. Dorate a **zigzag** (da 5 s) e dorate che **lampeggiano e diventano carbone** a metà caduta (da 10 s; "carbone travestito": toccarle costa un cuore anche quando sono ancora d'oro). Rara **meteora di carbone** (4%, da 8 s) che attraversa allo stesso modo: −1 cuore (Marzia, 16/11).
 - Combo: ogni 5 dorate di fila il moltiplicatore sale (×1 → ×5).
 - Difficoltà: velocità di caduta da 230 a 560 px/s in 45 s; una nuova ogni 650 ms → 280 ms; dai 15 s a volte ne cadono 2 insieme; il carbone passa dal 20% al 35%. Area di tocco = raggio pallina + 12 px.
 - Effetti: pallina che scoppia in brillantini, "+10 ×3" che vola, carbone che fa polvere nera e scuote lo schermo, cuore che si scuce.
 
 ### 6.2 Campanelli (gioco 2)
-- 4 campanelli 2×2 (colori diversi + nota di una scala pentatonica, suono generato dal codice). Il gioco suona e illumina una sequenza; ripetila toccando. Si parte da **3 note** (medio da subito), +1 a ogni turno.
-- Velocità della sequenza: 600 ms a nota → 280 ms dal turno 10. Dal turno 6 le note sono più brevi. Dal turno 9 un campanello "birichino" scambia posto con un altro (animazione di 0,5 s) **prima** della sequenza: la posizione conta, il colore resta.
+- ⚠ Tarato con Marzia il 16/11: **i valori veri sono le costanti in cima a `lib/giochi/campanelli.ts`** (e il riassunto in STATO.md).
+- 4 campanelli 2×2 (colori diversi + nota di una scala pentatonica, suono generato dal codice). Il gioco suona e illumina una sequenza; ripetila toccando. Si parte da **4 note** (Marzia, 16/11), +1 a ogni turno **e una nota già sentita cambia** (dal turno 2); mai 3 note uguali di fila.
+- Velocità della sequenza: 600 ms a nota → 280 ms dal turno 10. Dal turno 6 le note sono più brevi. Dal turno 7 (Marzia, 16/11; prima era 9) un campanello "birichino" scambia posto con un altro (animazione di 0,5 s) **prima** della sequenza: la posizione conta, il colore resta.
 - Un errore = fine. 5 s per ogni tocco, altrimenti fine.
 - Punteggio: 10 × lunghezza della sequenza completata + bonus rapidità (fino a +5 per nota se rispondi entro 400 ms).
 - Effetti: campanello che dondola, onda di luce, sequenza giusta = scintille e campanella; errore = "stonata" buffa.
@@ -154,6 +158,7 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 - Antispam: una palla ogni 0,2 s; colpire una finestra vuota = −2 e combo azzerata.
 - Combo ×1 → ×4. Durata 60 s, ritmo che accelera (più personaggi insieme, più Babbi).
 - Effetti: palla che si schiaccia, elfo che barcolla con le stelline, imposte che sbattono, Babbo Natale offeso.
+- Racconto (campo `storia`): breve, lascia qualcosa da scoprire (Marzia, 16/11). Proposta: "Invece di incartare i regali, gli elfi si affacciano alle finestre del laboratorio a fare scherzi. Rispondi a palle di neve! Ma chi si affaccia non è sempre un elfo..."
 
 ## 7. Motore comune (`lib/giochi/motore.ts`) e file
 - Canvas 2D a tutto schermo; risoluzione = dimensione CSS × min(devicePixelRatio, 2); ridimensionamento con `ResizeObserver` (la barra di Safari cambia l'altezza).
@@ -175,8 +180,8 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 
 ## 9. Ordine dei lavori (una sessione per blocco)
 1. ✅ (16/11) **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
-2. Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
-3. Giochi 1 e 2.
-4. Giochi 3 e 4.
-5. Gioco 5 + premi grafici (neon, Esplosione, GODO, cowboy) + **sistemazione delle cornici/cuciture** (sezione 4) + annuncio vincitore.
+2. ✅ (16/11) Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
+3. ✅ (16/11) Giochi 1 e 2 (Palline al volo, Campanelli).
+4. ✅ (16/11) Giochi 3 e 4 (Impila i regali, Slitta slalom). Valori veri = costanti in cima a `lib/giochi/regali.ts` e `lib/giochi/slitta.ts` (riassunto in STATO.md); punteggio del gioco 3: 10 a piano + 10 in più per un perfetto.
+5. Gioco 5 + annuncio vincitore. (Premi grafici e sistemazione delle cuciture: ✅ fatti il 16/11 durante il blocco 3.)
 6. Collaudo completo (sezione 8), aggiornare STATO.md, commit, anteprima Vercel, prova di Marzia sul telefono.

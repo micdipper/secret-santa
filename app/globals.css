@@ -180,12 +180,14 @@ textarea {
   --spessore: #c9b48a;
 }
 
-/* Cucitura tratteggiata interna dei tasti (raggio = quello del tasto) */
+/* Cucitura tratteggiata interna dei tasti, a 5px dal bordo.
+   Raggio interno = raggio esterno − distanza (stesso centro): chi non è una pillola
+   dichiara il suo raggio con --raggio (es. [--raggio:20px] rounded-[20px]). */
 .cucitura::before {
   content: "";
   position: absolute;
   inset: 5px;
-  border-radius: inherit;
+  border-radius: max(0px, calc(var(--raggio, 9999px) - 5px));
   border: 2px dashed currentColor;
   opacity: 0.4;
   pointer-events: none;
@@ -310,6 +312,18 @@ textarea {
 .capelli-olografici {
   animation: olografico 6s linear infinite;
 }
+/* taglio Esplosione (premio del gioco 2): ondeggia appena */
+@keyframes esplosione {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.03); }
+}
+.esplosione {
+  transform-origin: 50px 36px;
+  animation: esplosione 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .esplosione { animation: none; }
+}
 /* cartellino del lupetto "da portare indietro" che dondola */
 @keyframes cartellino {
   0%, 100% { transform: rotate(-8deg); }
@@ -351,7 +365,7 @@ textarea {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  border: 1.5px dashed rgb(44 74 50 / 0.55);
+  border: 1.5px dashed rgb(44 74 50 / 0.55); /* stesso filo delle cuciture premio (FILO_CUCITURA in avatar.tsx) */
 }
 
 /* ---------- Santa Chat: fumetti di stoffa (NON cliccabili: piatti, cuciti) ----------

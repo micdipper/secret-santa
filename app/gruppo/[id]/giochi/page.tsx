@@ -1,58 +1,110 @@
-import { Feltro, Icone, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
-import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
-import { utenteCollegato } from "@/lib/supabase/server";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
+import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { caricaGiochi, caricaPersone, finestreDa } from "@/lib/giochi/dati";
+import { aperturaCalendario, benvenutoVisto, giorniAlloScambio, segnaBenvenuto } from "@/lib/giochi/avvento";
+import { durataBreve, scartoDa, statoDa, useOraServer } from "@/lib/giochi/ora";
+import { clientSoloBrowser } from "@/lib/supabase/client";
 
-// Minigiochi dell'avvento: uno al giorno nei 4 giorni prima dello scambio e il giorno stesso (PIANO-GIOCHI.md).
-// Finché non è il momento, la pagina spiega quando si sbloccano.
-export default async function PaginaGiochi({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { supabase, userId } = await utenteCollegato();
-  if (!userId) return null; // il layout del gruppo pensa all'accesso
+// Mini giochi dell'avvento del gruppo: il calendario si apre 5 giorni prima dello scambio, poi un regalo (gioco) al giorno.
+export default function PaginaCalendario() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [nomeGruppo, setNomeGruppo] = useState("");
+  const [conData, setConData] = useState(false);
+  const [dati, setDati] = useState<{ attivi: boolean; finestre: Finestra[]; scarto: number } | null>(null);
 
-  const { data: gruppo } = await supabase.from("groups").select("name, exchange_date, giochi_attivi, organizer_id").eq("id", id).maybeSingle();
-  if (!gruppo) return null;
-  const organizzatore = gruppo.organizer_id === userId;
-  const giorni = giorniMancanti(gruppo.exchange_date);
+  const carica = useCallback(async () => {
+    const supabase = clientSoloBrowser();
+    const { data: s } = await supabase.auth.getSession();
+    if (!s.session) return router.replace("/");
+    const [g, giochi, persone] = await Promise.all([
+      supabase.from("groups").select("name, exchange_date").eq("id", id).maybeSingle(),
+      caricaGiochi(supabase, id),
+      caricaPersone(supabase, id),
+    ]);
+    if (!g.data || !giochi) return router.replace(`/gruppo/${id}`);
+    setNomeGruppo(g.data.name);
+    setConData(!!g.data.exchange_date);
+    setDati({ attivi: giochi.attivi, finestre: finestreDa(giochi, persone), scarto: scartoDa(giochi.ora_server) });
+  }, [id, router]);
 
-  let titolo = "Non è ancora il momento";
-  let testo: string;
-  if (!gruppo.exchange_date) {
-    testo = organizzatore
-      ? "I minigiochi si sbloccano quando scegli il giorno dello scambio (almeno 6 giorni da oggi)."
-      : "I minigiochi si sbloccano quando l'organizzatore sceglie il giorno dello scambio. Ripassa tra qualche giorno!";
-  } else if (!gruppo.giochi_attivi) {
-    titolo = "Niente minigiochi per questo gruppo";
-    testo = organizzatore
-      ? "Il giorno dello scambio è troppo vicino: i giochi hanno bisogno di almeno 6 giorni di anticipo. Puoi scegliere una data più lontana in Organizza."
-      : "Il giorno dello scambio è troppo vicino: i giochi hanno bisogno di almeno 6 giorni di anticipo.";
-  } else if (giorni !== null && giorni > 4) {
-    testo = `Non è ancora il momento di questo: ripassa tra qualche giorno! Il primo gioco si apre ${dataBreve(giornoPrima(gruppo.exchange_date, 4))} a mezzanotte, poi uno al giorno fino allo scambio.`;
-  } else if (giorni !== null && giorni >= -1) {
-    titolo = "Ci siamo quasi";
-    testo = "Il calendario dei giochi si sta cucendo: ripassa tra poco!";
-  } else {
-    titolo = "I giochi sono finiti";
-    testo = "Lo scambio è passato: alla prossima!";
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- dati dal database (asincrono)
+    carica();
+    const torna = () => document.visibilityState === "visible" && carica();
+    document.addEventListener("visibilitychange", torna);
+    return () => document.removeEventListener("visibilitychange", torna);
+  }, [carica]);
 
+  const ora = useOraServer(dati?.scarto ?? 0);
+  // a mezzanotte una finestrella si apre o si chiude: ricarico. Finché un vincitore non è deciso, ricarico ogni 8 s.
+  const stati = dati?.finestre.map((f) => statoDa(f.apre, f.chiude, ora)).join() ?? "";
+  const statiPrima = useRef(stati);
+  useEffect(() => {
+    if (statiPrima.current && stati !== statiPrima.current) carica();
+    statiPrima.current = stati;
+  }, [stati, carica]);
+  const inAttesa = dati?.finestre.some((f) => statoDa(f.apre, f.chiude, ora) === "chiuso" && !f.deciso);
+  useEffect(() => {
+    if (!inAttesa) return;
+    const t = setInterval(carica, 8000);
+    return () => clearInterval(t);
+  }, [inAttesa, carica]);
+
+  // benvenuto: la prima volta che si apre il calendario (una volta per gruppo, ricordato nel telefono)
+  const [benvenuto, setBenvenuto] = useState(false);
+  const apertura = dati?.attivi && dati.finestre.length === 5 ? aperturaCalendario(dati.finestre[0].apre) : null;
+  const aperto = apertura !== null && ora >= apertura;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- memoria del telefono (solo nel browser)
+    if (aperto && !benvenutoVisto(id)) setBenvenuto(true);
+  }, [aperto, id]);
+
+  if (!dati || !ora) return <main className="flex-1" />;
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <TestataInterna indietro={`/gruppo/${id}`} etichettaIndietro={`Torna a ${gruppo.name}`} contesto={gruppo.name} titolo="Minigiochi dell'avvento" />
-      <Feltro className="mt-6">
-        <span className="absolute -top-1 right-0 flex size-12 items-center justify-center rounded-full bg-vermiglio text-crema [&>svg]:size-6 [&>svg]:fill-none [&>svg]:stroke-current [&>svg]:stroke-[2.2]">
-          {Icone.calendario}
-        </span>
-        <TitoloRiquadro className="pr-16">{titolo}</TitoloRiquadro>
-        <p className="mt-2">{testo}</p>
-        <p className="mt-3 text-sm text-inchiostro/70">5 giochi, uno al giorno, 3 tentativi a testa e classifica in diretta. Chi vince si porta a casa un premio unico per il suo personaggio.</p>
-        {organizzatore && (!gruppo.exchange_date || !gruppo.giochi_attivi) && (
-          <TastoLink href={`/gruppo/${id}/organizza`} className="mt-5">
-            Scegli la data
-          </TastoLink>
+      <TestataInterna
+        indietro={`/gruppo/${id}`}
+        etichettaIndietro="Torna al gruppo"
+        contesto={nomeGruppo}
+        titolo="Mini giochi dell'avvento"
+        sottotitolo="Un regalo da scartare ogni giorno fino allo scambio."
+      />
+      <div className="mt-6">
+        {dati.attivi && aperto ? (
+          <Calendario finestre={dati.finestre} ora={ora} href={(n) => `/gruppo/${id}/giochi/${n}`} gruppo={id} />
+        ) : dati.attivi && apertura !== null ? (
+          <Feltro>
+            <TitoloRiquadro>Non è ancora il momento</TitoloRiquadro>
+            <p className="mt-2">
+              Ripassa tra qualche giorno: il calendario si sblocca 5 giorni prima dello scambio, cioè tra {durataBreve(apertura - ora)}.
+            </p>
+          </Feltro>
+        ) : (
+          <Feltro>
+            <TitoloRiquadro>{conData ? "Niente giochi per questo gruppo" : "Non è ancora il momento"}</TitoloRiquadro>
+            <p className="mt-2">
+              {conData
+                ? "I giochi partono solo se, quando si fissa la data dello scambio, mancano almeno 6 giorni."
+                : "Ripassa tra qualche giorno: i giochi si sbloccano quando l'organizzatore sceglie il giorno dello scambio (almeno 6 giorni prima)."}
+            </p>
+          </Feltro>
         )}
-      </Feltro>
+      </div>
+      {aperto && (
+        <Benvenuto
+          giorni={giorniAlloScambio(dati.finestre[4].apre, ora)}
+          aperto={benvenuto}
+          onChiudi={() => {
+            segnaBenvenuto(id);
+            setBenvenuto(false);
+          }}
+        />
+      )}
     </main>
   );
 }

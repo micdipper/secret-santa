@@ -98,7 +98,7 @@ export function RiquadroEsclusioni({
                   setMotivo(v);
                   setCoppiaB("");
                 }}
-                className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 rounded-[20px] px-2 pt-4 pb-3 text-center ${
+                className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 [--raggio:20px] rounded-[20px] px-2 pt-4 pb-3 text-center ${
                   motivo === v ? "outline-3 outline-offset-2 outline-vermiglio" : ""
                 }`}
               >

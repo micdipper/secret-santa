@@ -96,6 +96,10 @@ export default function Stile() {
           ...ACCESSORI.map((a, i) => ({ nome: a.nome, look: { pelle: [1, 3, 0, 4, 2][i % 5], capelli: [0, 2, 7, 9, 4][i % 5], coloreCapelli: [1, 3, 0, 5, 2][i % 5], barba: 0, occhiali: 0, maglione: [3, 1, 4, 0, 2][i % 5], accessori: [a.id] } })),
           { nome: "Taglio Super", look: { pelle: 2, capelli: 12, coloreCapelli: 0, barba: 0, occhiali: 0, maglione: 3, accessori: [] } },
           { nome: "Capelli olografici", look: { pelle: 5, capelli: 4, coloreCapelli: 7, barba: 0, occhiali: 0, maglione: 1, accessori: [] } },
+          { nome: "Capelli neon", look: { pelle: 0, capelli: 2, coloreCapelli: 8, barba: 0, occhiali: 0, maglione: 1, accessori: [] } },
+          { nome: "Taglio Esplosione", look: { pelle: 3, capelli: 13, coloreCapelli: 4, barba: 0, occhiali: 0, maglione: 0, accessori: [] } },
+          { nome: "Maglione GODO", look: { pelle: 1, capelli: 8, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 6, accessori: [] } },
+          { nome: "Esplosione neon e cowboy", look: { pelle: 2, capelli: 13, coloreCapelli: 8, barba: 0, occhiali: 0, maglione: 6, accessori: ["cowboy"] } },
           { nome: "Super, olografico e lupetto", look: { pelle: 1, capelli: 12, coloreCapelli: 7, barba: 0, occhiali: 1, maglione: 3, accessori: ["sciarpa"] } },
         ].map((p) => (
           <figure key={p.nome} className="flex flex-col items-center gap-2">

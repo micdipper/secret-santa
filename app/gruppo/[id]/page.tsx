@@ -4,6 +4,7 @@ import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { FeedGruppo } from "@/components/feed-gruppo";
+import { RiquadroGiochi } from "@/components/giochi/riquadro-giochi";
 import { MenuGruppo } from "@/components/menu-gruppo";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, TastoLink, TitoloRiquadro } from "@/components/ui";
@@ -140,6 +141,8 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           </TastoLink>
         </Feltro>
       )}
+
+      {io && <RiquadroGiochi groupId={id} />}
 
       {io && (
         <section className="mt-8">
