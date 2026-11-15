@@ -4,6 +4,8 @@ import type { Gioco } from "./base.ts";
 import { campanelli } from "./campanelli.ts";
 import { stelline } from "./finto.ts";
 import { palline } from "./palline.ts";
+import { regali } from "./regali.ts";
+import { slitta } from "./slitta.ts";
 
 export type InfoGioco = {
   n: number;
@@ -44,8 +46,26 @@ export const GIOCHI: InfoGioco[] = [
     gioco: campanelli,
     provvisorio: false,
   },
-  { n: 3, nome: "Impila i regali", regole: REGOLE_PROVVISORIE, premio: "godo", nomePremio: "Maglione GODO", durataMax: 600, gioco: stelline, provvisorio: true },
-  { n: 4, nome: "Slitta slalom", regole: REGOLE_PROVVISORIE, premio: "cornici", nomePremio: "Cornici ricamate", durataMax: 300, gioco: stelline, provvisorio: true },
+  {
+    n: 3,
+    nome: "Impila i regali",
+    regole: ["Il pacco scorre sopra la torre: tocca per appoggiarlo. Quello che sporge viene tagliato e il pacco dopo è più stretto.", "Appoggialo preciso per un Perfetto (punti doppi): 3 perfetti di fila e il pacco si riallarga.", "Più sali, più va veloce. Se manchi la torre, finisce!"],
+    premio: "godo",
+    nomePremio: "Maglione GODO",
+    durataMax: 600,
+    gioco: regali,
+    provvisorio: false,
+  },
+  {
+    n: 4,
+    nome: "Slitta slalom",
+    regole: ["Trascina il dito a destra e a sinistra, dove vuoi sullo schermo: la slitta lo segue.", "Evita abeti, pupazzi di neve e lastre di ghiaccio: un urto e finisce. Un punto a metro, 25 per ogni regalo preso.", "La slitta accelera e i passaggi si stringono, ma un varco c'è sempre."],
+    premio: "cornici",
+    nomePremio: "Cornici ricamate",
+    durataMax: 300,
+    gioco: slitta,
+    provvisorio: false,
+  },
   { n: 5, nome: "Palle di neve", regole: REGOLE_PROVVISORIE, premio: "cowboy", nomePremio: "Cappello da cowboy", durataMax: 65, gioco: stelline, provvisorio: true },
 ];
 

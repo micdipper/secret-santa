@@ -7,6 +7,8 @@ import { geometria, type StatoCampanelli } from "../lib/giochi/campanelli.ts";
 import { GIOCHI, REGOLE_SERVER } from "../lib/giochi/elenco.ts";
 import type { StatoStelline } from "../lib/giochi/finto.ts";
 import type { StatoPalline } from "../lib/giochi/palline.ts";
+import { velocita as velocitaRegali, type StatoRegali } from "../lib/giochi/regali.ts";
+import { corridoio, type StatoSlitta } from "../lib/giochi/slitta.ts";
 
 const MONDI: Mondo[] = [
   { w: 390, h: 844, sopra: 88 + 47, sotto: 16 + 34 }, // iPhone
@@ -56,8 +58,39 @@ const botCampanelli: Bot = (s: StatoCampanelli, m, caso, bravura) => {
   return [tocco(c.x + (caso() - 0.5) * 40, c.y + (caso() - 0.5) * 40)];
 };
 
-const BOT: Record<string, Bot> = { stelline: botStelline, palline: botPalline, campanelli: botCampanelli };
-const nomeBot = (n: number) => (GIOCHI[n - 1].provvisorio ? "stelline" : ["palline", "campanelli"][n - 1]);
+// Gioco 3: il bot sceglie a ogni piano di quanto sbagliare e tocca quando il pacco è lì
+// (il fortissimo sbaglia di 0-4 px e aspetta di vederlo arrivare: tanti perfetti; il medio di 0-24 px e a volte tocca a caso)
+const mire = new WeakMap<object, { piano: number; mira: number; caso: boolean }>();
+const botRegali: Bot = (s: StatoRegali, _m, caso, bravura) => {
+  if (!s.pacco) return [];
+  const piano = s.piani.length;
+  const sotto = s.piani[piano - 1];
+  let m = mire.get(s);
+  if (!m || m.piano !== piano) {
+    // errore = mira + tempismo del dito (una persona bravissima sbaglia di ~12 ms, una media di ~35 ms)
+    const errore = (bravura === 1 ? caso() * 3 : caso() * 12) + velocitaRegali(piano) * caso() * (bravura === 1 ? 0.012 : 0.035);
+    m = { piano, mira: sotto.x + (caso() < 0.5 ? -1 : 1) * errore, caso: bravura < 1 && caso() < 0.05 };
+    mire.set(s, m);
+  }
+  if (m.caso) return s.t - s.pacco.nato > 0.3 ? [tocco(0, 0)] : [];
+  if (s.t - s.pacco.nato < 0.25) return []; // tempo di reazione
+  const passo = (velocitaRegali(piano) * 1.5) / 60; // quanto si sposta in un fotogramma (al massimo)
+  return Math.abs(s.pacco.x - m.mira) <= passo / 2 ? [tocco(0, 0)] : [];
+};
+
+// Gioco 4: il bot guarda avanti e segue il centro del corridoio (il fortissimo esattamente;
+// il medio con ritardo e un po' di tremolio). Se il fortissimo si schianta, il percorso era impossibile.
+const botSlitta: Bot = (s: StatoSlitta, _m, caso, bravura) => {
+  const avanti = bravura === 1 ? s.v * 0.07 : s.v * (0.02 + caso() * 0.05);
+  const q = corridoio(s, s.dist + avanti);
+  const meta = q.c + (bravura === 1 ? 0 : (caso() - 0.5) * q.hw * 2.2);
+  if (!s.dito) return [{ tipo: "giu", id: 1, x: s.meta, y: 500 }];
+  if (bravura < 1 && caso() < 0.6) return [];
+  return [{ tipo: "muovi", id: 1, x: s.dito.x0 + (meta - s.dito.meta0) / 1.2, y: 500 }];
+};
+
+const BOT: Record<string, Bot> = { stelline: botStelline, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta };
+const nomeBot = (n: number) => (GIOCHI[n - 1].provvisorio ? "stelline" : ["palline", "campanelli", "regali", "slitta"][n - 1]);
 
 function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
   const { gioco } = GIOCHI[n - 1];
@@ -82,8 +115,9 @@ function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
 
 for (const info of GIOCHI) {
   const r = REGOLE_SERVER[info.n];
-  const partite = info.n === 2 ? 400 : PARTITE; // i campanelli durano molto: meno partite
+  const partite = info.n === 2 || info.n === 4 ? 400 : PARTITE; // i campanelli durano molto: meno partite
   const punti: number[] = [];
+  const dettagli: Record<string, number[]> = { medio: [], forte: [] };
   let maxPs = 0;
   for (let i = 0; i < partite; i++) {
     const seme = (i * 2654435761) >>> 0;
@@ -96,14 +130,17 @@ for (const info of GIOCHI) {
     if (punteggio > r.puntiAlSecondo * secondi + 100) errore(`gioco ${info.n} seme ${seme}: troppi punti al secondo (${punteggio} in ${secondi.toFixed(1)} s)`);
     if (secondi < r.durataMin && punteggio > 0) errore(`gioco ${info.n} seme ${seme}: dura ${secondi.toFixed(1)} s, sotto il minimo ${r.durataMin} (il server la annullerebbe)`);
     if (secondi > r.durataMax) errore(`gioco ${info.n} seme ${seme}: dura ${secondi.toFixed(1)} s, oltre ${r.durataMax}`);
+    if (info.n === 4 && bravura === 1 && secondi < 200) errore(`gioco 4 seme ${seme}: il bot perfetto si schianta dopo ${secondi.toFixed(0)} s (percorso impossibile?)`);
     if (i < 30) {
       const b = partita(info.n, seme, mondo, bravura);
       if (b.punteggio !== a.punteggio || b.firma !== a.firma) errore(`gioco ${info.n} seme ${seme}: stesso seme, partita diversa`);
     }
     punti.push(punteggio);
+    dettagli[bravura === 1 ? "forte" : "medio"].push(Math.round(secondi));
     maxPs = Math.max(maxPs, punteggio / Math.max(1, secondi));
   }
   punti.sort((a, b) => a - b);
+  if (process.env.DETTAGLI) console.log("  per bravura:", JSON.stringify(dettagli));
   const mediana = punti[Math.floor(punti.length / 2)];
   console.log(
     `gioco ${info.n} (${info.provvisorio ? "provvisorio" : info.nome}): mediana ${mediana}, record ${punti.at(-1)} (limite ${r.scoreMax}), punti/s max ${maxPs.toFixed(0)} (limite ${r.puntiAlSecondo})`,

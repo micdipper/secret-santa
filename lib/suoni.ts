@@ -205,6 +205,31 @@ export const suoni = {
     nota(f * 2.76, 0.4 * lungo, { volume: 0.06 });
     nota(f * 2, 0.5 * lungo, { tipo: "triangle", volume: 0.05 });
   },
+  // gioco 3: pacco appoggiato e tagliato (tonfo morbido + forbici sulla stoffa)
+  taglio() {
+    nota(150, 0.12, { volume: 0.2, scivola: 0.6 });
+    rumore(0.06, { volume: 0.1, filtro: 3000, tipoFiltro: "bandpass", q: 2, ritardo: 0.02 });
+    rumore(0.05, { volume: 0.08, filtro: 3600, tipoFiltro: "bandpass", q: 2, ritardo: 0.08 });
+  },
+  // gioco 3: perfetto (tonfo + campanella che sale con i perfetti di fila)
+  perfetto(livello = 1) {
+    nota(170, 0.1, { volume: 0.18, scivola: 0.7 });
+    const f = 1047 * Math.pow(2, (Math.min(livello, 8) - 1) / 12);
+    campana(f, 0.03, 0.14);
+    campana(f * 1.5, 0.1, 0.08);
+  },
+  // gioco 4: regalo preso (due sonagli che salgono)
+  regalo(livello = 0) {
+    const f = 880 * Math.pow(2, (livello % 5) / 12);
+    campana(f, 0, 0.11);
+    campana(f * 1.335, 0.07, 0.09);
+  },
+  // urto: botta sorda nella neve con lo sbuffo
+  urto() {
+    nota(90, 0.3, { volume: 0.3, scivola: 0.5 });
+    rumore(0.45, { volume: 0.32, filtro: 700, scendi: 0.3 });
+    rumore(0.2, { volume: 0.1, filtro: 4000, tipoFiltro: "highpass", ritardo: 0.03 });
+  },
   fineGioco() {
     [784, 659, 523, 659].forEach((f, i) => nota(f, 0.28, { tipo: "triangle", volume: 0.1, ritardo: i * 0.12 }));
   },

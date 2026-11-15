@@ -179,6 +179,6 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 1. ✅ (16/11) **Autorizzazioni tutte insieme (sezione 0)**, poi database (sezione 3) + test SQL + avviso/blocco data in Organizza.
 2. ✅ (16/11) Motore comune + `partita.tsx` + calendario + pagina del gioco con classifica in diretta (con un gioco finto) + sala prove.
 3. ✅ (16/11) Giochi 1 e 2 (Palline al volo, Campanelli).
-4. Giochi 3 e 4 (Impila i regali, Slitta slalom): oggi sono ancora il segnaposto "Stelline".
+4. ✅ (16/11) Giochi 3 e 4 (Impila i regali, Slitta slalom). Valori veri = costanti in cima a `lib/giochi/regali.ts` e `lib/giochi/slitta.ts` (riassunto in STATO.md); punteggio del gioco 3: 10 a piano + 10 in più per un perfetto.
 5. Gioco 5 + annuncio vincitore. (Premi grafici e sistemazione delle cuciture: ✅ fatti il 16/11 durante il blocco 3.)
 6. Collaudo completo (sezione 8), aggiornare STATO.md, commit, anteprima Vercel, prova di Marzia sul telefono.
