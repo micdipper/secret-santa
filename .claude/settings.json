@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Supabase__apply_migration",
+      "mcp__Supabase__execute_sql",
+      "mcp__Supabase__get_advisors",
+      "mcp__Supabase__list_tables",
+      "mcp__Supabase__list_migrations",
+      "mcp__Supabase__query_logs",
+      "mcp__Vercel__list_deployments",
+      "mcp__Vercel__get_deployment",
+      "mcp__Vercel__list_deployment_events",
+      "Bash(npm ci)",
+      "Bash(npx next build*)",
+      "Bash(npx next start*)",
+      "Bash(NODE_USE_ENV_PROXY=1 npx next start*)",
+      "Bash(npx tsc*)",
+      "Bash(npx eslint*)",
+      "Bash(node *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(git merge origin/ccr-f135f3c8-c3chko*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push origin HEAD:ccr-f135f3c8-c3chko)",
+      "Bash(git push -u origin ccr-*)"
+    ]
+  }
+}
