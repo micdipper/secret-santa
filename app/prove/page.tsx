@@ -13,6 +13,7 @@ const PROVE = [
   { titolo: "Toppe del gruppo", testo: "Crea simboli (ricamo o foto) e parole come l'organizzatore: poi li trovi nel cassetto della bacheca di prova.", href: "/prove/toppe" },
   { titolo: "Santa Chat", testo: "Scrivi come Babbo Natale o come chi riceve: dall'altra parte risponde un amico inventato.", href: "/prove/chat" },
   { titolo: "Novità", testo: "Il feed del gruppo con post, foto e reazioni. Prova a scrivere i nomi degli amici inventati: diventano asterischi.", href: "/prove/novita" },
+  { titolo: "Calendario dei giochi", testo: "Le 5 finestrelle e la pagina di ogni gioco con la classifica in diretta (amici inventati). Per ora c'è un gioco provvisorio uguale per tutti e 5.", href: "/prove/giochi" },
   { titolo: "Personaggio", testo: "L'editor completo con tutti i premi già sbloccati.", href: "/prove/personaggio" },
   { titolo: "Galleria dello stile", testo: "Personaggi, premi, olografie, tasti e colori del sito.", href: "/stile" },
 ];

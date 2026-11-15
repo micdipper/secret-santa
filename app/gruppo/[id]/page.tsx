@@ -6,6 +6,7 @@ import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { PallinoChat } from "@/components/pallino-chat";
 import { FeedGruppo } from "@/components/feed-gruppo";
+import { RiquadroGiochi } from "@/components/giochi/riquadro-giochi";
 import { ToppaBabbo } from "@/components/santa-chat";
 import type { Profilo } from "@/lib/totem";
 import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
@@ -112,6 +113,8 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           </TastoLink>
         </Feltro>
       )}
+
+      {io && <RiquadroGiochi groupId={id} />}
 
       {io && (
         <Link href={`/gruppo/${id}/bacheca/${io.id}`} className="feltro cliccabile mt-4 flex items-center gap-4 p-4 pl-5">
