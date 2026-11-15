@@ -7,7 +7,6 @@ import {
   motion,
   useAnimate,
   useMotionValue,
-  useReducedMotion,
   useTransform,
 } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { cambiaBrano, suoni } from "@/lib/suoni";
+import { useRiduciMovimento } from "@/lib/movimento";
 
 
 // three.js si scarica solo quando serve (mentre gira la slot machine)
@@ -138,7 +138,7 @@ export function AperturaBusta({
   prova?: { ricomincia: () => void }; // pagina di prova: niente database, "Ricomincia" al posto della bacheca
 }) {
   const supabase = clientSoloBrowser();
-  const ridotto = useReducedMotion();
+  const ridotto = useRiduciMovimento();
   const [fase, setFase] = useState<
     "leva" | "gira" | "fermo" | "crepa" | "rotta" | "scena"
   >("leva");
@@ -182,6 +182,7 @@ export function AperturaBusta({
 
   // Appena si apre la pagina: c'è il 3D? Se sì preparo subito la scena (la neve scende già dietro la slot)
   useEffect(() => {
+    if (ridotto === null) return; // "riduci movimento" non ancora letto
     // eslint-disable-next-line react-hooks/set-state-in-effect -- si sa solo nel browser
     setBusta3d(!ridotto && webglDisponibile());
   }, [ridotto]);

@@ -5,10 +5,11 @@
 // L'olografia sta SOTTO scritte e personaggio, che restano nitidi.
 // La disposizione è identica al biglietto 3D (components/scena-busta.tsx → disegnaFronte):
 // tutte le misure sono in percentuali / cqw della larghezza, proporzioni 4:5.
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect } from "react";
 import { Avatar, type Look } from "@/components/avatar";
 import { BRINA, OLOGRAFIA_SCELTA, OLOGRAFIE, type Olografia } from "@/lib/olografie";
+import { useRiduciMovimento } from "@/lib/movimento";
 
 export function fontNome(nome: string) {
   return Math.min(0.1, 0.86 / Math.max(1, nome.length * 0.56)); // frazione della larghezza (uguale al 3D)
@@ -27,7 +28,7 @@ export function BigliettoOlografico({
   accesa?: boolean; // si può preparare la card spenta (già pronta, senza scatti) e accendere l'olografia dopo
   olografia?: Olografia;
 }) {
-  const ridotto = useReducedMotion();
+  const ridotto = useRiduciMovimento();
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
   const sx = useSpring(rx, { stiffness: 140, damping: 16 });
