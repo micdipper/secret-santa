@@ -13,6 +13,7 @@ import {
   NOMI_BARBA,
   NOMI_CAPELLI,
   NOMI_CUCITURE,
+  premioCucitura,
   NOMI_OCCHIALI,
   PELLI,
   ToppaAvatar,
@@ -104,12 +105,15 @@ export function EditorPersonaggio({
         children: <Campioni colori={MAGLIONI} scelto={look.maglione} nome="Maglione" onScegli={(maglione) => onCambia({ maglione })} />,
       })}
 
-      {sbloccati.includes("cuciture") &&
+      {(sbloccati.includes("cuciture") || sbloccati.includes("cornici")) &&
         parte({
           titolo: "Cucitura della toppa",
           children: (
             <div role="radiogroup" aria-label="Cucitura della toppa" className="mt-4 grid grid-cols-3 gap-3">
-              {NOMI_CUCITURE.map((nome, i) => (
+              {NOMI_CUCITURE.map((nome, i) => {
+                const premio = premioCucitura(i);
+                if (premio && !sbloccati.includes(premio)) return null; // compaiono solo quando sbloccate
+                return (
                 <button
                   key={nome}
                   type="button"
@@ -121,7 +125,8 @@ export function EditorPersonaggio({
                   <ToppaAvatar look={{ ...look, cucitura: i }} dimensione={64} />
                   {nome}
                 </button>
-              ))}
+                );
+              })}
             </div>
           ),
         })}

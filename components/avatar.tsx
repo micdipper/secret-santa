@@ -38,8 +38,10 @@ export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
 export const OCCHIALI_VELOCI = ["occhiali", "occhiali_olo"];
 
-// Cuciture intorno alla toppa del personaggio (premio "cuciture": un post nelle Novità + 5 reazioni)
+// Cuciture intorno alla toppa del personaggio: 0 filza (per tutti) · 1 catenella = premio "cuciture"
+// (un post nelle Novità + 5 reazioni) · 2 tulipano, 3 felce, 4 punto croce = "cornici", premio del gioco 4 (PIANO-GIOCHI.md)
 export const NOMI_CUCITURE = ["Filza", "Catenella", "Tulipano", "Felce", "Punto croce"];
+export const premioCucitura = (i: number) => (i === 0 ? null : i === 1 ? "cuciture" : "cornici");
 
 export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
