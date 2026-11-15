@@ -318,7 +318,7 @@ textarea {
   50% { transform: rotate(2deg) scale(1.03); }
 }
 .esplosione {
-  transform-origin: 50px 40px;
+  transform-origin: 50px 36px;
   animation: esplosione 1.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {

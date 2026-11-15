@@ -42,7 +42,8 @@ export function EditorPersonaggio({
   onCambia: (campi: Partial<Look>) => void;
   riquadri?: boolean;
 }) {
-  const tagli = visibili(NOMI_CAPELLI, PREMI_TAGLI, sbloccati);
+  // i tagli premio sempre in fondo (anche se i tagli nuovi hanno un numero più alto)
+  const tagli = visibili(NOMI_CAPELLI, PREMI_TAGLI, sbloccati).sort((a, b) => (PREMI_TAGLI[a.i] ? 1 : 0) - (PREMI_TAGLI[b.i] ? 1 : 0));
   const colori = visibili(COLORI_CAPELLI, PREMI_COLORI, sbloccati);
   const maglioni = visibili(MAGLIONI, PREMI_MAGLIONI, sbloccati);
   const premi = ACCESSORI.filter((a) => sbloccati.includes(a.id));

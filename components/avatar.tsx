@@ -19,8 +19,9 @@ export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#5
 export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6"];
 // L'ultimo maglione (crema con GODO a punto croce) è il premio del gioco 3
 export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd"];
-// Gli ultimi tagli sono premi: Super (Santa Chat) ed Esplosione (gioco 2)
-export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione"];
+// 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
+// (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
+export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
 export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
 export const NOMI_OCCHIALI = ["Niente", "Tondi", "Grandi"];
 
@@ -221,21 +222,30 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
       return dietro ? null : (
         <path d="M30 42l-3-12 8 2-1-11 8 5 4-10 5 9 6-8 2 10 8-5-2 10 8-1-3 11c-5-8-12-11-20-11s-15 3-20 11z" fill={c} />
       );
-    case 13: // Esplosione (premio del gioco 2): ciocche a saetta e molle che sparano in tutte le direzioni
+    case 13: // Esplosione (premio del gioco 2): mullet spettinato, frangetta corta e dritta, punte in alto, ciocche lisce lunghe ai lati
       return dietro ? (
-        <g className="esplosione">
-          <path
-            d="M30 50L8 58l14-12L2 40l22-2L8 22l20 8L22 8l14 16 4-20 8 18 8-19 4 20 13-15-5 21 19-9-15 16 21 1-19 7 22 10-23-3z"
-            fill={c}
-          />
-          {/* molle */}
-          <path d="M18 64c-4-1-4-4 0-4s4-3 0-3-4-3 0-3" fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
-          <path d="M82 64c4-1 4-4 0-4s-4-3 0-3 4-3 0-3" fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
-          <path d="M50 4c-3-1-3-3 0-3" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
-          <path d="M28 18l-6-4 5 1zM70 16l6-5-3 5z" fill="#fff" opacity=".25" />
+        <g>
+          {/* punte spettinate che spuntano dietro la testa (ondeggiano appena) */}
+          <path className="esplosione" d="M29 36L20 27l10 1-4-12 10 7 1-14 7 11 5-14 4 14 7-12 1 14 9-8-3 12 10-2-8 10z" fill={c} />
+          {/* massa dietro le spalle */}
+          <path d="M28 42c0-14 10-22 22-22s22 8 22 22v20H28z" fill={c} />
         </g>
       ) : (
-        <path d="M29 43c-1-13 8-22 21-22s22 9 21 22l-5-7-1 6-5-9-2 8-5-10-2 9-4-9-3 8-4-7-1 7-3-5z" fill={c} />
+        <g fill={c}>
+          {/* calotta con la frangetta corta, dritta e sfilata */}
+          <path d="M29 41c0-14 9-22 21-22s21 8 21 22l-2-4-3 1.4-2.6-1.8-2.6 1.6-2.8-1.7-2.8 1.6-2.8-1.6-2.8 1.6-2.8-1.6-2.8 1.7-2.6-1.6-2.6 1.8L31 37z" />
+          {/* radici più scure */}
+          <path d="M33 30c4-6 10-9 17-9s13 3 17 9c-5-3-11-4-17-4s-12 1-17 4z" fill="#000" opacity=".18" />
+          {/* ciocche lunghe e lisce ai lati del viso, punte sfilate */}
+          <path d="M29 38c-3 6-4 16-4 28l-1 30 3-4 2 5 2-6 2 4 1-28c0-10 1-19 2-26z" />
+          <path d="M71 38c3 6 4 16 4 28l1 30-3-4-2 5-2-6-2 4-1-28c0-10-1-19-2-26z" />
+        </g>
+      );
+    case 14: // riga in mezzo: due tende che incorniciano il viso, fino alle spalle
+      return dietro ? (
+        <path d="M28 44c0-16 10-24 22-24s22 8 22 24v24c0 2-2 3-4 3H32c-2 0-4-1-4-3z" fill={c} />
+      ) : (
+        <path d="M50 21c-11 0-20 8-21 22v23h6V46c1-11 7-17 15-19 8 2 14 8 15 19v20h6V43c-1-14-10-22-21-22z" fill={c} />
       );
     default: // super (premio): punte enormi a ventaglio
       return dietro ? (
