@@ -135,6 +135,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - Procedere per fasi; a fine di ogni fase: commit, deploy su Vercel, verifica dal telefono.
 - Prima di scrivere codice per una fase, presentare un breve piano e aspettare l'ok.
 - Testare l'estrazione con utenti finti prima di usarla davvero.
+- **Provare le cose legate al tempo senza aspettarlo** ("viaggio nel tempo", scelto da Marzia il 15/11): gruppo di prova con utenti finti su telefoni simulati (Playwright), data dello scambio spostata con SQL tra un momento e l'altro, schermate mandate a Marzia (esempio: `test-e2e/giochi-tempo.mjs`). Marzia non deve provare a mano giorno per giorno; le serve solo essere al computer per confermare le operazioni sul database.
 - Mai mettere chiavi segrete nel codice: solo variabili d'ambiente su Vercel; nel frontend solo la publishable key di Supabase.
 - Non installare skill, plugin o pacchetti non elencati qui senza chiedere.
 - Codice semplice e leggibile: nessuna astrazione non necessaria.
