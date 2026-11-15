@@ -18,7 +18,9 @@ export function calcolaRighe(persone: Persona[], partite: Partita[], ora: number
   const righe = persone.map((p): Riga => {
     const mie = partite.filter((r) => r.member_id === p.memberId);
     const finite = mie.filter((r) => r.score !== null && r.finished_at);
-    const migliore = finite.length ? Math.max(...finite.map((r) => r.score!)) : mie.length ? 0 : null;
+    // partita abbandonata (mai finita e ormai scaduta) = 0; chi sta facendo la prima partita non ha ancora un punteggio
+    const abbandonate = mie.some((r) => r.score === null && new Date(r.started_at).getTime() <= ora - durataMax * 1000);
+    const migliore = finite.length ? Math.max(...finite.map((r) => r.score!)) : abbandonate ? 0 : null;
     const quando = finite.filter((r) => r.score === migliore).map((r) => r.finished_at!).sort()[0] ?? null;
     const staGiocando = mie.some((r) => r.score === null && new Date(r.started_at).getTime() > ora - durataMax * 1000);
     return { ...p, migliore, quando, tentativi: mie.length, staGiocando };
@@ -69,7 +71,7 @@ export function Classifica({ righe, io, n, tentativiMax = 3 }: { righe: Riga[]; 
               key={r.memberId}
               layout="position"
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
-              className={`relative flex items-center gap-3 rounded-2xl px-3 py-2 ${mia ? "bg-senape/30" : ""} ${r.migliore === null ? "opacity-55" : ""}`}
+              className={`relative flex items-center gap-3 rounded-2xl px-3 py-2 ${mia ? "bg-senape/30" : ""} ${r.migliore === null && !r.staGiocando ? "opacity-55" : ""}`}
             >
               <span className={`w-7 flex-none text-center font-titolo text-lg ${p === 1 ? "text-vermiglio" : "text-abete"}`}>{p ?? "–"}</span>
               <ToppaAvatar look={r.look} dimensione={40} nome={r.nome} />

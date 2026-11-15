@@ -197,7 +197,7 @@ export function Partita({
                               Nuovo record!
                             </motion.span>
                           )}
-                          {esito.posizione !== null && <p className="text-inchiostro/80">{esito.posizione === 1 ? "Sei primo in classifica!" : `Sei ${esito.posizione}° in classifica`}</p>}
+                          {esito.posizione !== null && esito.punteggio > 0 && <p className="text-inchiostro/80">{esito.posizione === 1 ? "Sei primo in classifica!" : `Sei ${esito.posizione}° in classifica`}</p>}
                         </div>
                       )}
                       {puoRiprovare && (

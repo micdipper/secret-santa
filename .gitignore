@@ -153,3 +153,4 @@ vite.config.ts.timestamp-*
 next-env.d.ts
 *.pem
 .DS_Store
+foto-giochi/
