@@ -27,7 +27,7 @@ export const GIOCHI: InfoGioco[] = [
   {
     n: 1,
     nome: "Palline al volo",
-    regole: ["Tocca le palline dorate prima che cadano sulla neve.", "Ogni dorata persa e ogni carbone toccato costano un cuore: ne hai 3. Occhio alla meteora di carbone!", "5 dorate di fila alzano il moltiplicatore. La cometa d'oro vale 50!"],
+    regole: ["Tocca le palline dorate prima che cadano sulla neve: ogni dorata persa costa uno dei 3 cuori.", "Mai toccare il carbone, neanche la meteora. Attento: certe dorate lampeggiano e diventano carbone!", "5 dorate di fila alzano il moltiplicatore. La cometa d'oro vale 50!"],
     premio: "neon",
     nomePremio: "Capelli neon",
     durataMax: 50,
@@ -53,7 +53,7 @@ export const TENTATIVI = 3;
 
 // Gli stessi controlli di private.regole_gioco (per i test con Node)
 export const REGOLE_SERVER: Record<number, { durataMin: number; durataMax: number; scoreMax: number; puntiAlSecondo: number }> = {
-  1: { durataMin: 3, durataMax: 50, scoreMax: 8000, puntiAlSecondo: 260 },
+  1: { durataMin: 1, durataMax: 50, scoreMax: 8000, puntiAlSecondo: 260 },
   2: { durataMin: 2, durataMax: 600, scoreMax: 12000, puntiAlSecondo: 60 },
   3: { durataMin: 2, durataMax: 600, scoreMax: 6000, puntiAlSecondo: 25 },
   4: { durataMin: 3, durataMax: 300, scoreMax: 20000, puntiAlSecondo: 120 },

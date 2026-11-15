@@ -4,6 +4,7 @@
 // Il carbone cade spesso attaccato a una dorata ("trappola"), sempre di più verso la fine.
 // 5 dorate di fila alzano il moltiplicatore (fino a ×5). Rara cometa che attraversa: +50.
 // Rara meteora di carbone che attraversa come la cometa: toccarla costa un cuore.
+// Insidie: dorate che zigzagano e dorate che si spengono a metà caduta e diventano carbone (lampeggiano prima).
 import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
@@ -13,14 +14,20 @@ const RAGGIO = 26; // px
 const MARGINE_TOCCO = 12; // px in più intorno alla pallina…
 const MARGINE_VELOCITA = 0.02; // …più 2 px ogni 100 px/s (le palline veloci si prendono meglio)
 const RITARDO_TOCCO = 0.1; // s: il dito "arriva" un attimo dopo l'occhio: vale anche dove la pallina era 0,1 s fa
-const VELOCITA = [300, 560]; // px/s, dall'inizio alla fine
-const OGNI = [0.55, 0.28]; // s tra una pallina e l'altra
-const DOPPIE_DA = 8; // s: da qui a volte ne cadono 2 insieme
-const P_DOPPIA = 0.3;
+const VELOCITA = [340, 620]; // px/s, dall'inizio alla fine
+const OGNI = [0.48, 0.25]; // s tra una pallina e l'altra
+const DOPPIE_DA = 6; // s: da qui a volte ne cadono 2 insieme
+const P_DOPPIA = 0.4;
 const CARBONE = [0.32, 0.4]; // probabilità del carbone
 const TRAPPOLE_DA = 3; // s: da qui il carbone può cadere attaccato a una dorata…
-const P_TRAPPOLA = [0.45, 0.8]; // …con questa probabilità (da TRAPPOLE_DA alla fine)
-const DISTANZA_TRAPPOLA = [2.2, 2.6]; // centro-centro, in raggi (le aree di tocco si toccano)
+const P_TRAPPOLA = [0.5, 0.9]; // …con questa probabilità (da TRAPPOLE_DA alla fine)
+const DISTANZA_TRAPPOLA = [2.05, 2.4]; // centro-centro, in raggi (le aree di tocco si sovrappongono)
+const ZIGZAG_DA = 5; // s: da qui alcune dorate zigzagano…
+const P_ZIGZAG = [0.15, 0.35]; // …con questa probabilità
+const ZIGZAG = 40; // px a destra e a sinistra
+const SPEGNE_DA = 10; // s: da qui alcune dorate si spengono a metà caduta e diventano carbone…
+const P_SPEGNE = [0.1, 0.22]; // …con questa probabilità
+const PREAVVISO = 0.4; // s di lampeggio prima di diventare carbone
 const P_COMETA = 0.03;
 const METEORE_DA = 8; // s: da qui può passare la meteora di carbone
 const P_METEORA = 0.04;
@@ -32,7 +39,8 @@ const MOLT_MAX = 5;
 
 type Tipo = "oro" | "carbone" | "cometa" | "meteora";
 const attraversa = (t: Tipo) => t === "cometa" || t === "meteora"; // vanno in diagonale
-type Pallina = { tipo: Tipo; x0: number; x: number; y: number; vx: number; vy: number; fase: number; viva: boolean };
+type Pallina = { tipo: Tipo; x0: number; x: number; y: number; vx: number; vy: number; fase: number; zigzag: boolean; spegne: number; viva: boolean };
+// spegne = istante in cui la dorata diventa carbone (-1 = mai)
 
 export type StatoPalline = {
   caso: () => number;
@@ -62,7 +70,7 @@ function nasce(s: StatoPalline, m: Mondo) {
   if (sorte < P_COMETA || (s.t >= METEORE_DA && sorte < P_COMETA + P_METEORA)) {
     const daSinistra = s.caso() < 0.5;
     const y = m.sopra + s.caso() * m.h * 0.25;
-    aggiungi(s, { tipo: sorte < P_COMETA ? "cometa" : "meteora", x0: 0, x: daSinistra ? -RAGGIO : m.w + RAGGIO, y, vx: (daSinistra ? 1 : -1) * VELOCITA_COMETA * 0.85, vy: VELOCITA_COMETA * 0.42, fase: 0 });
+    aggiungi(s, { tipo: sorte < P_COMETA ? "cometa" : "meteora", x0: 0, x: daSinistra ? -RAGGIO : m.w + RAGGIO, y, vx: (daSinistra ? 1 : -1) * VELOCITA_COMETA * 0.85, vy: VELOCITA_COMETA * 0.42, fase: 0, zigzag: false, spegne: -1 });
     return;
   }
   const quante = s.t >= DOPPIE_DA && s.caso() < P_DOPPIA ? 2 : 1;
@@ -73,21 +81,34 @@ function nasce(s: StatoPalline, m: Mondo) {
     if (Math.abs(x - s.ultimaX) < RAGGIO * 3) x = RAGGIO + 12 + ((x - RAGGIO - 12 + largo / 2) % largo);
     s.ultimaX = x;
     const tipo: Tipo = s.caso() < mescola(CARBONE[0], CARBONE[1], k) ? "carbone" : "oro";
-    let v = mescola(VELOCITA[0], VELOCITA[1], k) * (0.9 + s.caso() * 0.2);
-    let y = -RAGGIO - i * RAGGIO * 2.5;
-    let fase = s.caso() * 6.28;
+    const v = mescola(VELOCITA[0], VELOCITA[1], k) * (0.9 + s.caso() * 0.2);
+    const y = -RAGGIO - i * RAGGIO * 2.5;
+    const fase = s.caso() * 6.28;
+    let zigzag = false;
+    let spegne = -1;
     // trappola: il carbone cade di fianco a una dorata appena nata, alla stessa velocità
     if (tipo === "carbone" && s.t >= TRAPPOLE_DA && s.caso() < mescola(P_TRAPPOLA[0], P_TRAPPOLA[1], limita((s.t - TRAPPOLE_DA) / (DURATA - TRAPPOLE_DA), 0, 1))) {
       const oro = s.palline.find((p) => p.viva && p.tipo === "oro" && p.y < m.sopra);
       if (oro) {
         const lato = oro.x0 < m.w / 2 ? 1 : oro.x0 > m.w / 2 ? -1 : s.caso() < 0.5 ? 1 : -1;
+        // stessa velocità e stesso dondolio (anche a zigzag) della sua dorata: cadono appaiati
         x = oro.x0 + lato * RAGGIO * mescola(DISTANZA_TRAPPOLA[0], DISTANZA_TRAPPOLA[1], s.caso());
-        y = oro.y - RAGGIO * (s.caso() - 0.5);
-        v = oro.vy;
-        fase = oro.fase; // dondolano insieme
+        aggiungi(s, { tipo, x0: x, x, y: oro.y - RAGGIO * (s.caso() - 0.5), vx: 0, vy: oro.vy, fase: oro.fase, zigzag: oro.zigzag, spegne: -1 });
+        continue;
       }
     }
-    aggiungi(s, { tipo, x0: x, x, y, vx: 0, vy: v, fase });
+    if (tipo === "oro") {
+      if (s.t >= ZIGZAG_DA && s.caso() < mescola(P_ZIGZAG[0], P_ZIGZAG[1], k)) {
+        zigzag = true;
+        x = limita(x, RAGGIO + ZIGZAG + 8, m.w - RAGGIO - ZIGZAG - 8); // non esce dallo schermo
+      }
+      if (s.t >= SPEGNE_DA && s.caso() < mescola(P_SPEGNE[0], P_SPEGNE[1], k)) {
+        // si spegne tra il 35% e il 60% della caduta
+        const strada = m.h - m.sotto - y;
+        spegne = s.t + (strada * mescola(0.35, 0.6, s.caso())) / v;
+      }
+    }
+    aggiungi(s, { tipo, x0: x, x, y, vx: 0, vy: v, fase, zigzag, spegne });
   }
 }
 
@@ -163,7 +184,13 @@ export const palline: Gioco<StatoPalline> = {
       if (!p.viva) continue;
       p.y += p.vy * dt;
       if (attraversa(p.tipo)) p.x += p.vx * dt;
-      else p.x = p.x0 + Math.sin(s.t * 2.2 + p.fase) * 7;
+      else p.x = p.x0 + (p.zigzag ? Math.sin(s.t * 4.2 + p.fase) * ZIGZAG : Math.sin(s.t * 2.2 + p.fase) * 7);
+      // la dorata che si spegne diventa carbone
+      if (p.tipo === "oro" && p.spegne >= 0 && s.t >= p.spegne) {
+        p.tipo = "carbone";
+        p.spegne = -1;
+        s.eventi.push({ tipo: "spenta", x: p.x, y: p.y });
+      }
     }
 
     // a terra (sulla neve) o fuori dallo schermo
@@ -221,7 +248,9 @@ export const palline: Gioco<StatoPalline> = {
         else ctx.drawImage(sprite.cometa, -RAGGIO, -RAGGIO, RAGGIO * 2, RAGGIO * 2);
         ctx.restore();
       } else {
-        const img = p.tipo === "oro" ? sprite.oro : sprite.carbone;
+        // una dorata che sta per spegnersi lampeggia tra oro e carbone
+        const lampeggia = p.tipo === "oro" && p.spegne >= 0 && s.t > p.spegne - PREAVVISO && Math.floor(s.t * 14) % 2 === 0;
+        const img = p.tipo === "oro" && !lampeggia ? sprite.oro : sprite.carbone;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(Math.sin(s.t * 2.2 + p.fase) * 0.18);
@@ -252,6 +281,9 @@ export const palline: Gioco<StatoPalline> = {
       fx.testo(e.x!, e.y! - 40, "−♥", "#e5481e", 28);
       fx.trema(8);
       fx.suono("tonfoNeve");
+    } else if (e.tipo === "spenta") {
+      fx.scoppio(e.x!, e.y!, ["#3a3a3a", "#f6c94a"], 10, { velocita: 90, gravita: -60, dimensione: 3 });
+      fx.suono("puff");
     } else if (e.tipo === "fumo") {
       fx.scoppio(e.x!, e.y!, ["rgba(40,40,40,.6)"], 5, { velocita: 70, gravita: -40, dimensione: 4 });
     }

@@ -12,7 +12,7 @@ const PASSO = [0.5, 0.28]; // s per nota: dal giro 1 al giro 10 (poi resta 0.28)
 const GIRO_VELOCE = 10;
 const GIRO_NOTE_CORTE = 6; // da qui la luce dura meno
 const GIRO_SCAMBI = 7; // da qui un campanello "birichino" cambia posto
-const DURATA_SCAMBIO = 0.5;
+const DURATA_SCAMBIO = 0.9; // lento e alto, così si vede bene
 const PAUSA = 0.9; // s prima di ogni giro
 const ATTESA_MAX = 5; // s per ogni tocco
 const RAPIDO = [0.4, 1]; // bonus pieno entro 0,4 s, niente oltre 1 s
@@ -32,6 +32,7 @@ export type StatoCampanelli = {
   pos: number; // nota a cui siamo
   slot: number[]; // slot[campanello] = casella (0..3) dove si trova
   scambio: [number, number] | null;
+  ultimoScambio: [number, number] | null; // il prossimo scambio non lo annulla mai
   luce: number[]; // da quanto è acceso ogni campanello (s); <0 = spento
   durataLuce: number[];
   dondola: number[];
@@ -92,6 +93,7 @@ export const campanelli: Gioco<StatoCampanelli> = {
       pos: 0,
       slot: [0, 1, 2, 3],
       scambio: null,
+      ultimoScambio: null,
       luce: [-1, -1, -1, -1],
       durataLuce: [0, 0, 0, 0],
       dondola: [0, 0, 0, 0],
@@ -120,9 +122,14 @@ export const campanelli: Gioco<StatoCampanelli> = {
     if (s.fase === "pausa" && s.tFase >= PAUSA) {
       s.tFase = 0;
       if (s.giro >= GIRO_SCAMBI) {
-        const a = Math.floor(s.caso() * 4);
-        const b = (a + 1 + Math.floor(s.caso() * 3)) % 4;
+        let a = 0;
+        let b = 0;
+        do {
+          a = Math.floor(s.caso() * 4);
+          b = (a + 1 + Math.floor(s.caso() * 3)) % 4;
+        } while (s.ultimoScambio && Math.min(a, b) === Math.min(...s.ultimoScambio) && Math.max(a, b) === Math.max(...s.ultimoScambio));
         s.scambio = [a, b];
+        s.ultimoScambio = [a, b];
         s.fase = "scambio";
         s.eventi.push({ tipo: "scambio" });
       } else {
@@ -272,7 +279,7 @@ export const campanelli: Gioco<StatoCampanelli> = {
         ctx.fill();
       }
       const angolo = Math.sin(s.t * 16) * 0.32 * s.dondola[i];
-      disegnaCampanello(ctx, x, y - alza * 18, rToppa * (acceso ? 0.74 : 0.68) * (1 + alza * 0.12), angolo, COLORI[i]);
+      disegnaCampanello(ctx, x, y - alza * 40, rToppa * (acceso ? 0.74 : 0.68) * (1 + alza * 0.2), angolo + alza * 0.3, COLORI[i]);
     }
   },
 
