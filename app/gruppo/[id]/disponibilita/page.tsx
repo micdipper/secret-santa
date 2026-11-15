@@ -6,7 +6,7 @@ import { lookDi } from "@/components/avatar";
 import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { Disponibilita, type PersonaDisp } from "@/components/disponibilita";
 import { dataLunga } from "@/lib/disponibilita";
-import { Feltro, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Dati = { nome: string; organizzatore: boolean; giorni: string[] | null; data: string | null; persone: PersonaDisp[]; io: string | null };
@@ -124,9 +124,6 @@ export default function PaginaDisponibilita() {
           <Feltro>
             <TitoloRiquadro>{dati.data ? "La data è fissata!" : "Nessun sondaggio in corso"}</TitoloRiquadro>
             <p className="mt-2">{dati.data ? `Lo scambio è ${dataLunga(dati.data)}.` : "L'organizzatore non ha proposto giorni da scegliere."}</p>
-            <TastoLink href={`/gruppo/${id}`} className="mt-5">
-              Vai alla pagina del gruppo
-            </TastoLink>
           </Feltro>
         )}
       </div>
