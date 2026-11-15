@@ -312,6 +312,18 @@ textarea {
 .capelli-olografici {
   animation: olografico 6s linear infinite;
 }
+/* taglio Esplosione (premio del gioco 2): ondeggia appena */
+@keyframes esplosione {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.03); }
+}
+.esplosione {
+  transform-origin: 50px 40px;
+  animation: esplosione 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .esplosione { animation: none; }
+}
 /* cartellino del lupetto "da portare indietro" che dondola */
 @keyframes cartellino {
   0%, 100% { transform: rotate(-8deg); }
@@ -377,7 +389,7 @@ textarea {
   position: absolute;
   inset: 4px;
   border-radius: 50%;
-  border: 1.5px dashed rgb(44 74 50 / 0.55);
+  border: 1.5px dashed rgb(44 74 50 / 0.55); /* stesso filo delle cuciture premio (FILO_CUCITURA in avatar.tsx) */
 }
 
 /* ---------- Santa Chat: fumetti di stoffa (NON cliccabili: piatti, cuciti) ----------

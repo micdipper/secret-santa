@@ -15,16 +15,25 @@ export type Look = {
 };
 
 export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
-// L'ultimo colore (olografico) è un premio da sbloccare
-export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)"];
-export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a"];
-// L'ultimo taglio (Super) è un premio da sbloccare
-export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super"];
+// Gli ultimi colori sono premi: olografico (tutti i premi) e neon (gioco 1)
+export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6"];
+// L'ultimo maglione (crema con GODO a punto croce) è il premio del gioco 3
+export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd"];
+// Gli ultimi tagli sono premi: Super (Santa Chat) ed Esplosione (gioco 2)
+export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione"];
 export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
 export const NOMI_OCCHIALI = ["Niente", "Tondi", "Grandi"];
 
 export const CAPELLI_SUPER = 12;
+export const CAPELLI_PAZZO = 13;
 export const COLORE_OLOGRAFICO = 7;
+export const COLORE_NEON = 8;
+export const MAGLIONE_GODO = 6;
+
+// Premi che sono una scelta normale dell'editor (taglio, colore, maglione): compaiono solo se sbloccati
+export const PREMI_TAGLI: Record<number, string> = { [CAPELLI_SUPER]: "super", [CAPELLI_PAZZO]: "pazzo" };
+export const PREMI_COLORI: Record<number, string> = { [COLORE_OLOGRAFICO]: "olografico", [COLORE_NEON]: "neon" };
+export const PREMI_MAGLIONI: Record<number, string> = { [MAGLIONE_GODO]: "godo" };
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
   { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Completa il sondaggio totem." },
@@ -32,6 +41,7 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Tutte le 8 toppe del tuo totem sulla bacheca, più il tuo simbolo o la tua parola." },
   { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri premi." },
+  { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
 ];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
@@ -55,7 +65,7 @@ export function lookIniziale(seme: string): Look {
     coloreCapelli: (h >>> 7) % COLORE_OLOGRAFICO,
     barba: 0,
     occhiali: 0,
-    maglione: (h >>> 11) % MAGLIONI.length,
+    maglione: (h >>> 11) % MAGLIONE_GODO, // mai un maglione premio
     accessori: [],
   };
 }
@@ -211,6 +221,22 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
       return dietro ? null : (
         <path d="M30 42l-3-12 8 2-1-11 8 5 4-10 5 9 6-8 2 10 8-5-2 10 8-1-3 11c-5-8-12-11-20-11s-15 3-20 11z" fill={c} />
       );
+    case 13: // Esplosione (premio del gioco 2): ciocche a saetta e molle che sparano in tutte le direzioni
+      return dietro ? (
+        <g className="esplosione">
+          <path
+            d="M30 50L8 58l14-12L2 40l22-2L8 22l20 8L22 8l14 16 4-20 8 18 8-19 4 20 13-15-5 21 19-9-15 16 21 1-19 7 22 10-23-3z"
+            fill={c}
+          />
+          {/* molle */}
+          <path d="M18 64c-4-1-4-4 0-4s4-3 0-3-4-3 0-3" fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M82 64c4-1 4-4 0-4s-4-3 0-3 4-3 0-3" fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M50 4c-3-1-3-3 0-3" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M28 18l-6-4 5 1zM70 16l6-5-3 5z" fill="#fff" opacity=".25" />
+        </g>
+      ) : (
+        <path d="M29 43c-1-13 8-22 21-22s22 9 21 22l-5-7-1 6-5-9-2 8-5-10-2 9-4-9-3 8-4-7-1 7-3-5z" fill={c} />
+      );
     default: // super (premio): punte enormi a ventaglio
       return dietro ? (
         <g>
@@ -284,6 +310,46 @@ function Calendario() {
   );
 }
 
+// "GODO" a punto croce: lettere 3×5, una crocetta per quadretto
+const LETTERE: Record<string, string[]> = {
+  G: [".##", "#..", "#.#", "#.#", ".##"],
+  O: [".#.", "#.#", "#.#", "#.#", ".#."],
+  D: ["##.", "#.#", "#.#", "#.#", "##."],
+};
+function PuntoCroceGodo() {
+  const q = 1.5; // lato del quadretto
+  const segni: string[] = [];
+  "GODO".split("").forEach((l, i) => {
+    LETTERE[l].forEach((riga, r) =>
+      riga.split("").forEach((c, k) => {
+        if (c !== "#") return;
+        const x = 50 - (4 * 4 * q - q) / 2 + i * 4 * q + k * q;
+        const y = 82 + r * q;
+        segni.push(`M${x} ${y}l${q} ${q}M${x + q} ${y}l${-q} ${q}`);
+      }),
+    );
+  });
+  return <path d={segni.join("")} stroke="#e5481e" strokeWidth=".75" strokeLinecap="round" />;
+}
+
+// Cappello da cowboy (premio del gioco 5): cuoio, tesa curva, fascia a punto croce con stellina d'oro
+function CappelloCowboy() {
+  return (
+    <g transform="rotate(-8 50 30)">
+      {/* cupola con l'ammaccatura in cima */}
+      <path d="M33 31c-1-9 1-17 5-21 3-2 6 0 8 2 2-2 6-2 8 0 2-2 5-4 8-2 4 4 6 12 5 21z" fill="#8a5a33" />
+      <path d="M38 12c2 6 2 13 1 19M62 12c-2 6-2 13-1 19" stroke="#6e4426" strokeWidth="1" fill="none" />
+      {/* fascia a punto croce */}
+      <path d="M33.5 25.5h33v5h-33z" fill="#2c4a32" />
+      <path d="M36 27l2 2m0-2l-2 2M40 27l2 2m0-2l-2 2M58 27l2 2m0-2l-2 2M62 27l2 2m0-2l-2 2" stroke="#f3e8cf" strokeWidth=".7" />
+      <path d="M50 24.6l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z" fill="#e9a81c" stroke="#b97c0c" strokeWidth=".4" />
+      {/* tesa curva, alzata ai lati */}
+      <path d="M14 26c4 3 9 5 14 5h44c5 0 10-2 14-5-1 6-8 10-17 10H31c-9 0-16-4-17-10z" fill="#9b6a3f" />
+      <path d="M18 29c5 3 9 4 13 4h38c4 0 8-1 13-4" fill="none" stroke="#f3e8cf" strokeWidth=".8" strokeDasharray="1.6 1.4" opacity=".75" />
+    </g>
+  );
+}
+
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
   const pelle = PELLI[look.pelle];
   const capelli = COLORI_CAPELLI[look.coloreCapelli];
@@ -291,6 +357,13 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const filo = look.maglione === 2 || look.maglione === 4 ? "#2c4a32" : "#f3e8cf";
   const ha = (a: string) => look.accessori.includes(a);
   const olografico = look.coloreCapelli === COLORE_OLOGRAFICO;
+  const neon = look.coloreCapelli === COLORE_NEON;
+  const classeCapelli = olografico ? "capelli-olografici" : undefined;
+  const alone = neon ? "url(#alone-neon)" : undefined; // filtro SVG (Safari non applica i filtri CSS dentro gli SVG)
+  const godo = look.maglione === MAGLIONE_GODO;
+  const cowboy = ha("cowboy");
+  // con il cappello i capelli si vedono solo sotto la tesa (e ai lati)
+  const taglio = cowboy ? "url(#sotto-cappello)" : undefined;
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
       {olografico && (
@@ -304,9 +377,27 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
           </linearGradient>
         </defs>
       )}
+      {neon && (
+        <defs>
+          <filter id="alone-neon" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="sfocato" />
+            <feMerge>
+              <feMergeNode in="sfocato" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      )}
+      {cowboy && (
+        <defs>
+          <clipPath id="sotto-cappello">
+            <path d="M0 100V0h12v34L88 23V0h12v100z" />
+          </clipPath>
+        </defs>
+      )}
       {ha("stellina") && <Calendario />}
       {/* capelli dietro */}
-      <g className={olografico ? "capelli-olografici" : undefined}>
+      <g className={classeCapelli} clipPath={taglio} filter={alone}>
         <Capelli stile={look.capelli} c={capelli} dietro />
       </g>
       {/* spalle e maglione (o il lupetto grigio, se indossato) */}
@@ -320,10 +411,22 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       ) : (
         <>
           <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
-      <path d="M18 92c8-4 20-6 32-6s24 2 32 6" fill="none" stroke={filo} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" opacity=".9" />
-      {[26, 38, 50, 62, 74].map((x) => (
-        <path key={x} d={`M${x - 3} 96l3-4 3 4-3 4z`} fill={filo} opacity=".9" />
-      ))}
+          {godo ? (
+            <>
+              <PuntoCroceGodo />
+              {/* fila di rombi nordici */}
+              {[22, 30, 38, 46, 54, 62, 70, 78].map((x) => (
+                <path key={x} d={`M${x} 92.5l3 3.5-3 3.5-3-3.5z`} fill="none" stroke="#2c4a32" strokeWidth=".9" />
+              ))}
+            </>
+          ) : (
+            <>
+              <path d="M18 92c8-4 20-6 32-6s24 2 32 6" fill="none" stroke={filo} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" opacity=".9" />
+              {[26, 38, 50, 62, 74].map((x) => (
+                <path key={x} d={`M${x - 3} 96l3-4 3 4-3 4z`} fill={filo} opacity=".9" />
+              ))}
+            </>
+          )}
         </>
       )}
       {/* collo */}
@@ -341,7 +444,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
         <circle cx="69.5" cy="47" r="3.5" />
         <circle cx="50" cy="45" r="20" />
       </g>
-      <g className={olografico ? "capelli-olografici" : undefined}>
+      <g className={classeCapelli} filter={alone}>
         <Barba tipo={look.barba} c={capelli} />
       </g>
       {/* viso */}
@@ -355,9 +458,10 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       )}
       {ha("occhiali") || ha("occhiali_olo") ? <OcchialiVeloci olografici={ha("occhiali_olo")} /> : <Occhiali tipo={look.occhiali} />}
       {/* capelli davanti */}
-      <g className={olografico ? "capelli-olografici" : undefined}>
+      <g className={classeCapelli} clipPath={taglio} filter={alone}>
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
+      {cowboy && <CappelloCowboy />}
 
       {/* accessori */}
       {ha("sciarpa") && (
@@ -400,7 +504,7 @@ export function ToppaAvatar({
 }) {
   const toppa = (
     <span className={`toppa overflow-hidden ${look?.cucitura ? "toppa-senza-cucitura" : ""} ${cliccabile ? "cliccabile stoffa-chiara" : ""}`} style={{ width: dimensione, height: dimensione }}>
-      {look?.cucitura ? <Cucitura tipo={look.cucitura} /> : null}
+      {look?.cucitura ? <Cucitura tipo={look.cucitura} dimensione={dimensione} /> : null}
       {look ? (
         <Avatar look={look} titolo={nome} className="relative top-[8%] h-full w-full" />
       ) : (
@@ -426,66 +530,65 @@ export function lookDi(profili: { user_id: string; look: unknown }[] | null, use
   return normalizzaLook(profili?.find((p) => p.user_id === userId)?.look, userId);
 }
 
-// Le cuciture "di lusso" intorno alla toppa, in filo dorato: catenella, tulipano, felce, punto croce.
-// (la filza normale è il tratteggio della classe .toppa)
-export function Cucitura({ tipo }: { tipo: number }) {
-  const R = 43; // stesso cerchio della cucitura normale
-  const filo = "#c9931c";
+// Le cuciture "di lusso" intorno alla toppa: catenella, tulipano, felce, punto croce.
+// Stesse regole della filza (.toppa::before in globals.css): verde abete al 55%, filo di 1,5 px veri
+// a ogni dimensione, linea centrale sullo stesso cerchio (bordo − 4 px − metà filo). Stanno SOTTO il busto.
+export const FILO_CUCITURA = "rgb(44 74 50 / 0.55)";
+export function Cucitura({ tipo, dimensione }: { tipo: number; dimensione: number }) {
+  const R = ((dimensione / 2 - 4 - 0.75) * 100) / dimensione; // in unità del viewBox (100)
+  const k = R / 43; // i motivi erano disegnati per il raggio 43: restano proporzionati
+  const filo = FILO_CUCITURA;
+  const tratto = { stroke: filo, strokeWidth: 1.5, vectorEffect: "non-scaling-stroke" as const, fill: "none", strokeLinecap: "round" as const };
   const p = (a: number, r = R) => [50 + r * Math.cos(a), 50 + r * Math.sin(a)] as const;
   const gradi = (a: number) => (a * 180) / Math.PI;
   let segni: ReactNode = null;
   if (tipo === 1) {
     // catenella: anelli a goccia uno dentro l'altro
     const N = 18;
-    segni = Array.from({ length: N }, (_, k) => {
-      const a = (k / N) * Math.PI * 2;
+    segni = Array.from({ length: N }, (_, j) => {
+      const a = (j / N) * Math.PI * 2;
       const [x, y] = p(a);
-      return <ellipse key={k} cx={x} cy={y} rx="5.2" ry="2.6" transform={`rotate(${gradi(a) + 90} ${x} ${y})`} fill="none" stroke={filo} strokeWidth="1.8" />;
+      return <ellipse key={j} cx={x} cy={y} rx={5.2 * k} ry={2.6 * k} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} {...tratto} />;
     });
   } else if (tipo === 2) {
     // tulipano: una coppa (punto lanciato) con un punto dritto che la attraversa
     const N = 12;
-    segni = Array.from({ length: N }, (_, k) => {
-      const a = (k / N) * Math.PI * 2;
+    segni = Array.from({ length: N }, (_, j) => {
+      const a = (j / N) * Math.PI * 2;
       const [x, y] = p(a);
       return (
-        <g key={k} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} fill="none" stroke={filo} strokeWidth="1.7" strokeLinecap="round">
-          <path d={`M${x - 3.2} ${y - 3.4}c0 4 1.4 6 3.2 6s3.2-2 3.2-6`} />
-          <path d={`M${x} ${y - 4.4}v8.4`} />
-          <path d={`M${x - 2.4} ${y + 4.6}h4.8`} />
+        <g key={j} transform={`rotate(${gradi(a) + 90} ${x} ${y}) translate(${x} ${y}) scale(${k}) translate(${-x} ${-y})`}>
+          <path d={`M${x - 3.2} ${y - 3.4}c0 4 1.4 6 3.2 6s3.2-2 3.2-6`} {...tratto} />
+          <path d={`M${x} ${y - 4.4}v8.4`} {...tratto} />
+          <path d={`M${x - 2.4} ${y + 4.6}h4.8`} {...tratto} />
         </g>
       );
     });
   } else if (tipo === 3) {
-    // felce: una linea centrale e, a intervalli, tre punti che partono dallo stesso foro
+    // felce: una linea centrale e, a intervalli, due punti che partono dallo stesso foro
     const N = 16;
     segni = (
       <>
-        <circle cx="50" cy="50" r={R} fill="none" stroke={filo} strokeWidth="1.4" strokeDasharray="4 2.2" />
-        {Array.from({ length: N }, (_, k) => {
-          const a = (k / N) * Math.PI * 2;
+        <circle cx="50" cy="50" r={R} {...tratto} strokeDasharray="5 3" />
+        {Array.from({ length: N }, (_, j) => {
+          const a = (j / N) * Math.PI * 2;
           const [x, y] = p(a);
-          return (
-            <g key={k} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} stroke={filo} strokeWidth="1.6" strokeLinecap="round">
-              <path d={`M${x} ${y}l-3.6 3.6M${x} ${y}l3.6 3.6`} />
-            </g>
-          );
+          return <path key={j} d={`M${x} ${y}l${-3.6 * k} ${3.6 * k}M${x} ${y}l${3.6 * k} ${3.6 * k}`} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} {...tratto} />;
         })}
       </>
     );
   } else if (tipo === 4) {
     // punto croce: tante piccole x
     const N = 22;
-    segni = Array.from({ length: N }, (_, k) => {
-      const a = (k / N) * Math.PI * 2;
+    const m = 2.2 * k;
+    segni = Array.from({ length: N }, (_, j) => {
+      const a = (j / N) * Math.PI * 2;
       const [x, y] = p(a);
-      return (
-        <path key={k} d={`M${x - 2.2} ${y - 2.2}l4.4 4.4M${x + 2.2} ${y - 2.2}l-4.4 4.4`} stroke={filo} strokeWidth="1.7" strokeLinecap="round" />
-      );
+      return <path key={j} d={`M${x - m} ${y - m}l${2 * m} ${2 * m}M${x + m} ${y - m}l${-2 * m} ${2 * m}`} {...tratto} />;
     });
   }
   return (
-    <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 z-[1] h-full w-full" aria-hidden>
+    <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden>
       {segni}
     </svg>
   );

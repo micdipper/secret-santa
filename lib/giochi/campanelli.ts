@@ -1,6 +1,6 @@
 // Gioco 2 · CAMPANELLI (PIANO-GIOCHI.md 6.2)
 // 4 campanelli 2×2: il gioco suona una sequenza, tu la ripeti. Si parte da 3 note, +1 a ogni giro.
-// Un errore (o 5 secondi senza toccare) = fine. Dal giro 9 un campanello cambia posto prima della sequenza.
+// Un errore (o 5 secondi senza toccare) = fine. Dal giro 7 due campanelli cambiano posto prima della sequenza.
 import { casuale, curve, limita, mescola, stile, type Evento, type Gioco, type Mondo } from "./base.ts";
 
 // ----- costanti (taratura) -----
@@ -8,7 +8,7 @@ const NOTE_INIZIO = 3;
 const PASSO = [0.6, 0.28]; // s per nota: dal giro 1 al giro 10 (poi resta 0.28)
 const GIRO_VELOCE = 10;
 const GIRO_NOTE_CORTE = 6; // da qui la luce dura meno
-const GIRO_SCAMBI = 9; // da qui un campanello "birichino" cambia posto
+const GIRO_SCAMBI = 7; // da qui un campanello "birichino" cambia posto
 const DURATA_SCAMBIO = 0.5;
 const PAUSA = 0.9; // s prima di ogni giro
 const ATTESA_MAX = 5; // s per ogni tocco

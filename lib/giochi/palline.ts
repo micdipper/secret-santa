@@ -1,5 +1,7 @@
 // Gioco 1 · PALLINE AL VOLO (PIANO-GIOCHI.md 6.1)
-// Dall'alto cadono palline: tocca quelle dorate, mai il carbone (3 cuori). 45 secondi.
+// Dall'alto cadono palline: tocca quelle dorate, mai il carbone. 3 cuori: si perde un cuore toccando
+// il carbone o lasciando cadere una dorata sulla neve. 45 secondi.
+// Più avanti il carbone cade sempre più spesso attaccato a una dorata ("trappola").
 // 5 dorate di fila alzano il moltiplicatore (fino a ×5). Rara cometa che attraversa: +50.
 import { casuale, limita, mescola, type Evento, type Gioco, type Mondo } from "./base.ts";
 
@@ -13,6 +15,9 @@ const OGNI = [0.65, 0.28]; // s tra una pallina e l'altra
 const DOPPIE_DA = 15; // s: da qui a volte ne cadono 2 insieme
 const P_DOPPIA = 0.3;
 const CARBONE = [0.2, 0.35]; // probabilità del carbone
+const TRAPPOLE_DA = 12; // s: da qui il carbone può cadere attaccato a una dorata…
+const P_TRAPPOLA = [0.35, 0.8]; // …con questa probabilità (da TRAPPOLE_DA alla fine)
+const DISTANZA_TRAPPOLA = [2.2, 2.6]; // centro-centro, in raggi (le aree di tocco si toccano)
 const P_COMETA = 0.03;
 const VELOCITA_COMETA = 640; // px/s
 const PUNTI = 10;
@@ -61,8 +66,21 @@ function nasce(s: StatoPalline, m: Mondo) {
     if (Math.abs(x - s.ultimaX) < RAGGIO * 3) x = RAGGIO + 12 + ((x - RAGGIO - 12 + largo / 2) % largo);
     s.ultimaX = x;
     const tipo: Tipo = s.caso() < mescola(CARBONE[0], CARBONE[1], k) ? "carbone" : "oro";
-    const v = mescola(VELOCITA[0], VELOCITA[1], k) * (0.9 + s.caso() * 0.2);
-    aggiungi(s, { tipo, x0: x, x, y: -RAGGIO - i * RAGGIO * 2.5, vx: 0, vy: v, fase: s.caso() * 6.28 });
+    let v = mescola(VELOCITA[0], VELOCITA[1], k) * (0.9 + s.caso() * 0.2);
+    let y = -RAGGIO - i * RAGGIO * 2.5;
+    let fase = s.caso() * 6.28;
+    // trappola: il carbone cade di fianco a una dorata appena nata, alla stessa velocità
+    if (tipo === "carbone" && s.t >= TRAPPOLE_DA && s.caso() < mescola(P_TRAPPOLA[0], P_TRAPPOLA[1], limita((s.t - TRAPPOLE_DA) / (DURATA - TRAPPOLE_DA), 0, 1))) {
+      const oro = s.palline.find((p) => p.viva && p.tipo === "oro" && p.y < m.sopra);
+      if (oro) {
+        const lato = oro.x0 < m.w / 2 ? 1 : oro.x0 > m.w / 2 ? -1 : s.caso() < 0.5 ? 1 : -1;
+        x = oro.x0 + lato * RAGGIO * mescola(DISTANZA_TRAPPOLA[0], DISTANZA_TRAPPOLA[1], s.caso());
+        y = oro.y - RAGGIO * (s.caso() - 0.5);
+        v = oro.vy;
+        fase = oro.fase; // dondolano insieme
+      }
+    }
+    aggiungi(s, { tipo, x0: x, x, y, vx: 0, vy: v, fase });
   }
 }
 
@@ -146,9 +164,15 @@ export const palline: Gioco<StatoPalline> = {
       } else if (p.y > terra) {
         p.viva = false;
         if (p.tipo === "oro") {
-          if (s.combo > 0) s.eventi.push({ tipo: "persa", x: p.x, y: terra });
+          // dorata sulla neve: si perde un cuore
+          s.eventi.push({ tipo: "persa", x: p.x, y: terra });
           s.combo = 0;
           s.conti.cadute++;
+          s.vite--;
+          if (s.vite <= 0) {
+            s.fine = true;
+            return;
+          }
         } else s.eventi.push({ tipo: "fumo", x: p.x, y: terra });
       }
     }
@@ -211,8 +235,10 @@ export const palline: Gioco<StatoPalline> = {
       fx.trema(12);
       fx.suono("sbaglio");
     } else if (e.tipo === "persa") {
-      fx.scoppio(e.x!, e.y!, ["#fbf6ea"], 8, { velocita: 120, gravita: 300, dimensione: 3 });
-      fx.suono("puff");
+      fx.scoppio(e.x!, e.y!, ["#fbf6ea", "#f6c94a"], 14, { velocita: 160, gravita: 300, dimensione: 3.5 });
+      fx.testo(e.x!, e.y! - 40, "−♥", "#e5481e", 28);
+      fx.trema(8);
+      fx.suono("tonfoNeve");
     } else if (e.tipo === "fumo") {
       fx.scoppio(e.x!, e.y!, ["rgba(40,40,40,.6)"], 5, { velocita: 70, gravita: -40, dimensione: 4 });
     }

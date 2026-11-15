@@ -27,7 +27,7 @@ export const GIOCHI: InfoGioco[] = [
   {
     n: 1,
     nome: "Palline al volo",
-    regole: ["Tocca le palline dorate prima che arrivino sulla neve.", "Non toccare il carbone: hai solo 3 cuori. Dura 45 secondi.", "5 dorate di fila alzano il moltiplicatore. La cometa vale 50!"],
+    regole: ["Tocca le palline dorate prima che cadano sulla neve.", "Ogni dorata persa e ogni carbone toccato costano un cuore: ne hai 3.", "5 dorate di fila alzano il moltiplicatore. La cometa vale 50!"],
     premio: "neon",
     nomePremio: "Capelli neon",
     durataMax: 50,
@@ -37,7 +37,7 @@ export const GIOCHI: InfoGioco[] = [
   {
     n: 2,
     nome: "Campanelli",
-    regole: ["Ascolta i campanelli e ripeti la sequenza toccandoli.", "A ogni giro si aggiunge una nota: più sei veloce, più punti.", "Un errore e finisce. Dal 9° giro i campanelli cambiano posto!"],
+    regole: ["Ascolta i campanelli e ripeti la sequenza toccandoli.", "A ogni giro si aggiunge una nota: più sei veloce, più punti.", "Un errore e finisce. Dal 7° giro i campanelli cambiano posto!"],
     premio: "pazzo",
     nomePremio: "Taglio Esplosione",
     durataMax: 600,

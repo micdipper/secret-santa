@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import {
   ACCESSORI,
   Avatar,
-  CAPELLI_SUPER,
-  COLORE_OLOGRAFICO,
   COLORI_CAPELLI,
   ESCLUSIVI,
   OCCHIALI_VELOCI,
@@ -16,6 +14,9 @@ import {
   premioCucitura,
   NOMI_OCCHIALI,
   PELLI,
+  PREMI_COLORI,
+  PREMI_MAGLIONI,
+  PREMI_TAGLI,
   ToppaAvatar,
   type Look,
 } from "@/components/avatar";
@@ -25,8 +26,11 @@ import { Feltro, TitoloRiquadro } from "@/components/ui";
   Le scelte del personaggio. Usato in due posti:
   - pagina "Il tuo personaggio" (ogni parte nel suo riquadro, con i premi sbloccati);
   - "Crea un gruppo", dentro il riquadro "Tu" (parti una sotto l'altra).
-  I premi (taglio Super, colore olografico, accessori) compaiono SOLO quando sono sbloccati.
+  I premi (tagli Super ed Esplosione, colori olografico e neon, maglione GODO, accessori) compaiono SOLO quando sono sbloccati.
+  Ogni scelta tiene il suo numero (i), anche quando quelle prima sono nascoste.
 */
+const visibili = <T,>(lista: T[], premi: Record<number, string>, sbloccati: string[]) =>
+  lista.flatMap((v, i) => (premi[i] && !sbloccati.includes(premi[i]) ? [] : [{ v, i }]));
 export function EditorPersonaggio({
   look,
   sbloccati,
@@ -38,8 +42,9 @@ export function EditorPersonaggio({
   onCambia: (campi: Partial<Look>) => void;
   riquadri?: boolean;
 }) {
-  const tagli = NOMI_CAPELLI.filter((_, i) => i !== CAPELLI_SUPER || sbloccati.includes("super"));
-  const colori = COLORI_CAPELLI.filter((_, i) => i !== COLORE_OLOGRAFICO || sbloccati.includes("olografico"));
+  const tagli = visibili(NOMI_CAPELLI, PREMI_TAGLI, sbloccati);
+  const colori = visibili(COLORI_CAPELLI, PREMI_COLORI, sbloccati);
+  const maglioni = visibili(MAGLIONI, PREMI_MAGLIONI, sbloccati);
   const premi = ACCESSORI.filter((a) => sbloccati.includes(a.id));
 
   const parte = ({ titolo, children }: { titolo: string; children: ReactNode }) =>
@@ -67,7 +72,7 @@ export function EditorPersonaggio({
     <div className="flex flex-col gap-4">
       {parte({
         titolo: "Pelle",
-        children: <Campioni colori={PELLI} scelto={look.pelle} nome="Pelle" onScegli={(pelle) => onCambia({ pelle })} />,
+        children: <Campioni colori={PELLI.map((v, i) => ({ v, i }))} scelto={look.pelle} nome="Pelle" onScegli={(pelle) => onCambia({ pelle })} />,
       })}
 
       {parte({
@@ -84,7 +89,7 @@ export function EditorPersonaggio({
       {parte({
         titolo: "Barba e baffi",
         children: (
-          <Griglia nomi={NOMI_BARBA} scelto={look.barba} anteprima={(i) => ({ ...look, barba: i, accessori: [] })} onScegli={(barba) => onCambia({ barba })} />
+          <Griglia nomi={NOMI_BARBA.map((v, i) => ({ v, i }))} scelto={look.barba} anteprima={(i) => ({ ...look, barba: i, accessori: [] })} onScegli={(barba) => onCambia({ barba })} />
         ),
       })}
 
@@ -92,7 +97,7 @@ export function EditorPersonaggio({
         titolo: "Occhiali",
         children: (
           <Griglia
-            nomi={NOMI_OCCHIALI}
+            nomi={NOMI_OCCHIALI.map((v, i) => ({ v, i }))}
             scelto={look.occhiali}
             anteprima={(i) => ({ ...look, occhiali: i, accessori: [] })}
             onScegli={(occhiali) => onCambia({ occhiali })}
@@ -102,7 +107,7 @@ export function EditorPersonaggio({
 
       {parte({
         titolo: "Maglione",
-        children: <Campioni colori={MAGLIONI} scelto={look.maglione} nome="Maglione" onScegli={(maglione) => onCambia({ maglione })} />,
+        children: <Campioni colori={maglioni} scelto={look.maglione} nome="Maglione" onScegli={(maglione) => onCambia({ maglione })} />,
       })}
 
       {(sbloccati.includes("cuciture") || sbloccati.includes("cornici")) &&
@@ -173,14 +178,14 @@ function Griglia({
   anteprima,
   onScegli,
 }: {
-  nomi: string[];
+  nomi: { v: string; i: number }[];
   scelto: number;
   anteprima: (i: number) => Look;
   onScegli: (i: number) => void;
 }) {
   return (
     <div className="mt-4 grid grid-cols-3 gap-3">
-      {nomi.map((n, i) => (
+      {nomi.map(({ v: n, i }) => (
         <button
           key={n}
           type="button"
@@ -199,22 +204,30 @@ function Griglia({
 }
 
 // Campioni di colore: ognuno è un bottone tondo di stoffa; quello scelto è cerchiato.
-function Campioni({ colori, scelto, nome, onScegli }: { colori: string[]; scelto: number; nome: string; onScegli: (i: number) => void }) {
+function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: number }[]; scelto: number; nome: string; onScegli: (i: number) => void }) {
   return (
     <div className="mt-4 flex flex-wrap gap-3">
-      {colori.map((c, i) => {
+      {colori.map(({ v: c, i }) => {
         const olo = c.startsWith("url(");
-        const fondo = olo ? { backgroundImage: "linear-gradient(135deg,#ff4fae,#2fb8ff,#8a5cff,#ffc92e,#1fd69a)" } : { backgroundColor: c };
+        const neon = c === "#ff2bd6";
+        const godo = c === "#f6efdd";
+        const fondo = olo
+          ? { backgroundImage: "linear-gradient(135deg,#ff4fae,#2fb8ff,#8a5cff,#ffc92e,#1fd69a)" }
+          : neon
+            ? { backgroundImage: "radial-gradient(circle, #ffd6f7 0%, #ff6be3 35%, #ff2bd6 70%)" }
+            : { backgroundColor: c };
         return (
           <button
             key={c}
             type="button"
-            aria-label={olo ? `${nome} olografico` : `${nome} ${i + 1}`}
+            aria-label={olo ? `${nome} olografico` : c === "#ff2bd6" ? `${nome} neon` : c === "#f6efdd" ? `${nome} GODO` : `${nome} ${i + 1}`}
             aria-pressed={scelto === i}
             onClick={() => onScegli(i)}
-            className={`cliccabile size-12 rounded-full ${olo ? "capelli-olografici" : ""} ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
+            className={`cliccabile flex size-12 items-center justify-center rounded-full ${olo ? "capelli-olografici" : ""} ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
             style={{ ...fondo, ["--spessore" as string]: "rgb(0 0 0 / 0.3)" }}
-          />
+          >
+            {godo && <span className="font-titolo text-[11px] leading-none text-vermiglio">GODO</span>}
+          </button>
         );
       })}
     </div>
