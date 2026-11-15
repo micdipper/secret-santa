@@ -1,15 +1,23 @@
 # Stato dei lavori – Secret Santa
 
-Aggiornato al 13 novembre 2026 (notte, dopo Santa Chat e Novità). Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere.
+Aggiornato al 15 novembre 2026 (sera). Da leggere insieme a `CLAUDE.md` (brief e regole) prima di riprendere. Le note dettagliate di ogni giornata sono in fondo (sezioni "- 13/11 …", "- 14/11 …", "- 15/11 …").
 
+## ➡ DOVE SIAMO (15/11 sera)
+- **Fatto e provato** (in gran parte solo su telefono simulato: va verificato sul telefono vero): tutta la Fase 1 + Santa Chat (con limiti 5 messaggi/giorno da 50 caratteri) + Novità (post, reazioni) + censura dei nomi (nuovo algoritmo) + toppe dei totem dalle reference di Marzia + cassettiera con doppio fondo, toppa personale, toppe del gruppo + esclusioni si amano/si odiano/anno scorso + busta con slot a buste/personaggi e biglietto olografico + "Ricorda chi hai pescato" + premi ridistribuiti con il nuovo premio "Cuciture di lusso".
+- **Da fare**:
+  1. **Debug completo dell'app vera** (chiesto da Marzia: "prenditi tutto il tempo"), in una sessione nuova.
+  2. **Calendario dei giochi**: piano completo e approvato in `PIANO-GIOCHI.md` (scritto in un'altra sessione sul ramo `ccr-07e8e8f4-13gan0`, ora copiato anche qui). Marzia vuole eseguirlo con Fable, a blocchi (sezione 9 del piano).
+     ⚠ **Da chiarire con Marzia prima di farlo**: il piano mette come premio del gioco 4 le cornici Tulip / Fern / Cross stitch, ma il 15/11 sera (in questa sessione) le cuciture Catenella, Tulipano, Felce e Punto croce sono già state fatte come premio "Cuciture di lusso" (post + 5 reazioni). Decidere se il gioco 4 dà altre cornici o se le cuciture passano al gioco 4.
+  3. Rivelazione finale ("Chi era il Babbo Natale di chi").
+  4. **Pubblicazione**: unire il ramo in `main` → Production su Vercel (PR quando Marzia lo chiede).
+- Dati di prova da ripulire (chiedere a Marzia): gruppi "Test E2E Natale" elencati nelle sezioni Santa Chat e Novità.
 
-## ➡ PROSSIMO BLOCCO: da scegliere con Marzia
-Stato al 13/11 notte: **Fase 1 fatta e collaudata + Santa Chat + Novità (feed, post, reazioni) + censura dei nomi, tutto collaudato** (vedi sotto). Mancano: rivelazione finale ("Chi era il Babbo Natale di chi"), **pubblicazione** (unire il ramo in `main` → Production su Vercel).
 Regole sempre valide: prima di scrivere codice **breve piano e aspettare l'ok di Marzia**; mobile first, tasto finale chiaro, contrasto, animazioni con curve di Bézier, suoni da `lib/suoni.ts`. Marzia vuole risparmiare token: sessioni nuove per blocco, richieste raggruppate, poche prove visive.
-Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte senza node_modules), `npx next build`, poi `NODE_USE_ENV_PROXY=1 npx next start -p <porta>`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). I test automatici ora stanno nel repo in `test-e2e/` (quelli vecchi in `scratchpad/e2e/` sono andati persi con le sessioni) e creano gruppi "Test E2E Natale" da ripulire dopo (cancellare SOLO quei gruppi/utenti, chiedendo prima).
+Note tecniche utili: per le prove locali `npm ci` (il computer in cloud parte senza node_modules), `npx next build`, poi `NODE_USE_ENV_PROXY=1 npx next start -p <porta>`. Le modifiche al database passano da `apply_migration` (Supabase chiede conferma: va approvata). ⚠ Se si cambia `private.unlocked_accessories` o `public.save_avatar`, partire SEMPRE dall'ultima versione (oggi: migrazione `20261115100000_chat_censura_premi`). I test automatici stanno nel repo in `test-e2e/` e creano gruppi "Test E2E Natale" da ripulire dopo (cancellare SOLO quei gruppi/utenti, chiedendo prima).
 
-## Rami git (13/11)
-- Si lavora sul ramo **`ccr-f135f3c8-c3chko`** (dal 13/11 notte contiene anche `ccr-0d4074c1-k65cqp`: Santa Chat e Novità, uniti lì). Prima: `ccr-0d4074c1-k65cqp`, nato dall'ultimo commit di `claude/confident-sagan-im9axa` (c281c77): contiene tutto il lavoro. Il vecchio ramo `confident-sagan` resta indietro, non usarlo più.
+## Rami git (15/11)
+- Ramo con TUTTO il lavoro: **`ccr-f135f3c8-c3chko`**. Il ramo `ccr-07e8e8f4-13gan0` contiene solo il piano dei giochi (partito dal 13/11, ormai copiato qui): non lavorarci sopra.
+- Il ramo di lavoro **`ccr-f135f3c8-c3chko`** (dal 13/11 notte contiene anche `ccr-0d4074c1-k65cqp`: Santa Chat e Novità, uniti lì). Prima: `ccr-0d4074c1-k65cqp`, nato dall'ultimo commit di `claude/confident-sagan-im9axa` (c281c77): contiene tutto il lavoro. Il vecchio ramo `confident-sagan` resta indietro, non usarlo più.
 - `main` è ancora quasi vuoto: la pubblicazione = unire questo ramo in `main` (PR quando Marzia lo chiede).
 - Vercel fa un'anteprima per ogni ramo: il link di anteprima di questo ramo è diverso da quello di `confident-sagan`.
 
