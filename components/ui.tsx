@@ -198,12 +198,6 @@ export const Icone = {
       <path d="M4 20L20 4" />
     </svg>
   ),
-  sopra: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <rect x="4" y="10" width="11" height="10" rx="2" />
-      <path d="M9 10V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
-    </svg>
-  ),
   cestino: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
@@ -244,18 +238,6 @@ export const Icone = {
       <path d="M11 14l9-10" />
     </svg>
   ),
-  foto: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-      <circle cx="12" cy="13" r="3.5" />
-    </svg>
-  ),
-  reazione: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M20 12.5A8 8 0 1 1 11.5 4" />
-      <path d="M9 14.5c1.6 1.6 4.4 1.6 6 0M9 10h.01M14 10h.01M18 3v6M15 6h6" />
-    </svg>
-  ),
   fumetto: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
@@ -266,12 +248,6 @@ export const Icone = {
       <path d="M5 19L18 6" />
       <ellipse cx="19" cy="5" rx="1.6" ry="2.6" transform="rotate(45 19 5)" />
       <path d="M5 19c-2 1-2-2 1-3 4-1 6 2 9 1" />
-    </svg>
-  ),
-  gruccia: (
-    <svg viewBox="0 0 24 24" aria-hidden>
-      <path d="M10 6.5a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.3V11" />
-      <path d="M12 11l-8.5 6.2c-.8.6-.4 1.8.6 1.8h15.8c1 0 1.4-1.2.6-1.8z" />
     </svg>
   ),
   calendario: (
