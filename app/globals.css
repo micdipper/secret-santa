@@ -367,7 +367,9 @@ textarea {
 .toppa::before {
   content: "";
   position: absolute;
-  inset: 4px;
+  /* distanza dal bordo che cresce con la toppa (sui personaggi grandi 4px la attaccava al bordo);
+     stessa regola di Cucitura in avatar.tsx */
+  inset: max(4px, 7%);
   border-radius: 50%;
   border: 1.5px dashed rgb(44 74 50 / 0.55); /* stesso filo delle cuciture premio (FILO_CUCITURA in avatar.tsx) */
 }

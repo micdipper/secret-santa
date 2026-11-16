@@ -9,6 +9,8 @@ import { Pallina } from "./ornamenti";
 // che chiediamo al tocco su "Apri la busta"; il tocco funziona sempre.
 export function PallinaCheDondola({ className = "" }: { className?: string }) {
   const [dondola, setDondola] = useState(false);
+  // ogni tocco fa ripartire il dondolio da capo (prima, a pallina già in movimento, il tocco non faceva niente)
+  const [giro, setGiro] = useState(0);
   const ultimo = useRef(0);
 
   useEffect(() => {
@@ -34,12 +36,14 @@ export function PallinaCheDondola({ className = "" }: { className?: string }) {
       aria-label="Fai dondolare la pallina"
       onClick={() => {
         setDondola(true);
+        setGiro((g) => g + 1);
         suoni.pallina();
       }}
-      onAnimationEnd={() => setDondola(false)}
-      className={`block origin-top ${dondola ? "dondola" : ""} ${className}`}
+      className={`block ${className}`}
     >
-      <Pallina className="w-full" />
+      <span key={giro} onAnimationEnd={() => setDondola(false)} className={`block origin-top ${dondola ? "dondola" : ""}`}>
+        <Pallina className="w-full" />
+      </span>
     </button>
   );
 }

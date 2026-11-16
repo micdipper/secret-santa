@@ -21,7 +21,7 @@ export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e06
 export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd"];
 // 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
 // (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
-export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
+export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Pelato", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
 export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
 export const NOMI_OCCHIALI = ["Niente", "Tondi", "Grandi"];
 
@@ -177,8 +177,8 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
           ))}
         </g>
       );
-    case 5: // rasati
-      return dietro ? null : <path d="M31 40c1-12 9-19 19-19s18 7 19 19c-6-4-12-6-19-6s-13 2-19 6z" fill={c} opacity=".55" />;
+    case 5: // pelato (era "rasati"): niente capelli, solo un riflesso di luce sulla testa
+      return dietro ? null : <ellipse cx="42" cy="27" rx="6" ry="3" transform="rotate(-25 42 27)" fill="#fff" opacity=".35" />;
     case 6: // cresta
       return dietro ? null : (
         <g fill={c}>
@@ -552,7 +552,8 @@ export function lookDi(profili: { user_id: string; look: unknown }[] | null, use
 // a ogni dimensione, linea centrale sullo stesso cerchio (bordo − 4 px − metà filo). Stanno SOTTO il busto.
 export const FILO_CUCITURA = "rgb(44 74 50 / 0.55)";
 export function Cucitura({ tipo, dimensione }: { tipo: number; dimensione: number }) {
-  const R = ((dimensione / 2 - 4 - 0.75) * 100) / dimensione; // in unità del viewBox (100)
+  // stessa distanza dal bordo della cucitura normale (.toppa::before in globals.css): max(4px, 7%)
+  const R = ((dimensione / 2 - Math.max(4, dimensione * 0.07) - 0.75) * 100) / dimensione; // in unità del viewBox (100)
   const k = R / 43; // i motivi erano disegnati per il raggio 43: restano proporzionati
   const filo = FILO_CUCITURA;
   const tratto = { stroke: filo, strokeWidth: 1.5, vectorEffect: "non-scaling-stroke" as const, fill: "none", strokeLinecap: "round" as const };
