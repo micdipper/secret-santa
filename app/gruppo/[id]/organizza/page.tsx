@@ -32,6 +32,7 @@ type Gruppo = {
   quiz_salvato_at: string | null;
   giochi_attivi: boolean;
   giorni_proposti: string[] | null; // sondaggio della disponibilità aperto
+  estrazione_fatta: boolean; // "Abbiamo già fatto l'estrazione": ognuno indica la sua persona
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
 type Coppia = Esclusione;
@@ -80,7 +81,7 @@ function Organizza() {
         supabase
           .from("groups")
           .select(
-            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti",
+            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti, estrazione_fatta",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -241,6 +242,13 @@ function Organizza() {
     } catch {
       // condivisione annullata: niente da fare
     }
+  }
+
+  async function cambiaEstrazioneFatta(attiva: boolean) {
+    setErrore("");
+    const { error } = await supabase.rpc("imposta_estrazione_fatta", { p_group_id: id, p_attiva: attiva });
+    if (error) return setErrore(error.message);
+    carica();
   }
 
   async function estrai() {
@@ -537,6 +545,22 @@ function Organizza() {
         )}
       </Feltro>
 
+      {gruppo?.estrazione_fatta ? (
+        <Feltro className="mt-4">
+          <TitoloRiquadro>Estrazione già fatta</TitoloRiquadro>
+          <p className="mt-2">
+            {modificabile
+              ? "Ognuno, dalla pagina del gruppo, indica a chi fa il regalo (anche tu). Quando hanno indicato tutti, si aprono le buste. Chi ha scelto chi non lo vede nessuno."
+              : "Hanno indicato tutti la loro persona: ognuno trova la sua busta nella pagina del gruppo."}
+          </p>
+          {modificabile && (
+            <Tasto tipo="secondario" className="mt-5" onClick={() => cambiaEstrazioneFatta(false)}>
+              No, fatela fare al sito
+            </Tasto>
+          )}
+        </Feltro>
+      ) : (
+        <>
       <RiquadroEsclusioni
         className="mt-4"
         persone={membri.map((m) => ({ id: m.id, nome: m.display_name }))}
@@ -574,7 +598,15 @@ function Organizza() {
             {estrazioneInCorso ? "Estraggo…" : "Fai l'estrazione"}
           </Tasto>
         )}
+        {modificabile && (
+          <Tasto tipo="secondario" className="mt-3" onClick={() => cambiaEstrazioneFatta(true)}>
+            L&apos;abbiamo già fatta noi
+          </Tasto>
+        )}
       </Feltro>
+
+        </>
+      )}
 
       {errore && (
         <div className="mt-4">

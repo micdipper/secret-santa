@@ -3,6 +3,7 @@ import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { SceltaDestinatario } from "@/components/scelta-destinatario";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
@@ -21,7 +22,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
   const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
-    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti").eq("id", id).maybeSingle(),
+    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti, estrazione_fatta").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
@@ -59,8 +60,10 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
     ? "Prima crea il sondaggio: poi arriva il link d'invito da mandare agli amici."
     : gruppo.status === "aperto"
       ? mancanti.length > 0
-        ? `Sono entrati ${entrati} su ${membri.length}: manda il link a chi manca. Quando ci sono tutti fai l'estrazione.`
-        : "Ci sono tutti: puoi fare l'estrazione!"
+        ? `Sono entrati ${entrati} su ${membri.length}: manda il link a chi manca.${gruppo.estrazione_fatta ? "" : " Quando ci sono tutti fai l'estrazione."}`
+        : gruppo.estrazione_fatta
+          ? "Ci sono tutti: aspettiamo che ognuno indichi la sua persona."
+          : "Ci sono tutti: puoi fare l'estrazione!"
       : daAprire > 0
         ? `Estrazione fatta. ${daAprire === 1 ? "Manca 1 persona" : `Mancano ${daAprire} persone`} ad aprire la busta.`
         : "Estrazione fatta e buste aperte da tutti. Puoi sempre cambiare data, budget e tema.";
@@ -103,6 +106,24 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
     sondaggio = { risposto: !!io && !!risposte[io.id], risposte: Object.keys(risposte).length, migliori, max };
   }
 
+  // "Abbiamo già fatto l'estrazione": la mia scelta (le regole mi danno solo la mia) e quanti hanno scelto
+  let sceltaDestinatario: React.ReactNode = null;
+  if (gruppo.estrazione_fatta && gruppo.status === "aperto" && io) {
+    const [{ data: mia }, { data: quanti }] = await Promise.all([
+      supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
+      supabase.rpc("quanti_hanno_scelto", { p_group_id: id }),
+    ]);
+    sceltaDestinatario = (
+      <SceltaDestinatario
+        groupId={id}
+        persone={membri.filter((m) => m.id !== io.id).map((m) => ({ id: m.id, nome: m.display_name, look: look(m) }))}
+        scelta={mia?.receiver_member_id ?? null}
+        hannoScelto={quanti ?? 0}
+        totale={membri.length}
+      />
+    );
+  }
+
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
@@ -130,7 +151,12 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
       {/* 1. Il fulcro: busta, abbinamento o attesa (per l'organizzatore, prima dell'estrazione, è il suo riquadro) */}
       {gruppo.status === "aperto" ? (
-        organizzatore ? (
+        sceltaDestinatario ? (
+          <>
+            {organizzatore && riquadroOrganizzatore}
+            {sceltaDestinatario}
+          </>
+        ) : organizzatore ? (
           riquadroOrganizzatore
         ) : (
           <Feltro className="mt-6">

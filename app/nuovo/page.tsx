@@ -29,6 +29,7 @@ export default function NuovoGruppo() {
   // ogni gruppo è a sé: personaggio nuovo, nessun premio, password nuova
   const [look, setLook] = useState<Look>(LOOK_BASE);
   const [avvisoData, setAvvisoData] = useState(false);
+  const [giaEstratto, setGiaEstratto] = useState(false);
 
   function aggiungiNome() {
     const n = nuovoNome.trim();
@@ -80,6 +81,7 @@ export default function NuovoGruppo() {
       );
     }
     await supabase.rpc("save_avatar", { p_look: look });
+    if (giaEstratto) await supabase.rpc("imposta_estrazione_fatta", { p_group_id: risultato[0].group_id, p_attiva: true });
     // prima il sondaggio, poi il link d'invito
     router.push(`/gruppo/${risultato[0].group_id}/sondaggio?nuovo=1`);
   }
@@ -175,6 +177,23 @@ export default function NuovoGruppo() {
           <p className="mt-3 text-sm text-inchiostro/70">
             {altri.length === 0 ? "Nessuno ancora." : `${altri.length + 1} persone, te compreso. Il − accanto a un nome lo toglie.`}
           </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={giaEstratto}
+            onClick={() => setGiaEstratto(!giaEstratto)}
+            className="cucitura cliccabile stoffa-chiara relative mt-5 flex min-h-14 w-full items-center gap-4 rounded-[20px] px-5 py-3 text-left [--raggio:20px]"
+          >
+            <span className={`relative h-7 w-12 flex-none rounded-full transition-colors ${giaEstratto ? "bg-vermiglio" : "bg-abete/25"}`}>
+              <span className={`absolute top-1 size-5 rounded-full bg-white shadow transition-[left] ${giaEstratto ? "left-6" : "left-1"}`} />
+            </span>
+            <span className="flex flex-col">
+              <span className="font-titolo text-lg leading-tight text-abete">Abbiamo già fatto l&apos;estrazione</span>
+              <span className="text-sm text-inchiostro/70">
+                {giaEstratto ? "Ognuno, entrando, indicherà a chi fa il regalo. Lo saprà solo il sito." : "Altrimenti la fa il sito, quando ci sono tutti."}
+              </span>
+            </span>
+          </button>
         </Feltro>
 
         <Errore>{errore}</Errore>
