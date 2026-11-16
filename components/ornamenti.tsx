@@ -86,62 +86,6 @@ export function Rametto({ className, title }: Props) {
   );
 }
 
-// Fascia a maglia nordica (pattern ripetuto, riempie tutta la larghezza)
-const MOTIVO = [
-  "....1..1....",
-  "....1..1....",
-  "11..1111..11",
-  ".11..11..11.",
-  "..11.11.11..",
-  "111111111111",
-  "111111111111",
-  "..11.11.11..",
-  ".11..11..11.",
-  "11..1111..11",
-  "....1..1....",
-  "....1..1....",
-];
-
-export function FasciaMaglia({
-  className,
-  colore = "var(--color-crema)",
-  sfondo = "var(--color-vermiglio)",
-}: {
-  className?: string;
-  colore?: string;
-  sfondo?: string;
-}) {
-  const cella = 4;
-  const larghezzaTessera = 14 * cella;
-  const altezza = 18 * cella;
-  const punti: { x: number; y: number }[] = [];
-  MOTIVO.forEach((riga, r) =>
-    [...riga].forEach((c, col) => {
-      if (c === "1") punti.push({ x: (col + 1) * cella, y: (r + 3) * cella });
-    }),
-  );
-  return (
-    <svg className={className} height={altezza} width="100%" aria-hidden>
-      <defs>
-        <pattern id="maglia" width={larghezzaTessera} height={altezza} patternUnits="userSpaceOnUse">
-          <rect width={larghezzaTessera} height={altezza} fill={sfondo} />
-          {punti.map((p, i) => (
-            <rect key={i} x={p.x} y={p.y} width={cella} height={cella} fill={colore} />
-          ))}
-          {/* puntini di bordo, sopra e sotto */}
-          {Array.from({ length: 7 }, (_, i) => (
-            <g key={i} fill={colore}>
-              <rect x={i * 2 * cella} y={0} width={cella} height={cella} />
-              <rect x={i * 2 * cella + cella} y={altezza - cella} width={cella} height={cella} />
-            </g>
-          ))}
-        </pattern>
-      </defs>
-      <rect width="100%" height={altezza} fill="url(#maglia)" />
-    </svg>
-  );
-}
-
 // Pallina di Natale lucida, appesa a un filo (unico oggetto "realistico").
 export function Pallina({ className, title }: Props) {
   return (

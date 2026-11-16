@@ -32,9 +32,12 @@ export function FeedGruppo({
 
   const carica = useCallback(async () => {
     const supabase = clientSoloBrowser();
-    let q = supabase.from("feed_events").select("id, member_id, tipo, dati, quando").eq("group_id", groupId).order("quando", { ascending: false });
-    q = q.limit(limite ?? 200);
-    const { data } = await q;
+    const { data } = await supabase
+      .from("feed_events")
+      .select("id, member_id, tipo, dati, quando")
+      .eq("group_id", groupId)
+      .order("quando", { ascending: false })
+      .limit(limite ?? 200);
     const elenco = (data as Voce[]) ?? [];
     const ids = elenco.map((v) => v.id);
     const percorsi = elenco.flatMap((v) => (v.dati.foto ? [v.dati.foto] : []));

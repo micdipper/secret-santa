@@ -92,11 +92,15 @@ export function AvvisoPremi() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- controllo nel database al cambio di pagina
     controlla();
-    const ogni = setInterval(controlla, 20000);
+    // ogni 20 secondi, ma solo mentre il sito è davanti agli occhi; tornando nel sito si controlla subito
+    const ogni = setInterval(() => !document.hidden && controlla(), 20000);
+    const alRitorno = () => !document.hidden && controlla();
     window.addEventListener("controlla-premi", controlla);
+    document.addEventListener("visibilitychange", alRitorno);
     return () => {
       clearInterval(ogni);
       window.removeEventListener("controlla-premi", controlla);
+      document.removeEventListener("visibilitychange", alRitorno);
     };
   }, [controlla]);
 

@@ -35,7 +35,6 @@ type Gruppo = {
   estrazione_fatta: boolean; // "Abbiamo già fatto l'estrazione": ognuno indica la sua persona
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
-type Coppia = Esclusione;
 
 export default function PaginaOrganizza() {
   return (
@@ -54,7 +53,7 @@ function Organizza() {
   const [mioId, setMioId] = useState<string | null>(null);
   const [gruppo, setGruppo] = useState<Gruppo | null>(null);
   const [membri, setMembri] = useState<Membro[]>([]);
-  const [coppie, setCoppie] = useState<Coppia[]>([]);
+  const [coppie, setCoppie] = useState<Esclusione[]>([]);
   const [profili, setProfili] = useState<{ user_id: string; look: unknown }[]>(
     [],
   );
@@ -96,12 +95,14 @@ function Organizza() {
           .eq("group_id", id),
       ]);
     setMioId(s.session?.user.id ?? null);
-    setGruppo(g as Gruppo | null);
-    setNuovaData((g as Gruppo | null)?.exchange_date ?? "");
-    setNuovoTema((g as Gruppo | null)?.theme ?? "");
-    setMembri((m as Membro[]) ?? []);
-    setCoppie((c as Coppia[]) ?? []);
-    const ids = ((m as Membro[]) ?? []).flatMap((x) =>
+    const gr = g as Gruppo | null;
+    const persone = (m as Membro[]) ?? [];
+    setGruppo(gr);
+    setNuovaData(gr?.exchange_date ?? "");
+    setNuovoTema(gr?.theme ?? "");
+    setMembri(persone);
+    setCoppie((c as Esclusione[]) ?? []);
+    const ids = persone.flatMap((x) =>
       x.user_id ? [x.user_id] : [],
     );
     const { data: p } = await supabase
@@ -196,18 +197,23 @@ function Organizza() {
     });
   }
 
-  async function condividiLinkReset(m: Membro, url: string) {
-    const testo = `${m.display_name.split(" ")[0]}, ecco il link per scegliere una nuova password per "${gruppo!.name}". Vale 24 ore e si usa una volta sola.`;
+  // Condivide un link (o lo copia, se il telefono non sa condividere)
+  async function condividiLink(titolo: string, testo: string, url: string) {
     try {
-      if (navigator.share)
-        await navigator.share({ title: "Nuova password", text: testo, url });
-      else {
+      if (navigator.share) {
+        await navigator.share({ title: titolo, text: testo, url });
+      } else {
         await navigator.clipboard.writeText(url);
         setAvviso("Link copiato.");
       }
     } catch {
-      // condivisione annullata
+      // condivisione annullata: niente da fare
     }
+  }
+
+  function condividiLinkReset(m: Membro, url: string) {
+    const testo = `${m.display_name.split(" ")[0]}, ecco il link per scegliere una nuova password per "${gruppo!.name}". Vale 24 ore e si usa una volta sola.`;
+    return condividiLink("Nuova password", testo, url);
   }
 
   async function liberaNome(m: Membro) {
@@ -229,19 +235,9 @@ function Organizza() {
     carica();
   }
 
-  async function condividi() {
-    const link = `${window.location.origin}/invito/${gruppo!.invite_code}`;
+  function condividi() {
     const testo = `Entra nel Secret Santa "${gruppo!.name}": tocca il tuo nome e scegli una password.`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: gruppo!.name, text: testo, url: link });
-      } else {
-        await navigator.clipboard.writeText(link);
-        setAvviso("Link copiato.");
-      }
-    } catch {
-      // condivisione annullata: niente da fare
-    }
+    return condividiLink(gruppo!.name, testo, `${window.location.origin}/invito/${gruppo!.invite_code}`);
   }
 
   async function cambiaEstrazioneFatta(attiva: boolean) {

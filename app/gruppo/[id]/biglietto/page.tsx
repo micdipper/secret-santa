@@ -13,18 +13,19 @@ export default async function PaginaBiglietto({ params }: { params: Promise<{ id
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: io }] = await Promise.all([
+  // le regole del database danno solo il mio abbinamento e i personaggi dei miei gruppi
+  const [{ data: gruppo }, { data: membri }, { data: abbinamento }, { data: profili }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
-    supabase.from("group_members").select("id, envelope_opened_at").eq("group_id", id).eq("user_id", userId).maybeSingle(),
+    supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
+    supabase.from("profiles").select("user_id, look"),
   ]);
+  const io = membri?.find((m) => m.user_id === userId);
   if (!gruppo || !io) return null; // non è un mio gruppo: ci pensa il layout
   if (!io.envelope_opened_at) redirect(`/gruppo/${id}/busta`); // prima si apre la busta
 
-  const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).eq("giver_member_id", io.id).maybeSingle();
-  if (!abbinamento) redirect(`/gruppo/${id}`);
-  const { data: lui } = await supabase.from("group_members").select("id, display_name, user_id").eq("id", abbinamento.receiver_member_id).maybeSingle();
+  const lui = membri?.find((m) => m.id === abbinamento?.receiver_member_id);
   if (!lui) redirect(`/gruppo/${id}`);
-  const { data: profili } = lui.user_id ? await supabase.from("profiles").select("user_id, look").eq("user_id", lui.user_id) : { data: [] };
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">

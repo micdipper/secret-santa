@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
-import { dataBreve, giorniMancanti } from "@/lib/date";
+import { dataBreve, giornoPrima, giorniMancanti, oggiRoma } from "@/lib/date";
 
 // I minigiochi dell'avvento partono 4 giorni prima dello scambio: servono almeno 6 giorni da oggi
 // (stessa regola del database, trigger groups_data_e_giochi).
@@ -15,8 +15,7 @@ export function dataTroppoVicina(data: string | null) {
 
 // Il primo giorno che va bene per avere i giochi
 function primaDataBuona() {
-  const oggi = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Rome" });
-  return new Date(new Date(`${oggi}T00:00:00Z`).getTime() + GIORNI_MINIMI_GIOCHI * 86_400_000).toISOString().slice(0, 10);
+  return giornoPrima(oggiRoma(), -GIORNI_MINIMI_GIOCHI);
 }
 
 // Pop-up: la data scelta è troppo vicina, quindi niente minigiochi. Si sceglie se cambiarla o continuare.

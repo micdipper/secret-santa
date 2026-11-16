@@ -7,7 +7,7 @@ import { SceltaDestinatario } from "@/components/scelta-destinatario";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -21,24 +21,21 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
+  // Tutto in una volta sola: le regole del database mostrano solo i dati dei miei gruppi
+  // (i personaggi di chi è entrato, i totem del sondaggio, la disponibilità e SOLO il mio abbinamento).
+  const [{ data: gruppo }, { data: membriDati }, { data: profili }, { data: risultati }, { data: nomiTotem }, { data: disp }, { data: abbinamento }] = await Promise.all([
     supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti, estrazione_fatta").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("profiles").select("user_id, look"),
+    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
+    supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
 
   const membri = (membriDati as Membro[]) ?? [];
-  // I personaggi di chi è entrato (le regole del database mostrano solo quelli dei miei gruppi)
-  const { data: profili } = await supabase
-    .from("profiles")
-    .select("user_id, look")
-    .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
   const look = (m: Membro) => lookDi(profili, m.user_id);
-  // i totem di chi ha fatto il sondaggio (badge accanto al personaggio)
-  const [{ data: risultati }, { data: nomiTotem }] = await Promise.all([
-    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
-    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
-  ]);
   const totemDi = (m: Membro) => {
     const r = risultati?.find((x) => x.user_id === m.user_id);
     if (!r) return null;
@@ -85,7 +82,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             ? "Il calendario è aperto!"
             : "Oggi c'è un regalo da scartare";
 
-  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
   const riquadroOrganizzatore = (
     <Feltro className="mt-6">
       <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
@@ -100,7 +96,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // Sondaggio della disponibilità aperto: chi ha risposto e il giorno più probabile
   let sondaggio: { risposto: boolean; risposte: number; migliori: string[]; max: number } | null = null;
   if (gruppo.giorni_proposti) {
-    const { data: disp } = await supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id);
     const risposte = Object.fromEntries((disp ?? []).map((r) => [r.member_id as string, r.giorni as string[]]));
     const { migliori, max } = conteggi([...(gruppo.giorni_proposti as string[])].sort(), risposte);
     sondaggio = { risposto: !!io && !!risposte[io.id], risposte: Object.keys(risposte).length, migliori, max };
@@ -109,15 +104,12 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // "Abbiamo già fatto l'estrazione": la mia scelta (le regole mi danno solo la mia) e quanti hanno scelto
   let sceltaDestinatario: React.ReactNode = null;
   if (gruppo.estrazione_fatta && gruppo.status === "aperto" && io) {
-    const [{ data: mia }, { data: quanti }] = await Promise.all([
-      supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
-      supabase.rpc("quanti_hanno_scelto", { p_group_id: id }),
-    ]);
+    const { data: quanti } = await supabase.rpc("quanti_hanno_scelto", { p_group_id: id });
     sceltaDestinatario = (
       <SceltaDestinatario
         groupId={id}
         persone={membri.filter((m) => m.id !== io.id).map((m) => ({ id: m.id, nome: m.display_name, look: look(m) }))}
-        scelta={mia?.receiver_member_id ?? null}
+        scelta={abbinamento?.receiver_member_id ?? null}
         hannoScelto={quanti ?? 0}
         totale={membri.length}
       />
@@ -127,7 +119,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
-    const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
     destinatario = membri.find((m) => m.id === abbinamento?.receiver_member_id);
   }
 
@@ -238,7 +229,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
               <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
               <span className="block text-sm text-inchiostro/70">Fai capire al tuo Babbo Natale cosa ti piace</span>
             </span>
-            {freccia}
+            <FrecciaAvanti />
           </Link>
 
           {/* 4. Santa Chat e mini giochi, affiancati: quelli non ancora sbloccati sono spenti col lucchetto
