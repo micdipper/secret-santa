@@ -16,9 +16,12 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membri }] = await Promise.all([
+  // le regole del database danno solo il mio abbinamento e i personaggi dei miei gruppi
+  const [{ data: gruppo }, { data: membri }, { data: a }, { data: profili }] = await Promise.all([
     supabase.from("groups").select("name, status").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
+    supabase.from("profiles").select("user_id, look"),
   ]);
   if (!gruppo || !membri) return null; // non è un mio gruppo: ci pensa il layout
   const io = membri.find((m) => m.user_id === userId);
@@ -28,13 +31,7 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
   const daAprire = membri.filter((m) => !m.envelope_opened_at);
   const aperta = estratto && daAprire.length === 0;
 
-  let destinatario: (typeof membri)[number] | undefined;
-  let profili: { user_id: string; look: unknown }[] | null = null;
-  if (aperta) {
-    const { data: a } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
-    destinatario = membri.find((m) => m.id === a?.receiver_member_id);
-    if (destinatario?.user_id) ({ data: profili } = await supabase.from("profiles").select("user_id, look").eq("user_id", destinatario.user_id));
-  }
+  const destinatario = aperta ? membri.find((m) => m.id === a?.receiver_member_id) : undefined;
 
   const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
 

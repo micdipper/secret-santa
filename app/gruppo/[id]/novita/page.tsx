@@ -12,18 +12,16 @@ export default async function PaginaNovita({ params }: { params: Promise<{ id: s
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membri }, { data: nomiTotem }] = await Promise.all([
+  // i personaggi: le regole del database mostrano solo quelli dei miei gruppi
+  const [{ data: gruppo }, { data: membri }, { data: nomiTotem }, { data: profili }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id").eq("group_id", id),
     supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
+    supabase.from("profiles").select("user_id, look"),
   ]);
   if (!gruppo || !membri) return null; // non è un mio gruppo: ci pensa il layout
   const io = membri.find((m) => m.user_id === userId);
   if (!io) redirect(`/gruppo/${id}`);
-  const { data: profili } = await supabase
-    .from("profiles")
-    .select("user_id, look")
-    .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
