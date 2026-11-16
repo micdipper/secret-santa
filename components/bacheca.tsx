@@ -777,6 +777,7 @@ function StratoRicamo({
   const gomma = strumento === "gomma";
   const [puoAnnullare, setPuoAnnullare] = useState(false);
   const idRicamo = useRef<string | null>(iniziale?.id ?? null);
+  const premioControllato = useRef(false); // il premio del primo ricamo: basta controllarlo una volta
   const timerSalva = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cella = larghezza / COLONNE;
@@ -846,7 +847,10 @@ function StratoRicamo({
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
         if (error) onErrore("Non sono riuscito a salvare il ricamo.");
-        else controllaPremi();
+        else if (!premioControllato.current) {
+          premioControllato.current = true;
+          controllaPremi();
+        }
       } else {
         const { data, error } = await supabase
           .from("moodboard_items")
