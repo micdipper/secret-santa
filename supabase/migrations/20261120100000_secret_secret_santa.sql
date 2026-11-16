@@ -1,19 +1,43 @@
 -- Easter egg "Secret secret Santa" (richiesta di Marzia, 20/11): 7 tocchi sulla pallina aprono
 -- una pagina segreta con un minigioco; vincendolo si sblocca il "cappello di Natale" (id `natale`).
--- È un gioco per scherzo: basta vincere una volta, il premio vale per quell'accesso (come gli altri).
+-- Una sola possibilità a testa per gruppo; il premio vale per quell'accesso (come gli altri).
 
 alter table public.group_members add column cappello_natale_at timestamptz;
+-- UNA sola possibilità: il tentativo si segna quando la partita parte, e non si può ripartire
+-- (né ricaricando la pagina né rifacendo cadere la pallina).
+alter table public.group_members add column secret_tentato_at timestamptz;
 
+create or replace function public.inizia_secret_secret_santa(p_group_id uuid)
+returns void language plpgsql security definer set search_path to '' as $$
+declare v_gia timestamptz;
+begin
+  select secret_tentato_at into v_gia from public.group_members
+  where group_id = p_group_id and user_id = (select auth.uid()) for update;
+  if not found then
+    raise exception 'Non fai parte di questo gruppo.';
+  end if;
+  if v_gia is not null then
+    raise exception 'GIA_TENTATO';
+  end if;
+  update public.group_members set secret_tentato_at = now()
+  where group_id = p_group_id and user_id = (select auth.uid());
+end;
+$$;
+
+-- Vale solo durante l'unica partita (20 s di gioco + un margine per la rete).
 create or replace function public.vinci_secret_secret_santa(p_group_id uuid)
 returns void language plpgsql security definer set search_path to '' as $$
 begin
   update public.group_members set cappello_natale_at = coalesce(cappello_natale_at, now())
-  where group_id = p_group_id and user_id = (select auth.uid());
+  where group_id = p_group_id and user_id = (select auth.uid())
+    and secret_tentato_at is not null and now() - secret_tentato_at < interval '35 seconds';
   if not found then
-    raise exception 'Non fai parte di questo gruppo.';
+    raise exception 'Partita non valida.';
   end if;
 end;
 $$;
+revoke execute on function public.inizia_secret_secret_santa(uuid) from public, anon;
+grant execute on function public.inizia_secret_secret_santa(uuid) to authenticated;
 revoke execute on function public.vinci_secret_secret_santa(uuid) from public, anon;
 grant execute on function public.vinci_secret_secret_santa(uuid) to authenticated;
 

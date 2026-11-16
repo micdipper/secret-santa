@@ -1,20 +1,8 @@
 "use client";
 // Oggetti di carta e da rivista presi dal design system "Secret Santa" (classi ss-* in globals.css):
-// stella a raggiera, conto alla rovescia, banda a maglia, biglietto, timbro, scarabocchi.
+// conto alla rovescia, banda a maglia, timbro, scarabocchi (biglietto e stella a raggiera tolti: stonavano col feltro).
 // Tutti piatti (non cliccabili): decorano e informano, non si toccano.
 import { useEffect, useId, useState, type ReactNode } from "react";
-
-// Stella a raggiera senape con un numero gigante (una sola grande per schermata).
-export function Starburst({ valore, etichetta, piccola = false, className = "" }: { valore: ReactNode; etichetta: string; piccola?: boolean; className?: string }) {
-  return (
-    <div className={`ss-burst ${piccola ? "ss-burst--small" : ""} ${className}`}>
-      <div>
-        <div className="ss-burst__value">{valore}</div>
-        <span className="ss-burst__label">{etichetta}</span>
-      </div>
-    </div>
-  );
-}
 
 // Giorni · ore · minuti allo scambio (mezzanotte del giorno dello scambio, ora italiana), aggiornato ogni minuto.
 export function Countdown({ data }: { data: string }) {
@@ -58,34 +46,6 @@ export function Countdown({ data }: { data: string }) {
 // Banda a maglia nordica da bordo a bordo (massimo due per schermata).
 export function KnitBand({ piccola = false, className = "" }: { piccola?: boolean; className?: string }) {
   return <div aria-hidden className={`ss-knit ${piccola ? "ss-knit--small" : ""} ${className}`} />;
-}
-
-// Biglietto con la matrice staccabile.
-export function Ticket({
-  occhiello,
-  titolo,
-  meta,
-  matrice,
-  colore = "clementina",
-  className = "",
-}: {
-  occhiello: string;
-  titolo: ReactNode;
-  meta?: ReactNode;
-  matrice: string;
-  colore?: "clementina" | "rosa" | "senape";
-  className?: string;
-}) {
-  return (
-    <div className={`ss-ticket ${colore !== "clementina" ? `ss-ticket--${colore}` : ""} ${className}`}>
-      <div className="ss-ticket__main">
-        <span className="ss-ticket__eyebrow">{occhiello}</span>
-        <span className="ss-ticket__title">{titolo}</span>
-        {meta && <span className="ss-ticket__meta">{meta}</span>}
-      </div>
-      <div className="ss-ticket__stub">{matrice}</div>
-    </div>
-  );
 }
 
 // Timbro tondo con il testo che gira sul bordo e una parola al centro.

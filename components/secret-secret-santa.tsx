@@ -1,7 +1,9 @@
 "use client";
 // Easter egg "Secret secret Santa" (7 tocchi sulla pallina): minigioco "Prendi il cappello".
 // Il cappello di Natale vola via col vento e rimbalza sui bordi, ogni tanto si ferma a riprendere fiato:
-// va toccato 5 volte in 20 secondi. Si riprova quante volte si vuole; vincendo si sblocca il cappello.
+// va toccato 7 volte in 15 secondi, è piccolo, velocissimo e cambia direzione a caso.
+// UNA SOLA POSSIBILITÀ: il database segna il tentativo appena parte la partita (inizia_secret_secret_santa),
+// quindi ricaricando la pagina o rifacendo cadere la pallina non si rigioca. Solo la sala prove è infinita.
 import { useEffect, useRef, useState } from "react";
 import { CappelloNatale } from "@/components/avatar";
 import { controllaPremi } from "@/components/avviso-premi";
@@ -9,20 +11,32 @@ import { Feltro, Tasto, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { suoni } from "@/lib/suoni";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
-const PRESE = 5; // tocchi per vincere
-const DURATA = 20; // secondi
-const LATO = 84; // lato del cappello in px (area toccabile)
+const PRESE = 7; // tocchi per vincere
+const DURATA = 15; // secondi
+const LATO = 56; // lato del cappello in px (area toccabile)
+const VELOCITA = 290; // px al secondo all'inizio
+const ACCELERA = 0.32; // +32% di velocità a ogni presa
 
-type Stato = "pronto" | "gioco" | "perso" | "vinto";
+type Stato = "pronto" | "gioco" | "perso" | "vinto" | "bruciato";
 
-export function SecretSecretSanta({ groupId, prova = false }: { groupId: string; prova?: boolean }) {
-  const [stato, setStato] = useState<Stato>("pronto");
+export function SecretSecretSanta({
+  groupId,
+  prova = false,
+  giaVinto = false,
+  giaTentato = false,
+}: {
+  groupId: string;
+  prova?: boolean;
+  giaVinto?: boolean;
+  giaTentato?: boolean;
+}) {
+  const [stato, setStato] = useState<Stato>(giaVinto ? "vinto" : giaTentato ? "bruciato" : "pronto");
   const [prese, setPrese] = useState(0);
   const [resto, setResto] = useState(DURATA);
   const [pos, setPos] = useState({ x: 40, y: 40, r: 0 });
   const [errore, setErrore] = useState("");
   const campo = useRef<HTMLDivElement>(null);
-  const moto = useRef({ x: 40, y: 40, vx: 160, vy: 120, r: 0, pausa: 0, inizio: 0, prese: 0 });
+  const moto = useRef({ x: 40, y: 40, vx: VELOCITA, vy: VELOCITA, r: 0, pausa: 0, inizio: 0, prese: 0 });
 
   useEffect(() => {
     if (stato !== "gioco") return;
@@ -38,13 +52,20 @@ export function SecretSecretSanta({ groupId, prova = false }: { groupId: string;
       if (m.pausa > 0) {
         m.pausa -= dt; // si ferma un attimo: il momento buono per prenderlo
       } else {
-        const vel = 1 + m.prese * 0.28; // a ogni presa scappa più veloce
+        const vel = 1 + m.prese * ACCELERA; // a ogni presa scappa più veloce
+        if (Math.random() < dt * 1.6) {
+          // strattone di vento: direzione nuova all'improvviso
+          const a = Math.random() * Math.PI * 2;
+          const v = Math.hypot(m.vx, m.vy);
+          m.vx = Math.cos(a) * v;
+          m.vy = Math.sin(a) * v;
+        }
         m.x += m.vx * vel * dt;
         m.y += m.vy * vel * dt;
         if (m.x < 0 || m.x > w) { m.vx *= -1; m.x = Math.max(0, Math.min(w, m.x)); }
         if (m.y < 0 || m.y > h) { m.vy *= -1; m.y = Math.max(0, Math.min(h, m.y)); }
         m.r += m.vx * dt * 0.4;
-        if (Math.random() < dt * 0.5) m.pausa = 0.35 + Math.random() * 0.35;
+        if (Math.random() < dt * 0.25) m.pausa = 0.15 + Math.random() * 0.15; // pause rare e brevissime
       }
       setPos({ x: m.x, y: m.y, r: m.r });
       const r = Math.max(0, DURATA - (ora - m.inizio) / 1000);
@@ -60,9 +81,18 @@ export function SecretSecretSanta({ groupId, prova = false }: { groupId: string;
     return () => cancelAnimationFrame(raf);
   }, [stato]);
 
-  function inizia() {
+  async function inizia() {
+    if (!prova) {
+      // si segna il tentativo PRIMA di giocare: da qui in poi non si torna indietro
+      const { error } = await clientSoloBrowser().rpc("inizia_secret_secret_santa", { p_group_id: groupId });
+      if (error) {
+        if (error.message.includes("GIA_TENTATO")) return setStato("bruciato");
+        return setErrore("Non riesco a partire: controlla la connessione e riprova.");
+      }
+    }
     const m = moto.current;
-    Object.assign(m, { x: 40, y: 40, vx: 150 + Math.random() * 40, vy: 110 + Math.random() * 40, r: 0, pausa: 0.6, inizio: performance.now(), prese: 0 });
+    const a = Math.random() * Math.PI * 2;
+    Object.assign(m, { x: 40, y: 40, vx: Math.cos(a) * VELOCITA, vy: Math.sin(a) * VELOCITA, r: 0, pausa: 0.4, inizio: performance.now(), prese: 0 });
     setPrese(0);
     setResto(DURATA);
     setErrore("");
@@ -92,6 +122,18 @@ export function SecretSecretSanta({ groupId, prova = false }: { groupId: string;
     const { error } = await clientSoloBrowser().rpc("vinci_secret_secret_santa", { p_group_id: groupId });
     if (error) return setErrore("Il premio non si è salvato: controlla la connessione e riprova a vincere.");
     controllaPremi();
+  }
+
+  if (stato === "bruciato") {
+    return (
+      <Feltro className="mt-6 text-center">
+        <TitoloRiquadro>Il vento se l&apos;è portato via</TitoloRiquadro>
+        <p className="mt-2">Il Secret secret Santa dà una sola possibilità, e l&apos;hai già avuta. Il cappello non torna più.</p>
+        <TastoLink href={`/gruppo/${groupId}`} tipo="secondario" className="mt-5">
+          Torna al gruppo
+        </TastoLink>
+      </Feltro>
+    );
   }
 
   if (stato === "vinto") {
@@ -137,10 +179,17 @@ export function SecretSecretSanta({ groupId, prova = false }: { groupId: string;
             <TitoloRiquadro>{stato === "perso" ? "Ti è scappato!" : "Il vento si è preso il cappello"}</TitoloRiquadro>
             <p>
               {stato === "perso"
-                ? `L'hai preso ${prese} ${prese === 1 ? "volta" : "volte"}. Riprova: ogni tanto si ferma a riprendere fiato.`
-                : `Toccalo ${PRESE} volte in ${DURATA} secondi. Ogni volta che lo prendi scappa più veloce.`}
+                ? `L'hai preso ${prese} ${prese === 1 ? "volta" : "volte"} su ${PRESE}. ${prova ? "Qui in sala prove puoi riprovare." : "Era la tua unica possibilità: il cappello è andato."}`
+                : `Toccalo ${PRESE} volte in ${DURATA} secondi. Ogni volta che lo prendi scappa più veloce. Hai una sola possibilità: niente seconde occasioni.`}
             </p>
-            <Tasto onClick={inizia}>{stato === "perso" ? "Riprova" : "Via!"}</Tasto>
+            {errore && <p className="text-sm text-vermiglio-scuro">{errore}</p>}
+            {stato === "perso" && !prova ? (
+              <TastoLink href={`/gruppo/${groupId}`} tipo="secondario">
+                Torna al gruppo
+              </TastoLink>
+            ) : (
+              <Tasto onClick={inizia}>{stato === "perso" ? "Riprova" : "Via!"}</Tasto>
+            )}
           </div>
         )}
       </div>

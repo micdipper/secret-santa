@@ -3,11 +3,11 @@ import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { SceltaDestinatario } from "@/components/scelta-destinatario";
-import { Countdown, KnitBand, RubberStamp, Scribble, Segno, Starburst, Ticket } from "@/components/carta";
+import { Countdown, KnitBand, RubberStamp, Scribble, Segno } from "@/components/carta";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
-import { Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -124,23 +124,19 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <KnitBand className="mt-[calc(env(safe-area-inset-top)+96px)]" />
+      <KnitBand className="relative z-20 mt-[calc(env(safe-area-inset-top)+96px)]" />
       <header className="relative pt-8">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
-        <Profondita intensita={8} className="absolute -top-2 right-0 w-16">
+        {/* la pallina parte da sotto la banda a maglia: il filo sparisce dietro, non si vede dove è appesa */}
+        <Profondita intensita={8} className="absolute -top-[46px] right-0 z-10 w-16">
           <PallinaCheDondola className="w-16" groupId={id} />
         </Profondita>
         <h1 className="pr-20 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
-        {/* il biglietto dello scambio, con la stella dei giorni che ci si appoggia sopra */}
-        <div className="relative mt-6 pr-6">
-          <Ticket
-            occhiello="Scambio · Secret Santa"
-            titolo={gruppo.exchange_date ? dataBreve(gruppo.exchange_date) : "Data da decidere"}
-            meta={[gruppo.budget_eur !== null ? `Budget ${gruppo.budget_eur} €` : null, gruppo.theme ? `Tema: ${gruppo.theme}` : null].filter(Boolean).join(" · ") || undefined}
-            matrice={`N° ${String(membri.length).padStart(2, "0")}`}
-          />
-          {giorni !== null && giorni > 0 && <div className="absolute -top-10 -right-2"><Starburst piccola valore={giorni} etichetta={giorni === 1 ? "giorno" : "giorni"} /></div>}
+        <div className="mt-4 flex flex-wrap gap-2 pr-20">
+          {gruppo.exchange_date && <EtichettaStoffa colore="vermiglio">Scambio {dataBreve(gruppo.exchange_date)}</EtichettaStoffa>}
+          {gruppo.budget_eur !== null && <EtichettaStoffa>budget {gruppo.budget_eur} €</EtichettaStoffa>}
         </div>
+        {gruppo.theme && <p className="mt-3 text-crema/80">Tema: {gruppo.theme}</p>}
         {giorni !== null && giorni > 0 && gruppo.exchange_date && (
           <div className="mt-6">
             <Countdown data={gruppo.exchange_date} />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Countdown, KnitBand, RubberStamp, Scribble, Segno, Starburst, Ticket } from "@/components/carta";
+import { Countdown, KnitBand, RubberStamp, Scribble, Segno } from "@/components/carta";
 import { CATALOGO } from "@/components/toppe";
 import { PROFILI, TOTEM_PREDEFINITI } from "@/lib/totem";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
@@ -48,10 +48,6 @@ export default function Stile() {
       <section id="mashup" className="pt-24">
         <KnitBand />
         <h2 className="mt-8 font-titolo text-[32px] leading-none">Amici di Natale</h2>
-        <div className="relative mt-6 pr-6">
-          <Ticket occhiello="Scambio · Secret Santa" titolo="20 dic" meta="Budget 30 € · Tema: rosso" matrice="N° 12" />
-          <div className="absolute -top-10 -right-2"><Starburst piccola valore={12} etichetta="giorni" /></div>
-        </div>
         <div className="mt-6">
           <Countdown data="2026-12-20" />
         </div>
@@ -63,7 +59,6 @@ export default function Stile() {
           <p className="mt-2 pr-16">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
           <Tasto className="mt-5">Apri la busta</Tasto>
         </Feltro>
-        <Ticket className="mt-8" colore="rosa" occhiello="Invito · Secret Santa" titolo="Amici di Natale" meta="Entrati 7 su 12" matrice="N° 12" />
         <h2 className="mt-8 font-titolo text-2xl">
           Novità <Segno tipo="asterisco" className="!bg-senape" />
         </h2>

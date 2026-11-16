@@ -568,40 +568,16 @@ textarea {
 .ss-mark--spunta { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; }
 .ss-mark--asterisco { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; }
 .ss-mark--freccia { width: 2.4em; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; }
-.ss-burst { position: relative; display: inline-grid; place-items: center; width: 168px; aspect-ratio: 1; transform: rotate(var(--tilt-strong)); }
-.ss-burst::before, .ss-burst::after { content: ""; position: absolute; inset: 0; clip-path: polygon(100.0% 50.0%, 87.7% 55.0%, 98.3% 62.9%, 85.1% 64.5%, 93.3% 75.0%, 80.1% 73.1%, 85.4% 85.4%, 73.1% 80.1%, 75.0% 93.3%, 64.5% 85.1%, 62.9% 98.3%, 55.0% 87.7%, 50.0% 100.0%, 45.0% 87.7%, 37.1% 98.3%, 35.5% 85.1%, 25.0% 93.3%, 26.9% 80.1%, 14.6% 85.4%, 19.9% 73.1%, 6.7% 75.0%, 14.9% 64.5%, 1.7% 62.9%, 12.3% 55.0%, 0.0% 50.0%, 12.3% 45.0%, 1.7% 37.1%, 14.9% 35.5%, 6.7% 25.0%, 19.9% 26.9%, 14.6% 14.6%, 26.9% 19.9%, 25.0% 6.7%, 35.5% 14.9%, 37.1% 1.7%, 45.0% 12.3%, 50.0% 0.0%, 55.0% 12.3%, 62.9% 1.7%, 64.5% 14.9%, 75.0% 6.7%, 73.1% 19.9%, 85.4% 14.6%, 80.1% 26.9%, 93.3% 25.0%, 85.1% 35.5%, 98.3% 37.1%, 87.7% 45.0%); }
-.ss-burst::before { background: var(--rosa); transform: translate(6px, 6px) rotate(8deg); }
-.ss-burst::after { background: var(--highlight); }
-.ss-burst > * { position: relative; z-index: 1; }
-.ss-burst__value { font: 700 60px/56px var(--font-display); color: var(--notte); text-align: center; }
-.ss-burst__label { display: block; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--notte); text-align: center; }
-.ss-burst--ghiaccio::after { background: var(--ghiaccio); }
-.ss-burst--ghiaccio .ss-burst__value, .ss-burst--ghiaccio .ss-burst__label { color: var(--fir); }
-.ss-burst--small { width: 96px; }
-.ss-burst--small .ss-burst__value { font-size: 32px; line-height: 32px; }
 .ss-rubber { display: inline-block; width: 112px; height: 112px; color: var(--accent-text); transform: rotate(var(--tilt-strong)); opacity: 0.9; }
 .ss-rubber text { font: 700 10.5px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase; fill: currentColor; }
 .ss-rubber .ss-rubber__ring { fill: none; stroke: currentColor; stroke-width: 2; }
 .ss-rubber .ss-rubber__ring--thin { stroke-width: 1; }
 .ss-rubber .ss-rubber__word { font: 700 17px var(--font-display); letter-spacing: 0; text-transform: none; }
 .ss-rubber--ink { color: var(--ink); }
-.ss-ticket { position: relative; display: inline-grid; grid-template-columns: 1fr auto; width: 320px; max-width: 100%; background: var(--clementina); color: var(--notte); box-shadow: var(--shadow-paper); transform: rotate(var(--tilt-right)); }
-.ss-ticket__main { padding: var(--space-4) var(--space-5); }
-.ss-ticket__eyebrow { display: block; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; }
-.ss-ticket__title { display: block; margin: 2px 0 var(--space-2); font: 700 26px/32px var(--font-display); }
-.ss-ticket__meta { font: 500 15px/20px var(--font-sans); }
-.ss-ticket__stub { position: relative; display: grid; place-items: center; width: 72px; border-left: 2px dashed currentColor; font: 700 12px/16px var(--font-sans); letter-spacing: 0.1em; text-transform: uppercase; writing-mode: vertical-rl; }
-.ss-ticket__stub::before, .ss-ticket__stub::after { content: ""; position: absolute; left: -10px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); }
-.ss-ticket__stub::before { top: -9px; }
-.ss-ticket__stub::after { bottom: -9px; }
-.ss-ticket--rosa { background: var(--rosa); color: var(--fir); }
-.ss-ticket--senape { background: var(--senape); color: var(--fir); }
 /* adattamenti al sito */
 .ss-countdown { justify-content: space-between; }
 .ss-countdown__unit { flex: 1; }
 .ss-countdown__value { font-family: var(--font-display); }
-.ss-ticket { width: 100%; }
-.ss-ticket__title { overflow-wrap: anywhere; }
 .ss-knit { margin-inline: -20px; } /* da bordo a bordo dentro le pagine (margine laterale px-5) */
 @media (prefers-reduced-motion: no-preference) {
   .timbro-entra { animation: timbro .5s cubic-bezier(.2, .8, .2, 1.2) both; }
