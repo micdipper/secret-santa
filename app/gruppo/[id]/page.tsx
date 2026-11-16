@@ -6,7 +6,7 @@ import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -79,7 +79,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             ? "Il calendario è aperto!"
             : "Oggi c'è un regalo da scartare";
 
-  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
   const riquadroOrganizzatore = (
     <Feltro className="mt-6">
       <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
@@ -207,7 +206,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
               <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
               <span className="block text-sm text-inchiostro/70">Fai capire al tuo Babbo Natale cosa ti piace</span>
             </span>
-            {freccia}
+            <FrecciaAvanti />
           </Link>
 
           {/* 4. Santa Chat e mini giochi, affiancati: quelli non ancora sbloccati sono spenti col lucchetto

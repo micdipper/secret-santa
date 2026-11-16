@@ -126,6 +126,11 @@ export function TestataInterna({
   );
 }
 
+// Freccia verde davanti al testo di un tasto che porta a un'altra pagina.
+export function FrecciaAvanti() {
+  return <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
+}
+
 // Campo di testo cucito con l'etichetta sempre visibile (da usare dentro un Feltro).
 export function Campo({
   etichetta,

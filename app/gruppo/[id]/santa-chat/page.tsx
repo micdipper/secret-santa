@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { PallinoChat } from "@/components/pallino-chat";
 import { ToppaBabbo } from "@/components/santa-chat";
-import { Feltro, Icone, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Feltro, FrecciaAvanti, Icone, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,6 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
 
   const destinatario = aperta ? membri.find((m) => m.id === a?.receiver_member_id) : undefined;
 
-  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
@@ -74,7 +73,7 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
                 <span className="block text-sm text-inchiostro/70">Non saprà che sei tu</span>
               </span>
               <PallinoChat receiverId={destinatario.id} ruolo="babbo" />
-              {freccia}
+              <FrecciaAvanti />
             </Link>
           )}
           <Link href={`/gruppo/${id}/chat?con=babbo`} className="feltro cliccabile flex items-center gap-4 p-4 pl-5">
@@ -84,7 +83,7 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
               <span className="block text-sm text-inchiostro/70">Lui sa chi sei, tu no</span>
             </span>
             <PallinoChat receiverId={io.id} ruolo="pescato" />
-            {freccia}
+            <FrecciaAvanti />
           </Link>
           <p className="text-sm text-crema/75">5 messaggi a testa al giorno, 50 caratteri l&apos;uno. I nomi del gruppo diventano asterischi.</p>
         </div>
