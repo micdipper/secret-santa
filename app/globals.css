@@ -200,13 +200,17 @@ textarea {
   width: 100%;
   align-items: center;
   justify-content: center;
-  height: 56px;
-  padding: 0 24px;
+  min-height: 56px;
+  padding: 8px 24px;
   border-radius: 28px;
   font-family: var(--font-titolo);
   font-size: 18px;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.1;
+  /* il testo non esce MAI dal tasto: se non ci sta va a capo (righe bilanciate) */
+  white-space: normal;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 /* Basteleur ha più spazio sotto le lettere: lo compensiamo */
 .tasto > span {

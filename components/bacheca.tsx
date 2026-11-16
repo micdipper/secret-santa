@@ -544,9 +544,9 @@ export function Bacheca({
                     role="slider"
                     aria-label="Trascina per ingrandire o ruotare"
                     aria-valuenow={Math.round(e.width)}
-                    // tutta FUORI dalla toppa (prima ne copriva un angolo e sulle toppe piccole quasi tutta: si ridimensionava invece di spostarsi),
-                    // sull'angolo rivolto verso il centro della tela, così non finisce tagliata dal bordo
-                    className={`absolute flex size-11 touch-none items-center justify-center ${e.x > 50 ? "-left-12" : "-right-12"} ${e.y > ALTEZZA / 2 ? "-top-12" : "-bottom-12"}`}
+                    // sempre nello stesso angolo (in basso a destra), appena FUORI dalla toppa: tocca l'angolo senza coprirla,
+                    // così la toppa si sposta da qualunque punto e la maniglia non salta da un angolo all'altro
+                    className="absolute -right-11 -bottom-11 flex size-11 touch-none items-center justify-center"
                     onPointerDown={(ev) => {
                       ev.stopPropagation();
                       (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
