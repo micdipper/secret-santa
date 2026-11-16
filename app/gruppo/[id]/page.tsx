@@ -20,24 +20,21 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
+  // Tutto in una volta sola: le regole del database mostrano solo i dati dei miei gruppi
+  // (i personaggi di chi è entrato, i totem del sondaggio, la disponibilità e SOLO il mio abbinamento).
+  const [{ data: gruppo }, { data: membriDati }, { data: profili }, { data: risultati }, { data: nomiTotem }, { data: disp }, { data: abbinamento }] = await Promise.all([
     supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("profiles").select("user_id, look"),
+    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
+    supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
 
   const membri = (membriDati as Membro[]) ?? [];
-  // I personaggi di chi è entrato (le regole del database mostrano solo quelli dei miei gruppi)
-  const { data: profili } = await supabase
-    .from("profiles")
-    .select("user_id, look")
-    .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
   const look = (m: Membro) => lookDi(profili, m.user_id);
-  // i totem di chi ha fatto il sondaggio (badge accanto al personaggio)
-  const [{ data: risultati }, { data: nomiTotem }] = await Promise.all([
-    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
-    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
-  ]);
   const totemDi = (m: Membro) => {
     const r = risultati?.find((x) => x.user_id === m.user_id);
     if (!r) return null;
@@ -97,7 +94,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // Sondaggio della disponibilità aperto: chi ha risposto e il giorno più probabile
   let sondaggio: { risposto: boolean; risposte: number; migliori: string[]; max: number } | null = null;
   if (gruppo.giorni_proposti) {
-    const { data: disp } = await supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id);
     const risposte = Object.fromEntries((disp ?? []).map((r) => [r.member_id as string, r.giorni as string[]]));
     const { migliori, max } = conteggi([...(gruppo.giorni_proposti as string[])].sort(), risposte);
     sondaggio = { risposto: !!io && !!risposte[io.id], risposte: Object.keys(risposte).length, migliori, max };
@@ -106,7 +102,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
-    const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
     destinatario = membri.find((m) => m.id === abbinamento?.receiver_member_id);
   }
 
