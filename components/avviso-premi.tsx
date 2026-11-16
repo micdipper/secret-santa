@@ -19,6 +19,7 @@ const NOMI: Record<string, string> = {
   pazzo: "Taglio Esplosione",
   godo: "Maglione GODO",
   cowboy: "Cappello da cowboy",
+  natale: "Cappello di Natale",
 };
 
 // Le altre parti del sito possono chiedere un controllo subito (es. dopo aver attaccato qualcosa)

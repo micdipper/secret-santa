@@ -43,7 +43,10 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri premi." },
   { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
+  { id: "natale", nome: "Cappello di Natale", comeSbloccarlo: "È un segreto." },
 ];
+// Un cappello alla volta.
+export const CAPPELLI = ["cowboy", "natale"];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
@@ -90,7 +93,7 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
 // Tiene al massimo uno tra lupetto, collana e calendario
 function soloUnoEsclusivo(lista: string[]) {
   let tieni = lista;
-  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI]) {
+  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI, CAPPELLI]) {
     const primo = tieni.find((a) => gruppo.includes(a));
     tieni = tieni.filter((a) => !gruppo.includes(a) || a === primo);
   }
@@ -367,6 +370,23 @@ function CappelloCowboy() {
   );
 }
 
+// Cappello di Natale (premio dell'easter egg "Secret secret Santa"): feltro rosso che ricade di lato,
+// bordo di pelliccia bianca a pallini e pompon
+export function CappelloNatale() {
+  return (
+    <g transform="rotate(-6 50 30)">
+      <path d="M31 30c0-12 7-21 19-22 9-1 17 3 22 9 4 5 7 11 12 13-2 3-6 3-9 0-3-4-5-8-8-10 1 4 1 7 0 10z" fill="#d9381e" />
+      <path d="M44 12c6-2 13 0 18 5" fill="none" stroke="#a82a14" strokeWidth="1.2" strokeLinecap="round" opacity=".7" />
+      <path d="M29 27c7-3 14-4 21-4s14 1 21 4c1 3 1 6 0 8-7-3-14-4-21-4s-14 1-21 4c-1-2-1-5 0-8z" fill="#f7f1e3" />
+      <g fill="#ddd2bc">
+        <circle cx="35" cy="29" r="1" /><circle cx="42" cy="27.5" r="1" /><circle cx="50" cy="27" r="1" /><circle cx="58" cy="27.5" r="1" /><circle cx="65" cy="29" r="1" />
+      </g>
+      <circle cx="80" cy="31" r="5" fill="#f7f1e3" />
+      <circle cx="79" cy="30" r="1.6" fill="#fff" opacity=".8" />
+    </g>
+  );
+}
+
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
   const pelle = PELLI[look.pelle];
   const capelli = COLORI_CAPELLI[look.coloreCapelli];
@@ -379,8 +399,9 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const alone = neon ? "url(#alone-neon)" : undefined; // filtro SVG (Safari non applica i filtri CSS dentro gli SVG)
   const godo = look.maglione === MAGLIONE_GODO;
   const cowboy = ha("cowboy");
+  const natale = !cowboy && ha("natale");
   // con il cappello i capelli si vedono solo sotto la tesa (e ai lati)
-  const taglio = cowboy ? "url(#sotto-cappello)" : undefined;
+  const taglio = cowboy || natale ? "url(#sotto-cappello)" : undefined;
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
       {olografico && (
@@ -405,7 +426,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
           </filter>
         </defs>
       )}
-      {cowboy && (
+      {(cowboy || natale) && (
         <defs>
           <clipPath id="sotto-cappello">
             <path d="M0 100V0h12v34L88 23V0h12v100z" />
@@ -479,6 +500,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
       {cowboy && <CappelloCowboy />}
+      {natale && <CappelloNatale />}
 
       {/* accessori */}
       {ha("sciarpa") && (
