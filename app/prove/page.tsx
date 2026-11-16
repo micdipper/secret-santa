@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Sala prove · Secret Santa", robots:
 // (Non è collegata dal sito: si apre scrivendo /prove nell'indirizzo.)
 const PROVE = [
   { titolo: "Apertura della busta", testo: "Slot machine, neve, sigillo, lembo e biglietto, con amici inventati.", href: "/prova-busta" },
-  { titolo: "Estrazione", testo: "Scrivi i nomi, aggiungi coppie e “anno scorso”, ed estrai quante volte vuoi. Stessa regola dell'estrazione vera.", href: "/prove/estrazione" },
+  { titolo: "Estrazione", testo: "Scrivi i nomi, aggiungi chi non deve pescarsi, ed estrai quante volte vuoi. Stessa regola dell'estrazione vera.", href: "/prove/estrazione" },
   { titolo: "Sondaggio totem", testo: "Rispondi alle domande predefinite e scopri il tuo totem. Si rifà quante volte vuoi.", href: "/prove/sondaggio" },
   { titolo: "Bacheca", testo: "Tela, cassettiera delle toppe e kit da ricamo. Scegli un totem per vedere le sue toppe nei cassetti. Non si salva niente.", href: "/prove/bacheca" },
   { titolo: "Toppe del gruppo", testo: "Crea simboli (ricamo o foto) e parole come l'organizzatore: poi li trovi nel cassetto della bacheca di prova.", href: "/prove/toppe" },
