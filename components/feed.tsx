@@ -121,6 +121,22 @@ export function VoceFeed({
     timer.current = null;
   }
 
+  // Tocco o scorrimento fuori dal menu = chiudi, ma il tocco arriva comunque a ciò che c'è sotto
+  // (prima un velo invisibile "mangiava" il primo tocco, anche sul tasto indietro).
+  const menu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!scegli) return;
+    const chiudi = (e: Event) => {
+      if (!menu.current?.contains(e.target as Node)) setScegli(false);
+    };
+    document.addEventListener("pointerdown", chiudi, true);
+    window.addEventListener("scroll", chiudi, true);
+    return () => {
+      document.removeEventListener("pointerdown", chiudi, true);
+      window.removeEventListener("scroll", chiudi, true);
+    };
+  }, [scegli]);
+
   function reagisci(e: string) {
     suoni.reazione();
     setScegli(false);
@@ -227,9 +243,8 @@ export function VoceFeed({
       <AnimatePresence>
         {scegli && (
           <>
-            {/* tocco fuori = chiudi */}
-            <div className="fixed inset-0 z-40" onPointerDown={() => setScegli(false)} />
             <motion.div
+              ref={menu}
               role="menu"
               aria-label="Scegli una reazione"
               initial={riduci ? false : { opacity: 0, scale: 0.7, y: 8 }}
