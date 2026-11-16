@@ -92,6 +92,22 @@ export default function Stile() {
         ))}
       </section>
 
+      {/* il cassetto: le toppe di tutti (non dei totem), per tipo */}
+      <section id="toppe-cassetto" className="flex flex-col gap-6 pt-6">
+        {(["simbolo", "parola", "palette"] as const).map((tipo) => (
+          <Feltro key={tipo}>
+            <TitoloRiquadro>{tipo === "simbolo" ? "Simboli" : tipo === "parola" ? "Parole" : "Texture"}</TitoloRiquadro>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo).map((t) => (
+                <span key={t.id} className="block" style={{ width: tipo === "parola" ? (t.larghezza ?? 46) * 2.6 : 88, aspectRatio: String(t.rapporto ?? 1) }}>
+                  {t.disegno()}
+                </span>
+              ))}
+            </div>
+          </Feltro>
+        ))}
+      </section>
+
       <section id="personaggi" className="grid grid-cols-3 gap-3 pt-6">
         {NOMI_CAPELLI.map((n, i) => (
           <figure key={n} className="toppa aspect-square w-full overflow-hidden">
