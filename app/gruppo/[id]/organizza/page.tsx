@@ -2,6 +2,7 @@
 
 import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { ProponiGiorni } from "@/components/disponibilita";
+import { Ticket } from "@/components/carta";
 import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -289,6 +290,16 @@ function Organizza() {
           </TastoLink>
         </Feltro>
       ) : (
+        <>
+        {/* l'invito come un biglietto staccabile (design system: Ticket) */}
+        <Ticket
+          className="mt-8"
+          colore="rosa"
+          occhiello="Invito · Secret Santa"
+          titolo={gruppo.name}
+          meta={`Entrati ${membri.filter((m) => m.user_id).length} su ${membri.length}`}
+          matrice={`N° ${String(membri.length).padStart(2, "0")}`}
+        />
         <Feltro className="mt-6">
           <TitoloRiquadro>Link d&apos;invito</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">
@@ -310,6 +321,7 @@ function Organizza() {
             Rivedi il sondaggio
           </TastoLink>
         </Feltro>
+        </>
       )}
 
       <Feltro className="mt-4">

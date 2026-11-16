@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { SceltaDestinatario } from "@/components/scelta-destinatario";
+import { Countdown, KnitBand, RubberStamp, Scribble, Segno, Starburst, Ticket } from "@/components/carta";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -124,20 +124,29 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <header className="relative pt-24">
+      <KnitBand className="mt-[calc(env(safe-area-inset-top)+96px)]" />
+      <header className="relative pt-8">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
-        <Profondita intensita={8} className="absolute top-[88px] right-0 w-16">
-          <PallinaCheDondola className="w-16" />
+        <Profondita intensita={8} className="absolute -top-2 right-0 w-16">
+          <PallinaCheDondola className="w-16" groupId={id} />
         </Profondita>
-        <h1 className="pr-16 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {giorni !== null && giorni >= 0 && (
-            <EtichettaStoffa colore="vermiglio">{giorni === 0 ? "Lo scambio è oggi!" : `${giorni} ${giorni === 1 ? "giorno" : "giorni"} allo scambio`}</EtichettaStoffa>
-          )}
-          {gruppo.exchange_date && <EtichettaStoffa>{dataBreve(gruppo.exchange_date)}</EtichettaStoffa>}
-          {gruppo.budget_eur !== null && <EtichettaStoffa>budget {gruppo.budget_eur} €</EtichettaStoffa>}
+        <h1 className="pr-20 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
+        {/* il biglietto dello scambio, con la stella dei giorni che ci si appoggia sopra */}
+        <div className="relative mt-6 pr-6">
+          <Ticket
+            occhiello="Scambio · Secret Santa"
+            titolo={gruppo.exchange_date ? dataBreve(gruppo.exchange_date) : "Data da decidere"}
+            meta={[gruppo.budget_eur !== null ? `Budget ${gruppo.budget_eur} €` : null, gruppo.theme ? `Tema: ${gruppo.theme}` : null].filter(Boolean).join(" · ") || undefined}
+            matrice={`N° ${String(membri.length).padStart(2, "0")}`}
+          />
+          {giorni !== null && giorni > 0 && <div className="absolute -top-10 -right-2"><Starburst piccola valore={giorni} etichetta={giorni === 1 ? "giorno" : "giorni"} /></div>}
         </div>
-        {gruppo.theme && <p className="mt-3 text-crema/80">Tema: {gruppo.theme}</p>}
+        {giorni !== null && giorni > 0 && gruppo.exchange_date && (
+          <div className="mt-6">
+            <Countdown data={gruppo.exchange_date} />
+          </div>
+        )}
+        {giorni === 0 && <p className="mt-6 font-titolo text-[28px] leading-tight">“È il giorno dello scambio!”</p>}
       </header>
 
       {/* 1. Il fulcro: busta, abbinamento o attesa (per l'organizzatore, prima dell'estrazione, è il suo riquadro) */}
@@ -159,10 +168,13 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         )
       ) : destinatario ? (
         <Feltro className="mt-6">
+          <RubberStamp giro="Busta aperta ✦ acqua in bocca ✦" parola="Aperta" className="timbro-entra absolute -top-8 -right-3 !size-24" />
           <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
-          <div className="mt-3 flex items-center gap-4">
+          <div className="mt-3 flex items-center gap-4 pr-12">
             <ToppaAvatar look={look(destinatario)} nome={destinatario.display_name} />
-            <TitoloRiquadro>{destinatario.display_name}</TitoloRiquadro>
+            <TitoloRiquadro>
+              <Scribble tipo="sottolineato">{destinatario.display_name}</Scribble>
+            </TitoloRiquadro>
           </div>
           <p className="mt-4">
             Acqua in bocca!
@@ -179,8 +191,10 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         </Feltro>
       ) : (
         <Feltro className="mt-6">
-          <BustaSigillata className="absolute -top-1 right-0 w-16 rotate-[8deg] drop-shadow-[0_3px_4px_rgba(0,0,0,.3)]" />
-          <TitoloRiquadro className="pr-20">La tua busta è pronta</TitoloRiquadro>
+          <RubberStamp giro="Estrazione fatta ✦ top secret ✦" parola="Fatto" className="timbro-entra absolute -top-8 -right-3 !size-24" />
+          <TitoloRiquadro className="pr-20">
+            La tua <Scribble tipo="cerchio">busta</Scribble> è pronta
+          </TitoloRiquadro>
           <p className="mt-2 pr-16">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
           <TastoLink href={`/gruppo/${id}/busta`} className="mt-5">
             Apri la busta
@@ -241,7 +255,9 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
           {/* 5. Novità del gruppo */}
           <section className="mt-8">
-            <h2 className="font-titolo text-2xl">Novità</h2>
+            <h2 className="font-titolo text-2xl">
+              Novità <Segno tipo="asterisco" className="!bg-senape" />
+            </h2>
             <div className="mt-4">
               <FeedGruppo
                 groupId={id}
