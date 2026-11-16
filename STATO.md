@@ -3,6 +3,18 @@
 Aggiornato al 17/11/2026 (blocchi 1-5 dei giochi fatti = tutti e 5 i giochi + annuncio del vincitore; prossimo il blocco 6 = collaudo completo; in più le richieste di Marzia del 15/11 sera, qui sotto). Da leggere insieme a `CLAUDE.md` (brief e regole). Qui c'è solo **come stanno le cose oggi**: la cronologia completa delle giornate è nella storia di git (la versione lunga di questo file è nel commit `8fd57b6`).
 **Aggiornarlo a fine blocco** riscrivendo le voci che cambiano, senza aggiungere diari giornalieri.
 
+## ✅ Fatto il 16/11 (dopo la pubblicazione): revisione del codice e pulizia
+- **Tasto indietro lento** (iPhone, Novità → gruppo): non era rotto, la pagina del gruppo arrivava tardi. Ora: `app/gruppo/[id]/loading.tsx` (stella che gira + "Un attimo…" subito al tocco, ferma con "riduci movimento"); pagina del gruppo con TUTTE le letture in un solo `Promise.all` (prima 5 giri uno dopo l'altro); layout del gruppo in parallelo; `utenteCollegato` con `cache()` (layout e pagina lo calcolano una volta). In parallelo anche Novità, Santa Chat, biglietto, bacheca di un membro, chat. I personaggi si leggono senza filtro: le regole di `profiles` danno già solo quelli dei miei gruppi.
+- Pulizia (`/simplify`): `lib/memoria.ts` (leggi/scrivi nella memoria del telefono), `oggiRoma()` in `lib/date.ts`, `FrecciaAvanti` in `components/ui.tsx`, condivisione dei link unica in Organizza; tolto codice mai usato (fascia a maglia, `NOMI_TIPI`, `smettiMusica`, 4 icone). Premi: il controllo ogni 20 s si ferma quando il sito è in secondo piano; il ricamo controlla i premi una volta sola per sessione.
+- ➡ **Da decidere con Marzia** (trovati dalla revisione del codice, NON ancora corretti; i primi tre vogliono una migrazione):
+  1. "Libera il nome" lascia a chi entra dopo bacheca, post, toppe, disponibilità e totem di chi aveva preso il nome per sbaglio.
+  2. Il link "Reimposta password" passa dall'organizzatore: potrebbe usarlo lui e vedere l'abbinamento di quella persona.
+  3. `envelope_opened_at` si può cambiare dal browser (rimettendolo vuoto si chiude la Santa Chat a tutti).
+  4. Sondaggio: se l'invio dell'ultima risposta fallisce, le risposte restano spente finché non si ricarica.
+  5. Ricamo: con rete lenta due primi salvataggi possono accavallarsi e perdere i punti successivi.
+  6. Portachiavi: un errore di rete momentaneo cancella l'accesso salvato del gruppo.
+  7. Minori: data passata fissabile dalla disponibilità; foto orfane se l'inserimento in bacheca fallisce; account orfani se l'invito fallisce.
+
 ## ✅ Fatto il 17/11 (richieste di Marzia del 15/11 sera)
 - Migrazione `20261117100000_chat_bacheca_gruppo.sql` (applicata): Santa Chat solo quando TUTTI hanno aperto la busta (`private.tutte_le_buste_aperte` + `invia_santa_message`); bacheca con una toppa per tipo (indice `moodboard_items_una_toppa`, le copie doppie che c'erano sono state tolte) e max 5 foto/immagini (trigger `bacheca_max_foto`); l'organizzatore modifica data/budget/tema anche dopo l'estrazione (policy "organizzatore modifica il gruppo").
 - **Un accesso per ogni gruppo**: `/nuovo` e l'invito creano sempre un accesso nuovo con password nuova; portachiavi del telefono `lib/portachiavi.ts`; layout `app/gruppo/[id]/layout.tsx` + `components/accesso-gruppo.tsx` (passa da solo all'accesso giusto o spiega come entrare); home con i gruppi del portachiavi (`components/elenco-gruppi.tsx`). Reimposta password senza `signOut`.
