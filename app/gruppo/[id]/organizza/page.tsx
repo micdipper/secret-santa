@@ -68,7 +68,8 @@ function Organizza() {
   } | null>(null);
   const [nuovoNome, setNuovoNome] = useState("");
   const [estrazioneInCorso, setEstrazioneInCorso] = useState(false);
-  // data e tema si scrivono qui e si salvano con il tasto (la data) o uscendo dal campo (il tema)
+  // data, nome e tema si scrivono qui e si salvano con il tasto (la data) o uscendo dal campo (nome e tema)
+  const [nuovoNomeGruppo, setNuovoNomeGruppo] = useState("");
   const [nuovaData, setNuovaData] = useState("");
   const [nuovoTema, setNuovoTema] = useState("");
   const [avvisoData, setAvvisoData] = useState(false);
@@ -98,6 +99,7 @@ function Organizza() {
     const gr = g as Gruppo | null;
     const persone = (m as Membro[]) ?? [];
     setGruppo(gr);
+    setNuovoNomeGruppo(gr?.name ?? "");
     setNuovaData(gr?.exchange_date ?? "");
     setNuovoTema(gr?.theme ?? "");
     setMembri(persone);
@@ -146,7 +148,7 @@ function Organizza() {
     modificabile && mancanti.length === 0 && membri.length >= 3;
 
   async function salva(
-    campi: Partial<Pick<Gruppo, "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
+    campi: Partial<Pick<Gruppo, "name" | "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
   ) {
     setGruppo((g) => (g ? { ...g, ...campi } : g));
     setSalvataggio("salvo");
@@ -325,8 +327,20 @@ function Organizza() {
       </Feltro>
 
       <Feltro className="mt-4">
-        <TitoloRiquadro>Quando e quanto</TitoloRiquadro>
+        <TitoloRiquadro>Il gruppo</TitoloRiquadro>
         <div className="mt-5 flex flex-col gap-5">
+          <Campo
+            id="nome-gruppo"
+            etichetta="Nome del gruppo"
+            value={nuovoNomeGruppo}
+            maxLength={80}
+            onChange={(e) => setNuovoNomeGruppo(e.target.value)}
+            onBlur={() => {
+              const nome = nuovoNomeGruppo.trim();
+              if (!nome) return setNuovoNomeGruppo(gruppo.name); // il nome non può restare vuoto
+              if (nome !== gruppo.name) salva({ name: nome });
+            }}
+          />
           {gruppo.giorni_proposti ? (
             // sondaggio della disponibilità aperto: la data la fissa l'organizzatore dalla pagina del sondaggio
             <div className="flex flex-col gap-3">
@@ -419,7 +433,7 @@ function Organizza() {
               ? "Salvo…"
               : salvataggio === "salvato"
                 ? "Salvato ✓ Tutti lo vedono nella pagina del gruppo."
-                : "Budget e tema si salvano da soli, la data con il suo tasto. Puoi cambiarli anche dopo l'estrazione."}
+                : "Nome, budget e tema si salvano da soli, la data con il suo tasto. Puoi cambiarli anche dopo l'estrazione."}
           </p>
         </div>
       </Feltro>

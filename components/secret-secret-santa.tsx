@@ -1,7 +1,7 @@
 "use client";
 // Easter egg "Secret secret Santa" (7 tocchi sulla pallina): minigioco "Prendi il cappello".
-// Il cappello di Natale vola via col vento e rimbalza sui bordi, ogni tanto si ferma a riprendere fiato:
-// va toccato 7 volte in 15 secondi, è piccolo, velocissimo e cambia direzione a caso.
+// Il cappello di Natale vola via col vento, rimbalza sui bordi e gira su se stesso all'impazzata:
+// va toccato 10 volte in 5 secondi, è velocissimo, cambia direzione di continuo e non si ferma mai.
 // UNA SOLA POSSIBILITÀ: il database segna il tentativo appena parte la partita (inizia_secret_secret_santa),
 // quindi ricaricando la pagina o rifacendo cadere la pallina non si rigioca. Solo la sala prove è infinita.
 import { useEffect, useRef, useState } from "react";
@@ -11,11 +11,13 @@ import { Feltro, Tasto, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { suoni } from "@/lib/suoni";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
-const PRESE = 7; // tocchi per vincere
-const DURATA = 15; // secondi
+const PRESE = 10; // tocchi per vincere
+const DURATA = 5; // secondi
 const LATO = 56; // lato del cappello in px (area toccabile)
-const VELOCITA = 290; // px al secondo all'inizio
-const ACCELERA = 0.32; // +32% di velocità a ogni presa
+const VELOCITA = 650; // px al secondo all'inizio
+const ACCELERA = 0.12; // +12% di velocità a ogni presa
+const VENTO = 4; // strattoni di vento al secondo (in media)
+const GIRA = 900; // gradi al secondo di rotazione
 
 type Stato = "pronto" | "gioco" | "perso" | "vinto" | "bruciato";
 
@@ -50,10 +52,10 @@ export function SecretSecretSanta({
       const w = (box?.width ?? 320) - LATO;
       const h = (box?.height ?? 420) - LATO;
       if (m.pausa > 0) {
-        m.pausa -= dt; // si ferma un attimo: il momento buono per prenderlo
+        m.pausa -= dt; // solo all'inizio, per vedere da dove parte
       } else {
         const vel = 1 + m.prese * ACCELERA; // a ogni presa scappa più veloce
-        if (Math.random() < dt * 1.6) {
+        if (Math.random() < dt * VENTO) {
           // strattone di vento: direzione nuova all'improvviso
           const a = Math.random() * Math.PI * 2;
           const v = Math.hypot(m.vx, m.vy);
@@ -64,11 +66,10 @@ export function SecretSecretSanta({
         m.y += m.vy * vel * dt;
         if (m.x < 0 || m.x > w) { m.vx *= -1; m.x = Math.max(0, Math.min(w, m.x)); }
         if (m.y < 0 || m.y > h) { m.vy *= -1; m.y = Math.max(0, Math.min(h, m.y)); }
-        m.r += m.vx * dt * 0.4;
-        if (Math.random() < dt * 0.25) m.pausa = 0.15 + Math.random() * 0.15; // pause rare e brevissime
+        m.r += Math.sign(m.vx) * GIRA * vel * dt;
       }
       setPos({ x: m.x, y: m.y, r: m.r });
-      const r = Math.max(0, DURATA - (ora - m.inizio) / 1000);
+      const r = Math.min(DURATA, Math.max(0, DURATA - (ora - m.inizio) / 1000)); // il tempo parte dopo la pausa iniziale
       setResto(Math.ceil(r));
       if (r <= 0) {
         setStato("perso");
@@ -92,7 +93,7 @@ export function SecretSecretSanta({
     }
     const m = moto.current;
     const a = Math.random() * Math.PI * 2;
-    Object.assign(m, { x: 40, y: 40, vx: Math.cos(a) * VELOCITA, vy: Math.sin(a) * VELOCITA, r: 0, pausa: 0.4, inizio: performance.now(), prese: 0 });
+    Object.assign(m, { x: 40, y: 40, vx: Math.cos(a) * VELOCITA, vy: Math.sin(a) * VELOCITA, r: 0, pausa: 0.3, inizio: performance.now() + 300, prese: 0 });
     setPrese(0);
     setResto(DURATA);
     setErrore("");
@@ -167,7 +168,7 @@ export function SecretSecretSanta({
             aria-label="Prendi il cappello"
             onPointerDown={preso}
             className="absolute top-0 left-0"
-            style={{ width: LATO, height: LATO, transform: `translate(${pos.x}px, ${pos.y}px) rotate(${Math.sin(pos.r / 30) * 18}deg)` }}
+            style={{ width: LATO, height: LATO, transform: `translate(${pos.x}px, ${pos.y}px) rotate(${pos.r}deg)` }}
           >
             <svg viewBox="25 4 64 36" className="w-full" aria-hidden>
               <CappelloNatale />
@@ -180,7 +181,7 @@ export function SecretSecretSanta({
             <p>
               {stato === "perso"
                 ? `L'hai preso ${prese} ${prese === 1 ? "volta" : "volte"} su ${PRESE}. ${prova ? "Qui in sala prove puoi riprovare." : "Era la tua unica possibilità: il cappello è andato."}`
-                : `Toccalo ${PRESE} volte in ${DURATA} secondi. Ogni volta che lo prendi scappa più veloce. Hai una sola possibilità: niente seconde occasioni.`}
+                : `Toccalo ${PRESE} volte in ${DURATA} secondi. Va all'impazzata e ogni volta che lo prendi scappa ancora più veloce. Hai una sola possibilità: niente seconde occasioni.`}
             </p>
             {errore && <p className="text-sm text-vermiglio-scuro">{errore}</p>}
             {stato === "perso" && !prova ? (

@@ -558,7 +558,8 @@ export function ToppaAvatar({
   return (
     <span className="relative inline-flex flex-none">
       {toppa}
-      <BadgeTotem profilo={totem.profilo} nome={totem.nome} immagine={totem.immagine} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -right-1 -bottom-1" />
+      {/* in alto a destra, un po' fuori dalla toppa: così il francobollo non copre il look */}
+      <BadgeTotem profilo={totem.profilo} nome={totem.nome} immagine={totem.immagine} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -top-[6%] -right-[14%]" />
     </span>
   );
 }

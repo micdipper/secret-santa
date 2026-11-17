@@ -13,12 +13,14 @@ import type { Profilo } from "@/lib/totem";
 
 /*
   Novità del gruppo: voci scritte dal database (ingressi, estrazione, buste, bacheche, totem) e post.
-  Ai post e alle voci si può solo reagire, una emoji a testa.
+  Ai post e alle voci si reagisce con una emoji a testa; ai post si può anche rispondere
+  con un messaggio di massimo 15 caratteri, uno a testa (cancellandolo se ne scrive un altro).
   Questo file disegna e basta: i dati arrivano da FeedGruppo (vero) o dalla sala prove.
 */
 
 export const EMOJI = ["🎄", "❤️", "😂", "🔥", "👀", "🇮🇱"] as const;
 export const MAX_POST = 100;
+export const MAX_RISPOSTA = 15;
 
 export type Persona = { nome: string; look: Look | null };
 export type Voce = {
@@ -29,6 +31,7 @@ export type Voce = {
   quando: string;
 };
 export type Reazione = { event_id: string; member_id: string; emoji: string };
+export type Risposta = { event_id: string; member_id: string; testo: string };
 export type TotemNomi = Partial<Record<Profilo, { nome: string; immagine?: string | null }>>;
 
 export function quandoBreve(iso: string) {
@@ -86,21 +89,27 @@ export function VoceFeed({
   persone,
   totem,
   reazioni,
+  risposte = [],
   io,
   fotoUrl,
   linkBacheca,
   onReagisci,
   onElimina,
+  onRispondi,
+  onEliminaRisposta,
 }: {
   voce: Voce;
   persone: Record<string, Persona>;
   totem: TotemNomi;
   reazioni: Reazione[];
+  risposte?: Risposta[];
   io: string | null;
   fotoUrl?: string;
   linkBacheca?: string;
   onReagisci: (emoji: string) => void;
   onElimina?: () => void;
+  onRispondi?: (testo: string) => Promise<string | void>; // restituisce l'errore, se c'è
+  onEliminaRisposta?: () => void;
 }) {
   const [scegli, setScegli] = useState(false);
   const riduci = useReducedMotion();
@@ -150,7 +159,7 @@ export function VoceFeed({
       tabIndex={0}
       aria-label="Tieni premuto per reagire"
       onPointerDown={(e) => {
-        if ((e.target as HTMLElement).closest("a,button")) return;
+        if ((e.target as HTMLElement).closest("a,button,input")) return;
         partenza.current = { x: e.clientX, y: e.clientY };
         timer.current = setTimeout(apri, 420);
       }}
@@ -161,6 +170,7 @@ export function VoceFeed({
       onPointerUp={smetti}
       onPointerCancel={smetti}
       onContextMenu={(e) => {
+        if ((e.target as HTMLElement).closest("input")) return; // nel campo risposta resta il menu del telefono (incolla…)
         e.preventDefault();
         smetti();
         apri();
@@ -240,6 +250,10 @@ export function VoceFeed({
         </div>
       )}
 
+      {voce.tipo === "post" && (
+        <RispostePost risposte={risposte} persone={persone} io={io} onRispondi={onRispondi} onElimina={onEliminaRisposta} />
+      )}
+
       <AnimatePresence>
         {scegli && (
           <>
@@ -272,6 +286,86 @@ export function VoceFeed({
           </>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Risposte sotto un post: una a testa, massimo 15 caratteri. La propria si può cancellare e riscrivere.
+function RispostePost({
+  risposte,
+  persone,
+  io,
+  onRispondi,
+  onElimina,
+}: {
+  risposte: Risposta[];
+  persone: Record<string, Persona>;
+  io: string | null;
+  onRispondi?: (testo: string) => Promise<string | void>;
+  onElimina?: () => void;
+}) {
+  const [testo, setTesto] = useState("");
+  const [invio, setInvio] = useState(false);
+  const [errore, setErrore] = useState("");
+  const giaRisposto = risposte.some((r) => r.member_id === io);
+  const pulito = testo.trim();
+  const puoRispondere = onRispondi && !giaRisposto;
+
+  async function invia() {
+    if (!onRispondi || !pulito || invio) return;
+    setInvio(true);
+    setErrore("");
+    const e = await onRispondi(pulito);
+    setInvio(false);
+    if (e) return setErrore(e);
+    suoni.inviato();
+    setTesto("");
+  }
+
+  if (risposte.length === 0 && !puoRispondere) return null;
+  return (
+    <div className="relative mt-3 flex flex-col gap-2 border-t-2 border-dashed border-current/20 pt-3">
+      {risposte.length > 0 && (
+        <ul className="flex flex-col gap-2" aria-label="Risposte">
+          {risposte.map((r) => {
+            const p = persone[r.member_id];
+            return (
+              <li key={r.member_id} className="flex min-h-11 items-center gap-2">
+                <ToppaAvatar look={p?.look ?? null} nome={p?.nome} dimensione={32} />
+                <p className="min-w-0 flex-1 leading-snug break-words">
+                  <strong className="font-semibold">{p?.nome.split(" ")[0] ?? "Qualcuno"}</strong> {r.testo}
+                </p>
+                {r.member_id === io && onElimina && (
+                  <TastoTondo type="button" etichetta="Cancella la tua risposta" icona={Icone.cestino} onClick={onElimina} className="!size-11 flex-none" />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {puoRispondere && (
+        <form
+          className="flex items-center gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            invia();
+          }}
+        >
+          <div className="campo-cucito min-w-0 flex-1">
+            <input
+              aria-label="Rispondi al post"
+              value={testo}
+              maxLength={MAX_RISPOSTA}
+              enterKeyHint="send"
+              placeholder={`Rispondi (max ${MAX_RISPOSTA})`}
+              className="text-inchiostro select-text placeholder:text-inchiostro/40"
+              onChange={(e) => setTesto(e.target.value)}
+            />
+          </div>
+          <TastoTondo type="submit" etichetta="Invia la risposta" icona={Icone.invia} disabled={!pulito || invio} className="flex-none" />
+        </form>
+      )}
+      {errore && <Errore>{errore}</Errore>}
     </div>
   );
 }
