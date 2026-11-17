@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { normalizzaLook } from "@/components/avatar";
-import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type Voce } from "@/components/feed";
+import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type Risposta, type Voce } from "@/components/feed";
 import { TestataInterna } from "@/components/ui";
 import { NOMI_PROVA, censuraProva } from "@/lib/prove";
 import { TOTEM_PREDEFINITI } from "@/lib/totem";
 
-// Sala prove delle Novità: voci inventate, post e reazioni che non si salvano. La censura dei nomi è quella vera.
+// Sala prove delle Novità: voci inventate, post, reazioni e risposte che non si salvano. La censura dei nomi è quella vera.
 const IO = "io";
 const PERSONE: Record<string, Persona> = {
   [IO]: { nome: "Tu", look: normalizzaLook(null, "tu-prova") },
@@ -29,12 +29,22 @@ const REAZIONI: Reazione[] = [
   { event_id: "v2", member_id: "p1", emoji: "❤️" },
   { event_id: "v5", member_id: "p2", emoji: "🔥" },
 ];
+const RISPOSTE: Risposta[] = [
+  { event_id: "v1", member_id: "p0", testo: "Pandoro forever" },
+  { event_id: "v1", member_id: "p3", testo: "io il torrone!" },
+];
 const TOTEM = Object.fromEntries(Object.entries(TOTEM_PREDEFINITI).map(([k, v]) => [k, { nome: v.nome }]));
 
 export default function ProvaNovita() {
   const [voci, setVoci] = useState(VOCI);
   const [reazioni, setReazioni] = useState(REAZIONI);
   const [foto, setFoto] = useState<Record<string, string>>({});
+  const [risposte, setRisposte] = useState(RISPOSTE);
+
+  async function rispondi(eventId: string, testo: string) {
+    const coperto = await censuraProva(testo);
+    setRisposte((r) => [...r, { event_id: eventId, member_id: IO, testo: coperto }]);
+  }
 
   function reagisci(eventId: string, emoji: string) {
     setReazioni((prima) => {
@@ -59,7 +69,7 @@ export default function ProvaNovita() {
         etichettaIndietro="Torna alla sala prove"
         contesto="Sala prove · niente viene salvato"
         titolo="Novità"
-        sottotitolo={`Prova a nominare gli amici inventati (${NOMI_PROVA.map((n) => n.split(" ")[0]).join(", ")}), anche con trucchi: diventano asterischi. Tieni premuto un post per reagire.`}
+        sottotitolo={`Prova a nominare gli amici inventati (${NOMI_PROVA.map((n) => n.split(" ")[0]).join(", ")}), anche con trucchi: diventano asterischi. Tieni premuto un post per reagire, o rispondi sotto (15 caratteri, una risposta a testa).`}
       />
       <div className="mt-6 flex flex-col gap-4">
         <ComponiPost onPubblica={pubblica} />
@@ -71,11 +81,14 @@ export default function ProvaNovita() {
               persone={PERSONE}
               totem={TOTEM}
               reazioni={reazioni.filter((r) => r.event_id === v.id)}
+              risposte={risposte.filter((r) => r.event_id === v.id)}
               io={IO}
               fotoUrl={v.dati.foto ? foto[v.dati.foto] : undefined}
               linkBacheca={v.tipo === "bacheca" ? "/prove/bacheca" : undefined}
               onReagisci={(e) => reagisci(v.id, e)}
               onElimina={v.member_id === IO ? () => setVoci((x) => x.filter((y) => y.id !== v.id)) : undefined}
+              onRispondi={(t) => rispondi(v.id, t)}
+              onEliminaRisposta={() => setRisposte((r) => r.filter((x) => !(x.event_id === v.id && x.member_id === IO)))}
             />
           )}
         />

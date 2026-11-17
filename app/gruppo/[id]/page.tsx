@@ -127,8 +127,8 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
       <KnitBand className="relative z-20 mt-[calc(env(safe-area-inset-top)+96px)]" />
       <header className="relative pt-8">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
-        {/* la pallina parte da sotto la banda a maglia: il filo sparisce dietro, non si vede dove è appesa */}
-        <Profondita intensita={8} className="absolute -top-[46px] right-0 z-10 w-16">
+        {/* la pallina pende sotto la banda a maglia: il filo sparisce dietro, ma la pallina si vede tutta */}
+        <Profondita intensita={8} className="absolute -top-4 right-0 z-10 w-16">
           <PallinaCheDondola className="w-16" groupId={id} />
         </Profondita>
         <h1 className="pr-20 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
@@ -274,7 +274,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           <h2 className="font-titolo text-2xl">Chi c&apos;è</h2>
           <span className="text-sm text-crema/75">{membri.length} persone</span>
         </div>
-        <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pt-1 pb-2">
+        <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pt-2 pb-2">
           {membri.map((m) =>
             m.user_id ? (
               <li key={m.id} className="flex-none">
