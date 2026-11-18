@@ -4,6 +4,7 @@ import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { AscoltaTocchi } from "@/components/audio";
 import { AvvisoPremi } from "@/components/avviso-premi";
+import { Analytics } from '@vercel/analytics/next';
 
 // Titoli: Basteleur Bold (Velvetyne, licenza SIL OFL in app/fonts/Basteleur-OFL.txt)
 const basteleur = localFont({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AscoltaTocchi />
         <AvvisoPremi />
         {children}
+        <Analytics />
       </body>
     </html>
   );
