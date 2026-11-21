@@ -10,7 +10,6 @@ const PASSO_LATO = 0.8; // se non basta, il lato lungo si riduce del 20% e si ri
 export const PROFILO_FEED = { latoMax: 800, latoMin: 480, maxKB: 35 }; // mostrate larghe ~343 punti
 export const PROFILO_BACHECA = { latoMax: 640, latoMin: 320, maxKB: MAX_KB }; // in bacheca sono piccole
 export const PROFILO_FRANCOBOLLO = { larghezza: 336, altezza: 416, maxKB: MAX_KB }; // foto dei totem
-export const PROFILO_TOPPA = { larghezza: 256, altezza: 256, maxKB: MAX_KB }; // foto dei simboli del gruppo
 
 // Errori con un messaggio già pronto da mostrare
 export class ErroreFoto extends Error {}
@@ -61,7 +60,7 @@ export async function comprimiFoto(file: Blob, profilo: { latoMax: number; latoM
   throw new ErroreFoto(FOTO_TROPPO_PESANTE);
 }
 
-// Foto ritagliata a misura fissa (totem, simboli): riempie tutto e taglia quello che avanza.
+// Foto ritagliata a misura fissa (totem): riempie tutto e taglia quello che avanza.
 // Restituisce un data URL JPEG (si salva nel database).
 export async function comprimiRitaglio(file: Blob, profilo: { larghezza: number; altezza: number; maxKB: number }) {
   const img = await decodifica(file);

@@ -1,7 +1,7 @@
 // Collaudo dei limiti delle foto (fase 1, 21/11), DOPO aver applicato 20261122100000_limiti_foto.sql.
 // 1) compressione (lib/foto.ts) in Chromium: foto da ~5 MB e caso peggiore sotto 50 KB, rotazione dell'iPhone giusta
 // 2) database, con utenti finti e scavalcando l'interfaccia: 2 foto in bacheca, 1 foto al giorno nel feed,
-//    5 foto dei totem da 50 KB, simboli del gruppo sotto 50 KB, simbolo personale senza foto nuove.
+//    5 foto dei totem da 50 KB, simboli (del gruppo e personali) senza foto nuove.
 // Uso: NODE_USE_ENV_PROXY=1 node test-e2e/limiti-foto.mjs   (solo la parte 1: SOLO_BROWSER=1)
 // Crea un gruppo "Test E2E Natale": alla fine stampa l'id da ripulire (chiedere prima a Marzia).
 import { createRequire, stripTypeScriptTypes } from "module";
@@ -58,7 +58,6 @@ const RUOTATA = "/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAA
         feed: (await m.comprimiFoto(f, m.PROFILO_FEED)).blob.size,
         bacheca: (await m.comprimiFoto(f, m.PROFILO_BACHECA)).blob.size,
         totem: (await m.comprimiRitaglio(f, m.PROFILO_FRANCOBOLLO)).length,
-        toppa: (await m.comprimiRitaglio(f, m.PROFILO_TOPPA)).length,
       };
     }
     const blob = new Blob([Uint8Array.from(atob(RUOTATA), (c) => c.charCodeAt(0))], { type: "image/jpeg" });
@@ -83,9 +82,9 @@ const RUOTATA = "/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAA
   await browser.close();
   for (const nome of ["normale", "grana"]) {
     const x = r[nome];
-    console.log(`     foto ${nome} da ${(x.partenza / 1048576).toFixed(1)} MB → feed ${(x.feed / 1024).toFixed(1)} KB, bacheca ${(x.bacheca / 1024).toFixed(1)} KB, totem ${x.totem} car., simbolo ${x.toppa} car.`);
+    console.log(`     foto ${nome} da ${(x.partenza / 1048576).toFixed(1)} MB → feed ${(x.feed / 1024).toFixed(1)} KB, bacheca ${(x.bacheca / 1024).toFixed(1)} KB, totem ${x.totem} car.`);
     ok(x.feed <= 35 * 1024 && x.bacheca <= 50 * 1024, `foto ${nome}: feed sotto 35 KB e bacheca sotto 50 KB`);
-    ok(x.totem <= 68300 && x.toppa <= 68300, `foto ${nome}: totem e simbolo sotto 50 KB (≤ 68.300 caratteri base64)`);
+    ok(x.totem <= 68300, `foto ${nome}: totem sotto 50 KB (≤ 68.300 caratteri base64)`);
   }
   ok(r.rotazione.h > r.rotazione.w && r.rotazione.verdeInAlto && r.rotazione.rapporto < 1, "foto verticale dell'iPhone (EXIF) ruotata giusta");
   ok(r.errore === "Non riesco a leggere questa foto. Prova con un'altra.", "file che non è una foto: messaggio chiaro");
@@ -165,17 +164,14 @@ r = await A.c.rpc("pubblica_post", { p_group: gid, p_testo: "", p_foto: null });
 ok(!!r.error, "un post vuoto resta rifiutato");
 await B.c.storage.from("moodboard").remove([p1, p2]);
 
-// simboli: del gruppo con foto fino a 50 KB; personale senza foto nuove
+// simboli: nessuna foto nuova, né del gruppo né personali; ricamati sì
 const simbolo = (member_id, foto) => ({ id: crypto.randomUUID(), group_id: gid, tipo: "simbolo", ordine: 0, member_id, contenuto: { foto } });
-const delGruppo = simbolo(null, base64(60000));
-r = await A.c.from("group_toppe").insert(delGruppo);
-ok(!r.error, "simbolo del gruppo con foto da 44 KB salvato");
-r = await A.c.from("group_toppe").upsert({ ...delGruppo, ordine: 1 });
-ok(!r.error, "il simbolo del gruppo si risalva con la stessa foto");
-r = await A.c.from("group_toppe").insert(simbolo(null, base64(71000)));
-ok(r.error?.message.includes("troppo pesante"), "simbolo del gruppo con foto oltre 50 KB rifiutato");
+r = await A.c.from("group_toppe").insert(simbolo(null, base64(1000)));
+ok(r.error?.message.includes("si ricamano"), "simbolo del gruppo con una foto rifiutato");
 r = await B.c.from("group_toppe").insert(simbolo(B.mid, base64(1000)));
-ok(r.error?.message.includes("si ricama"), "simbolo personale con una foto rifiutato");
+ok(r.error?.message.includes("si ricamano"), "simbolo personale con una foto rifiutato");
+r = await A.c.from("group_toppe").insert({ id: crypto.randomUUID(), group_id: gid, tipo: "simbolo", ordine: 0, member_id: null, contenuto: { celle: "0", stoffa: "crema" } });
+ok(!r.error, "simbolo del gruppo ricamato salvato");
 r = await B.c.from("group_toppe").insert({ id: crypto.randomUUID(), group_id: gid, tipo: "simbolo", ordine: 0, member_id: B.mid, contenuto: { celle: "0", stoffa: "crema" } });
 ok(!r.error, "simbolo personale ricamato salvato");
 

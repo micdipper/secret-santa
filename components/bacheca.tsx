@@ -710,7 +710,7 @@ export function Bacheca({
                   </div>
                   <div className="relative">
                     {editor.tipo === "simbolo" ? (
-                      <EditorSimbolo conFoto={false} id={editor.id} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
+                      <EditorSimbolo id={editor.id} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
                     ) : (
                       <EditorParola n={1} valore={editor.contenuto} onCambia={(v) => setEditor((e) => (e ? { ...e, contenuto: v } : e))} />
                     )}

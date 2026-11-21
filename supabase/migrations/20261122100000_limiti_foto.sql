@@ -1,10 +1,10 @@
 -- Limiti delle foto (richiesta di Marzia del 21/11, fase 1):
 -- 1) bacheca: massimo 2 foto/immagini da link a persona (prima 5)
 -- 2) Novità: massimo 1 post con foto al giorno a persona (ora italiana)
--- 3) foto dei totem e dei simboli del gruppo: massimo 50 KB, controllato solo quando la foto CAMBIA
---    (save_quiz e l'editor delle toppe riscrivono tutte le righe a ogni salvataggio: un CHECK, anche
---    NOT VALID, bloccherebbe chi ha già una foto vecchia più pesante anche solo per cambiare un nome)
--- 4) simbolo personale della bacheca: niente foto nuove (quelle già messe restano)
+-- 3) foto dei totem: massimo 50 KB, controllato solo quando la foto CAMBIA
+--    (save_quiz riscrive tutte le righe a ogni salvataggio: un CHECK, anche NOT VALID, bloccherebbe
+--    chi ha già una foto vecchia più pesante anche solo per cambiare il nome di un totem)
+-- 4) simboli (del gruppo e personali): niente foto nuove, si ricamano soltanto (quelle già messe restano)
 
 -- ---------------------------------------------------------------------
 -- 1) Bacheca: massimo 2 foto. Scatta solo quando si AGGIUNGE una foto (inserimento o cambio di kind
@@ -110,10 +110,8 @@ before insert or update of immagine on public.quiz_totems
 for each row execute function private.totem_foto_leggera();
 
 -- ---------------------------------------------------------------------
--- 3+4) Toppe del gruppo e personali (group_toppe):
---    - foto nuova: massimo 50 KB (contenuto intero ≤ 70.000 caratteri, ci sta anche la stoffa)
---    - simbolo personale (member_id non vuoto): nessuna foto nuova
---    Una foto rimasta uguale (stessa riga, stessa foto) passa sempre.
+-- 4) Simboli del gruppo e personali (group_toppe): nessuna foto nuova.
+--    Una foto rimasta uguale (stessa riga, stessa foto) passa sempre: l'editor riscrive tutte le righe.
 -- ---------------------------------------------------------------------
 create function private.toppe_foto()
 returns trigger
@@ -127,13 +125,7 @@ begin
              where t.id = new.id and t.contenuto->>'foto' = new.contenuto->>'foto') then
     return new; -- foto già salvata: resta com'era
   end if;
-  if new.member_id is not null then
-    raise exception 'Il tuo simbolo si ricama: le foto non si possono più usare';
-  end if;
-  if octet_length(new.contenuto::text) > 70000 then
-    raise exception 'La foto del simbolo è troppo pesante (massimo 50 KB)';
-  end if;
-  return new;
+  raise exception 'I simboli si ricamano: le foto non si possono più usare';
 end;
 $$;
 revoke execute on function private.toppe_foto() from public, anon, authenticated;

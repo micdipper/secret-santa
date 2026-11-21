@@ -1,14 +1,14 @@
 "use client";
 
 // Editor delle toppe del gruppo (solo l'organizzatore): fino a 4 simboli e 4 parole in più
-// che compaiono nel cassetto di tutti. Simbolo = foto oppure stoffa in tinta unita + ricamo a punto croce;
+// che compaiono nel cassetto di tutti. Simbolo = stoffa in tinta unita + ricamo a punto croce (dal 21/11 niente foto nuove:
+// quelle già messe restano e si vedono);
 // parola = si scrive direttamente sulla toppa, che cresce con il testo, e si sceglie la stoffa.
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LATO, MAX_PERSONALIZZATE, SimboloFoto, SimboloRicamato, ToppaParola, dentroCerchio, type ContenutoPersonalizzato, type RigaPersonalizzata } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
-import { PROFILO_TOPPA, comprimiRitaglio, messaggioFoto } from "@/lib/foto";
 import { STOFFE, STOFFE_PERSONALIZZABILI, impagina, righeDa, type Stoffa } from "@/lib/parole";
 import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -24,29 +24,16 @@ export function leggiToppeProva(): RigaPersonalizzata[] {
   }
 }
 
-// Foto del simbolo del gruppo: quadrato centrale, sotto i 50 KB (la toppa la ritaglia tonda)
-const fotoPerToppa = (file: File) => comprimiRitaglio(file, PROFILO_TOPPA);
+
 
 // ---------- simbolo: ricamo a punto croce dentro il cerchio, oppure foto ----------
-// conFoto = false per il simbolo personale della bacheca: solo ricamo (una foto già messa prima resta visibile)
-export function EditorSimbolo({
-  valore,
-  onCambia,
-  id,
-  conFoto = true,
-}: {
-  valore: ContenutoPersonalizzato;
-  onCambia: (v: ContenutoPersonalizzato) => void;
-  id: string;
-  conFoto?: boolean;
-}) {
+export function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; id: string }) {
   const [celle, setCelle] = useState(valore.celle || VUOTO.repeat(LATO * LATO));
   const [storia, setStoria] = useState<string[]>([]);
   const lavoro = useRef<string[] | null>(null); // le celle mentre il dito ricama
   const ultima = useRef<{ c: number; r: number } | null>(null);
   const [filo, setFilo] = useState(0);
   const [strumento, setStrumento] = useState<"ago" | "gomma">("ago");
-  const [errore, setErrore] = useState("");
   const stoffa: Stoffa = valore.stoffa ?? "crema";
 
   function cambia(nuove: string, ricorda = true) {
@@ -161,28 +148,6 @@ export function EditorSimbolo({
           onClick={() => cambia(VUOTO.repeat(LATO * LATO))}
         />
       </div>
-      {conFoto && (
-        <label className="tasto cucitura cliccabile stoffa-chiara cursor-pointer">
-          <span>Usa una foto</span>
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (!f) return;
-              try {
-                setErrore("");
-                onCambia({ foto: await fotoPerToppa(f), celle, stoffa });
-              } catch (e) {
-                setErrore(messaggioFoto(e));
-              }
-            }}
-          />
-        </label>
-      )}
-      <Errore>{errore}</Errore>
     </div>
   );
 }
@@ -289,7 +254,7 @@ export function EditorToppeGruppo({ groupId, prova = false, dopo }: { groupId: s
     const simboli = toppe!.filter((t) => t.tipo === "simbolo");
     if (parole.some((t) => !t.contenuto.testo?.trim())) return setErrore("C'è una parola vuota: scrivila o toglila.");
     if (simboli.some((t) => !t.contenuto.foto && !/[0-9]/.test(t.contenuto.celle ?? "") && !t.contenuto.stoffa))
-      return setErrore("C'è un simbolo vuoto: scegli una stoffa, ricamalo, metti una foto o toglilo.");
+      return setErrore("C'è un simbolo vuoto: scegli una stoffa, ricamalo o toglilo.");
     const righe = toppe!.map((t, i) => ({
       id: t.id,
       group_id: groupId,
