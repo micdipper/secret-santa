@@ -7,6 +7,7 @@ import { CampoPassword } from "@/components/scelte";
 import { Errore, Feltro, Tasto, TitoloRiquadro } from "@/components/ui";
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { passaAlGruppo, salvaAccessoCorrente } from "@/lib/portachiavi";
+import { SITO_PIENO_ACCESSI, leggiPosti } from "@/lib/posti";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 type Posto = {
@@ -100,6 +101,11 @@ export default function Invito() {
     if (!passwordValida(password)) {
       setInvio(false);
       return setErrore("La password deve avere almeno 8 caratteri.");
+    }
+    // tetto degli accessi: si controlla prima, così non resta un accesso senza gruppo
+    if ((await leggiPosti(supabase))?.accessi_pieni) {
+      setInvio(false);
+      return setErrore(SITO_PIENO_ACCESSI);
     }
     const { error: errAccesso } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
     if (errAccesso) {
