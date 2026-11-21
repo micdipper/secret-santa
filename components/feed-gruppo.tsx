@@ -3,13 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type Risposta, type TotemNomi, type Voce } from "@/components/feed";
 import { TastoLink } from "@/components/ui";
-import { riduciFoto } from "@/lib/foto";
+import { oggiRoma } from "@/lib/date";
+import { PROFILO_FEED, comprimiFoto, messaggioFoto } from "@/lib/foto";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 // Ultima novità vista, ricordata nel telefono (per "N nuove" nella pagina del gruppo)
 const chiaveVisto = (groupId: string) => `feed-visto:${groupId}`;
 
 // Errore di rete = "controlla la connessione"; altrimenti il messaggio del database (già in italiano)
+// stesso testo dell'errore del database (pubblica_post)
+const FOTO_GIA_POSTATA = "Hai già postato una foto oggi, riprova domani";
+
 const messaggioErrore = (error: { message: string }, cosa: string) =>
   error.message.includes("fetch") ? `${cosa}: controlla la connessione e riprova.` : error.message;
 
@@ -122,14 +126,19 @@ export function FeedGruppo({
     const supabase = clientSoloBrowser();
     let path: string | null = null;
     if (file) {
+      // una foto al giorno (ora italiana): lo controlla anche il database, qui si evita di caricarla per niente
+      const giornoRoma = (quando: string) => new Date(quando).toLocaleDateString("en-CA", { timeZone: "Europe/Rome" });
+      if (voci?.some((v) => v.member_id === io && v.tipo === "post" && v.dati.foto && giornoRoma(v.quando) === oggiRoma()))
+        return { errore: FOTO_GIA_POSTATA };
+      let blob: Blob;
       try {
-        const { blob } = await riduciFoto(file);
-        path = `${groupId}/${io}/${crypto.randomUUID()}.jpg`;
-        const { error } = await supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" });
-        if (error) throw error;
-      } catch {
-        return { errore: "Non riesco a caricare la foto. Riprova." };
+        blob = (await comprimiFoto(file, PROFILO_FEED)).blob;
+      } catch (e) {
+        return { errore: messaggioFoto(e) };
       }
+      path = `${groupId}/${io}/${crypto.randomUUID()}.jpg`;
+      const { error } = await supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" });
+      if (error) return { errore: "Non riesco a caricare la foto. Riprova." };
     }
     const { data, error } = await supabase.rpc("pubblica_post", { p_group: groupId, p_testo: testo, p_foto: path });
     if (error) {

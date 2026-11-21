@@ -1,4 +1,4 @@
-// Collaudo del 17/11: Santa Chat dopo tutte le buste, una toppa per tipo, max 5 foto,
+// Collaudo del 17/11: Santa Chat dopo tutte le buste, una toppa per tipo, max 2 foto (5 fino al 21/11),
 // gruppo modificabile dopo l'estrazione, e (nel browser) un accesso separato per ogni gruppo.
 // Uso: npx next start -p 3100 (in un altro terminale), poi NODE_USE_ENV_PROXY=1 node test-e2e/gruppi-separati.mjs
 // Crea gruppi "Test E2E Natale": alla fine stampa gli id da ripulire (chiedere prima a Marzia).
@@ -38,14 +38,14 @@ let r = await B.c.from("moodboard_items").insert({ member_id: B.mid, kind: "topp
 ok(!r.error, "prima toppa attaccata");
 r = await B.c.from("moodboard_items").insert({ member_id: B.mid, kind: "toppa", content: { toppa: "stella", tipo: "simbolo" }, width: 26, height: 26 });
 ok(!!r.error, "la stessa toppa una seconda volta è rifiutata");
-// max 5 foto/immagini
-for (let i = 0; i < 5; i++) {
+// max 2 foto/immagini (dal 21/11; il resto in limiti-foto.mjs)
+for (let i = 0; i < 2; i++) {
   r = await B.c.from("moodboard_items").insert({ member_id: B.mid, kind: "immagine_link", content: { url: `https://example.com/${i}.jpg`, rapporto: 1 }, width: 36, height: 36 });
   if (r.error) break;
 }
-ok(!r.error, "5 immagini attaccate");
-r = await B.c.from("moodboard_items").insert({ member_id: B.mid, kind: "immagine_link", content: { url: "https://example.com/6.jpg", rapporto: 1 }, width: 36, height: 36 });
-ok(r.error?.message.includes("5 foto"), "la sesta immagine è rifiutata");
+ok(!r.error, "2 immagini attaccate");
+r = await B.c.from("moodboard_items").insert({ member_id: B.mid, kind: "immagine_link", content: { url: "https://example.com/3.jpg", rapporto: 1 }, width: 36, height: 36 });
+ok(r.error?.message.includes("al massimo 2 foto"), "la terza immagine è rifiutata");
 
 // estrazione, poi chat bloccata finché non aprono tutti
 r = await A.c.rpc("run_draw", { p_group_id: gid });

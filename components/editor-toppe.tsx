@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LATO, MAX_PERSONALIZZATE, SimboloFoto, SimboloRicamato, ToppaParola, dentroCerchio, type ContenutoPersonalizzato, type RigaPersonalizzata } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
+import { PROFILO_TOPPA, comprimiRitaglio, messaggioFoto } from "@/lib/foto";
 import { STOFFE, STOFFE_PERSONALIZZABILI, impagina, righeDa, type Stoffa } from "@/lib/parole";
 import { FILI, NOMI_FILI, VUOTO } from "@/lib/ricamo";
 import { clientSoloBrowser } from "@/lib/supabase/client";
@@ -23,24 +24,22 @@ export function leggiToppeProva(): RigaPersonalizzata[] {
   }
 }
 
-// Foto del simbolo: quadrato centrale, piccolo e leggero (la toppa la ritaglia tonda)
-async function fotoPerToppa(file: File) {
-  const img = await createImageBitmap(file);
-  const L = 256;
-  const c = document.createElement("canvas");
-  c.width = L;
-  c.height = L;
-  const lato = Math.min(img.width, img.height);
-  c.getContext("2d")!.drawImage(img, (img.width - lato) / 2, (img.height - lato) / 2, lato, lato, 0, 0, L, L);
-  for (const q of [0.8, 0.65, 0.5]) {
-    const url = c.toDataURL("image/jpeg", q);
-    if (url.length < 100000) return url;
-  }
-  return c.toDataURL("image/jpeg", 0.35);
-}
+// Foto del simbolo del gruppo: quadrato centrale, sotto i 50 KB (la toppa la ritaglia tonda)
+const fotoPerToppa = (file: File) => comprimiRitaglio(file, PROFILO_TOPPA);
 
 // ---------- simbolo: ricamo a punto croce dentro il cerchio, oppure foto ----------
-export function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPersonalizzato; onCambia: (v: ContenutoPersonalizzato) => void; id: string }) {
+// conFoto = false per il simbolo personale della bacheca: solo ricamo (una foto già messa prima resta visibile)
+export function EditorSimbolo({
+  valore,
+  onCambia,
+  id,
+  conFoto = true,
+}: {
+  valore: ContenutoPersonalizzato;
+  onCambia: (v: ContenutoPersonalizzato) => void;
+  id: string;
+  conFoto?: boolean;
+}) {
   const [celle, setCelle] = useState(valore.celle || VUOTO.repeat(LATO * LATO));
   const [storia, setStoria] = useState<string[]>([]);
   const lavoro = useRef<string[] | null>(null); // le celle mentre il dito ricama
@@ -162,25 +161,27 @@ export function EditorSimbolo({ valore, onCambia, id }: { valore: ContenutoPerso
           onClick={() => cambia(VUOTO.repeat(LATO * LATO))}
         />
       </div>
-      <label className="tasto cucitura cliccabile stoffa-chiara cursor-pointer">
-        <span>Usa una foto</span>
-        <input
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            e.target.value = "";
-            if (!f) return;
-            try {
-              setErrore("");
-              onCambia({ foto: await fotoPerToppa(f), celle, stoffa });
-            } catch {
-              setErrore("Non riesco a leggere questa foto. Prova con un'altra.");
-            }
-          }}
-        />
-      </label>
+      {conFoto && (
+        <label className="tasto cucitura cliccabile stoffa-chiara cursor-pointer">
+          <span>Usa una foto</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (!f) return;
+              try {
+                setErrore("");
+                onCambia({ foto: await fotoPerToppa(f), celle, stoffa });
+              } catch (e) {
+                setErrore(messaggioFoto(e));
+              }
+            }}
+          />
+        </label>
+      )}
       <Errore>{errore}</Errore>
     </div>
   );
