@@ -2,9 +2,11 @@
 // Vercel chiama questo indirizzo con "Authorization: Bearer <CRON_SECRET>": senza la parola giusta non fa niente.
 // Usa la chiave segreta di Supabase (SUPABASE_SECRET_KEY, solo nelle impostazioni di Vercel): i file dello
 // Storage e gli accessi si cancellano solo così, non da SQL.
-// 1) file dello Storage che nessuno usa più (caricati da più di 1 ora)
-// 2) accessi senza nessun gruppo (invito fallito a metà, nome liberato), creati da più di 24 ore
-// Con l'impostazione "notte_cancella" a 0 (private.impostazioni) è in PROVA: scrive solo cosa cancellerebbe.
+// 1) gruppi finiti (giorno della cancellazione passato: scambio + 10 giorni, oppure 8 gennaio) con i loro accessi;
+//    in PROVA finché l'impostazione "fine_cancella" è 0 (scrive solo quali cancellerebbe)
+// 2) file dello Storage che nessuno usa più (caricati da più di 1 ora): anche quelli dei gruppi appena cancellati
+// 3) accessi senza nessun gruppo (invito fallito a metà, nome liberato), creati da più di 24 ore
+// 2 e 3 sono in PROVA finché l'impostazione "notte_cancella" è 0 (private.impostazioni).
 // Ogni notte scrive un rapporto in private.registro_notte.
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_URL } from "@/lib/supabase/config";
@@ -25,7 +27,22 @@ export async function GET(richiesta: Request) {
   const { data: davvero } = await supabase.rpc("notte_cancella");
   const rapporto: Record<string, unknown> = { prova: davvero !== true };
 
-  // 1) file orfani
+  // 1) gruppi finiti
+  const { data: fineDavvero } = await supabase.rpc("notte_fine_cancella");
+  const { data: finiti, error: eFiniti } = await supabase.rpc("notte_gruppi_finiti");
+  if (eFiniti) rapporto.errore_gruppi = eFiniti.message;
+  rapporto.gruppi_prova = fineDavvero !== true;
+  rapporto.gruppi_finiti = finiti ?? [];
+  if (fineDavvero === true) {
+    const cancellati = [];
+    for (const g of (finiti as { id: string }[] | null) ?? []) {
+      const { data, error } = await supabase.rpc("notte_cancella_gruppo", { p_group: g.id });
+      cancellati.push(error ? { gruppo: g.id, errore: error.message } : data);
+    }
+    rapporto.gruppi_cancellati = cancellati;
+  }
+
+  // 2) file orfani
   const { data: file, error: eFile } = await supabase.rpc("notte_file_orfani");
   if (eFile) rapporto.errore_file = eFile.message;
   const elenco = (file as string[] | null) ?? [];
@@ -39,7 +56,7 @@ export async function GET(richiesta: Request) {
   rapporto.file_orfani = elenco.length;
   rapporto.file_tolti = fileTolti;
 
-  // 2) accessi orfani
+  // 3) accessi orfani
   const { data: accessi, error: eAccessi } = await supabase.rpc("notte_accessi_orfani");
   if (eAccessi) rapporto.errore_accessi = eAccessi.message;
   let accessiTolti = 0;
