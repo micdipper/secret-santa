@@ -2,7 +2,8 @@
 // Solo JPEG (Safari non sa creare WebP dal canvas). La rotazione delle foto dell'iPhone (EXIF) viene
 // rispettata perché la foto si decodifica con <img>, che la applica in tutti i browser recenti.
 
-export const MAX_KB = 50; // limite di ogni immagine salvata (anche nel database: 50 KB ≈ 68.300 caratteri base64)
+export const MAX_KB = 50; // limite di ogni immagine salvata
+export const MAX_FOTO_BACHECA = 2; // foto e immagini da link a persona; uguale al trigger bacheca_max_foto
 const QUALITA = [0.7, 0.6, 0.5, 0.4, 0.35]; // si scende a passi
 const PASSO_LATO = 0.8; // se non basta, il lato lungo si riduce del 20% e si riprova
 
@@ -60,8 +61,7 @@ export async function comprimiFoto(file: Blob, profilo: { latoMax: number; latoM
   throw new ErroreFoto(FOTO_TROPPO_PESANTE);
 }
 
-// Foto ritagliata a misura fissa (totem): riempie tutto e taglia quello che avanza.
-// Restituisce un data URL JPEG (si salva nel database).
+// Foto ritagliata a misura fissa (totem): riempie tutto e taglia quello che avanza. Restituisce il JPEG.
 export async function comprimiRitaglio(file: Blob, profilo: { larghezza: number; altezza: number; maxKB: number }) {
   const img = await decodifica(file);
   const c = document.createElement("canvas");
@@ -73,12 +73,7 @@ export async function comprimiRitaglio(file: Blob, profilo: { larghezza: number;
   c.getContext("2d")!.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h);
   const blob = await primaSottoLimite(c, profilo.maxKB);
   if (!blob) throw new ErroreFoto(FOTO_TROPPO_PESANTE);
-  return await new Promise<string>((ok, no) => {
-    const r = new FileReader();
-    r.onload = () => ok(r.result as string);
-    r.onerror = () => no(new ErroreFoto(FOTO_ILLEGGIBILE));
-    r.readAsDataURL(blob);
-  });
+  return blob;
 }
 
 // Messaggio da mostrare per un errore qualsiasi durante la compressione

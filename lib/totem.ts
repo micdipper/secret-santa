@@ -80,5 +80,5 @@ export function profiloDa(impegno: number, esigenza: number): Profilo {
 export type TotemGruppo = { profilo: Profilo; nome: string; descrizione: string | null; immagine?: string | null };
 export const descrizioneDi = (t: { profilo: Profilo; descrizione: string | null }) => t.descrizione || TOTEM_PREDEFINITI[t.profilo].descrizione;
 
-// Foto del totem: ritaglio a francobollo (stesse proporzioni del riquadro interno, 84×104), sotto i 50 KB
+// Foto del totem: ritaglio a francobollo (stesse proporzioni del riquadro interno, 84×104), JPEG sotto i 50 KB per lo Storage
 export const fotoPerFrancobollo = (file: File) => comprimiRitaglio(file, PROFILO_FRANCOBOLLO);

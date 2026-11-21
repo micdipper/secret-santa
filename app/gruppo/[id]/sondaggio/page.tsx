@@ -6,6 +6,7 @@ import { FrancobolloTotem } from "@/components/totem";
 import { VibeTotem } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { messaggioFoto } from "@/lib/foto";
+import { CACHE_CONTROL } from "@/lib/foto-url";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import {
   DOMANDE_PREDEFINITE,
@@ -45,6 +46,7 @@ function Sondaggio() {
   const [bloccate, setBloccate] = useState(false); // qualcuno ha già risposto
   const [errore, setErrore] = useState("");
   const [salvo, setSalvo] = useState(false);
+  const [mioMembro, setMioMembro] = useState<string | null>(null); // cartella delle foto dei totem nello Storage
 
   useEffect(() => {
     (async () => {
@@ -53,6 +55,8 @@ function Sondaggio() {
       const { data: g } = await supabase.from("groups").select("name, organizer_id, quiz_salvato_at").eq("id", id).maybeSingle();
       if (!g || g.organizer_id !== uid) return router.replace(`/gruppo/${id}`);
       setNomeGruppo(g.name);
+      const { data: io } = await supabase.from("group_members").select("id").eq("group_id", id).eq("user_id", uid!).maybeSingle();
+      setMioMembro(io?.id ?? null);
       if (g.quiz_salvato_at) {
         const [{ data: q }, { data: t }, { count }] = await Promise.all([
           supabase.from("quiz_questions").select("id, parametro, ordine, testo, quiz_answers(testo, punti)").eq("group_id", id).order("ordine"),
@@ -271,12 +275,18 @@ function Sondaggio() {
                       const f = e.target.files?.[0];
                       e.target.value = "";
                       if (!f) return;
+                      let blob: Blob;
                       try {
-                        const immagine = await fotoPerFrancobollo(f);
-                        setTotem((t) => ({ ...t, [p]: { ...t[p], immagine } }));
+                        blob = await fotoPerFrancobollo(f);
                       } catch (e) {
-                        setErrore(messaggioFoto(e));
+                        return setErrore(messaggioFoto(e));
                       }
+                      // la foto va nello Storage (cartella dell'organizzatore): il telefono la tiene in memoria
+                      const immagine = `${id}/${mioMembro}/${crypto.randomUUID()}.jpg`;
+                      const { error } = await supabase.storage.from("moodboard").upload(immagine, blob, { contentType: "image/jpeg", cacheControl: CACHE_CONTROL });
+                      if (error) return setErrore("Non riesco a caricare la foto. Riprova.");
+                      setErrore("");
+                      setTotem((t) => ({ ...t, [p]: { ...t[p], immagine } }));
                     }}
                   />
                 </label>

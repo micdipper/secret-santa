@@ -13,7 +13,8 @@ import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/u
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
-import { PROFILO_BACHECA, comprimiFoto, messaggioFoto } from "@/lib/foto";
+import { MAX_FOTO_BACHECA, PROFILO_BACHECA, comprimiFoto, messaggioFoto } from "@/lib/foto";
+import { CACHE_CONTROL, urlFirmati } from "@/lib/foto-url";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -37,7 +38,7 @@ const ALTEZZA = (100 * 4) / 3;
 const MINIMO = 16;
 const COLONNE = 60;
 const RIGHE = 80;
-const MAX_FOTO = 2; // foto e immagini da link sulla bacheca (ogni toppa invece una sola volta); lo controlla anche il database
+const MAX_FOTO = MAX_FOTO_BACHECA; // 2 foto e immagini da link sulla bacheca (ogni toppa invece una sola volta); lo controlla anche il database
 
 
 // Ogni toppa nuova arriva un po' storta e un po' spostata dal centro, come attaccata a mano
@@ -208,18 +209,13 @@ export function Bacheca({
     return () => ro.disconnect();
   }, []);
 
-  // Le foto stanno in un archivio privato: chiedo indirizzi temporanei per vederle
+  // Le foto stanno in un archivio privato: indirizzi firmati, riusati per giorni (il browser non le riscarica)
   useEffect(() => {
     const percorsi = elementi.filter((e) => e.kind === "foto" && e.content.path && !urlFoto[e.content.path]).map((e) => e.content.path!);
     if (!percorsi.length) return;
-    supabase.storage
-      .from("moodboard")
-      .createSignedUrls(percorsi, 60 * 60)
-      .then(({ data }) => {
-        if (!data) return;
-        setUrlFoto((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path as string, d.signedUrl as string])) }));
-      });
-  }, [elementi, supabase, urlFoto]);
+    // si aggiorna solo se è arrivato qualcosa: un file sparito non fa ripartire la richiesta all'infinito
+    urlFirmati(percorsi).then((u) => Object.keys(u).length && setUrlFoto((prima) => ({ ...prima, ...u })));
+  }, [elementi, urlFoto]);
 
   const px = larghezza / 100; // pixel per unità
 
@@ -304,7 +300,7 @@ export function Bacheca({
         return;
       }
       const path = `${groupId}/${memberId}/${crypto.randomUUID()}.jpg`;
-      const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
+      const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg", cacheControl: CACHE_CONTROL }));
       if (error) setErrore("Non sono riuscito a caricare la foto. Riprova.");
       else if (await aggiungi("foto", { path, rapporto }, 36)) setAttaccata("La foto");
       else await supabase.storage.from("moodboard").remove([path]); // non è sulla bacheca: il file non deve restare orfano
@@ -413,7 +409,7 @@ export function Bacheca({
       <span className="block h-full w-full bg-white p-[6%] pb-[14%] shadow-[0_3px_6px_rgba(0,0,0,.3)]">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="" className="h-full w-full object-cover" draggable={false} />
+          <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" draggable={false} />
         ) : (
           <span className="block h-full w-full animate-pulse bg-kraft/40" />
         )}
