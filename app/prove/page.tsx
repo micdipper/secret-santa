@@ -11,6 +11,7 @@ const PROVE = [
   { titolo: "Sondaggio totem", testo: "Rispondi alle domande predefinite e scopri il tuo totem. Si rifà quante volte vuoi.", href: "/prove/sondaggio" },
   { titolo: "Bacheca", testo: "Tela, cassettiera delle toppe e kit da ricamo. Scegli un totem per vedere le sue toppe nei cassetti. Non si salva niente.", href: "/prove/bacheca" },
   { titolo: "Toppe del gruppo", testo: "Crea simboli ricamati e parole come l'organizzatore: poi li trovi nel cassetto della bacheca di prova.", href: "/prove/toppe" },
+  { titolo: "Fine del Secret Santa", testo: "L'avviso che ricorda di fare uno screenshot prima che gli account vengano cancellati, a 7, 2, 1 e 0 giorni.", href: "/prove/fine-santa" },
   { titolo: "Troppe foto in bacheca", testo: "Il popup per chi ha più di 2 foto: non si chiude finché non ne elimini abbastanza. Foto inventate, non si cancella niente.", href: "/prove/foto-in-piu" },
   { titolo: "Santa Chat", testo: "Scrivi come Babbo Natale o come chi riceve: dall'altra parte risponde un amico inventato.", href: "/prove/chat" },
   { titolo: "Novità", testo: "Il feed del gruppo con post, foto e reazioni. Prova a scrivere i nomi degli amici inventati: diventano asterischi.", href: "/prove/novita" },
