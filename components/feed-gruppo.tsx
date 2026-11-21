@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type Risposta, type TotemNomi, type Voce } from "@/components/feed";
-import { TastoLink } from "@/components/ui";
+import { Tasto, TastoLink } from "@/components/ui";
 import { oggiRoma } from "@/lib/date";
 import { PROFILO_FEED, comprimiFoto, messaggioFoto } from "@/lib/foto";
+import { CACHE_CONTROL, urlFirmati } from "@/lib/foto-url";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 // Ultima novità vista, ricordata nel telefono (per "N nuove" nella pagina del gruppo)
@@ -16,6 +17,8 @@ const FOTO_GIA_POSTATA = "Hai già postato una foto oggi, riprova domani";
 
 const messaggioErrore = (error: { message: string }, cosa: string) =>
   error.message.includes("fetch") ? `${cosa}: controlla la connessione e riprova.` : error.message;
+
+const PAGINA = 30; // voci per volta nella pagina delle Novità ("Mostra altre" ne aggiunge altre 30)
 
 // Il feed vero: legge voci, reazioni e foto dal database. Con `limite` mostra solo le ultime (pagina del gruppo).
 export function FeedGruppo({
@@ -38,6 +41,7 @@ export function FeedGruppo({
   const [risposte, setRisposte] = useState<Risposta[]>([]);
   const [foto, setFoto] = useState<Record<string, string>>({});
   const [nuove, setNuove] = useState(0);
+  const [quante, setQuante] = useState(PAGINA);
 
   const carica = useCallback(async () => {
     const supabase = clientSoloBrowser();
@@ -46,7 +50,7 @@ export function FeedGruppo({
       .select("id, member_id, tipo, dati, quando")
       .eq("group_id", groupId)
       .order("quando", { ascending: false })
-      .limit(limite ?? 200);
+      .limit(limite ?? quante);
     const elenco = (data as Voce[]) ?? [];
     const ids = elenco.map((v) => v.id);
     const post = elenco.filter((v) => v.tipo === "post").map((v) => v.id);
@@ -56,12 +60,12 @@ export function FeedGruppo({
       post.length
         ? supabase.from("feed_replies").select("event_id, member_id, testo").in("event_id", post).order("created_at")
         : Promise.resolve({ data: [] }),
-      percorsi.length ? supabase.storage.from("moodboard").createSignedUrls(percorsi, 60 * 60) : Promise.resolve({ data: [] }),
+      urlFirmati(percorsi), // stessi indirizzi per giorni: il browser non riscarica le foto
     ]);
     setVoci(elenco);
     setReazioni((r as Reazione[]) ?? []);
     setRisposte((risp as Risposta[]) ?? []);
-    setFoto(Object.fromEntries((firmati.data ?? []).flatMap((f) => (f.path && f.signedUrl ? [[f.path, f.signedUrl]] : []))));
+    setFoto(firmati);
 
     let visto = "1970-01-01T00:00:00Z";
     try {
@@ -77,7 +81,7 @@ export function FeedGruppo({
         .or(`member_id.is.null,member_id.neq.${io ?? "00000000-0000-0000-0000-000000000000"}`);
       setNuove(count ?? 0);
     }
-  }, [groupId, io, limite]);
+  }, [groupId, io, limite, quante]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- dati dal database (asincrono)
@@ -137,7 +141,7 @@ export function FeedGruppo({
         return { errore: messaggioFoto(e) };
       }
       path = `${groupId}/${io}/${crypto.randomUUID()}.jpg`;
-      const { error } = await supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" });
+      const { error } = await supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg", cacheControl: CACHE_CONTROL });
       if (error) return { errore: "Non riesco a caricare la foto. Riprova." };
     }
     const { data, error } = await supabase.rpc("pubblica_post", { p_group: groupId, p_testo: testo, p_foto: path });
@@ -174,6 +178,11 @@ export function FeedGruppo({
           />
         )}
       />
+      {!limite && voci.length >= quante && (
+        <Tasto tipo="secondario" onClick={() => setQuante((q) => q + PAGINA)}>
+          Mostra altre novità
+        </Tasto>
+      )}
       {limite && (
         <TastoLink href={`/gruppo/${groupId}/novita`} tipo="secondario">
           {nuove > 0 ? `Tutte le novità (${nuove > 9 ? "9+" : nuove} nuove)` : "Tutte le novità e i post"}

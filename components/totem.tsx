@@ -1,6 +1,9 @@
+"use client";
+
 // Le 5 illustrazioni dei totem, stile francobollo vintage (disegnate da noi in SVG).
 // Sono legate al PROFILO, non al nome: se l'organizzatore rinomina un totem l'immagine resta.
 import type { ReactNode } from "react";
+import { useUrlFoto } from "@/lib/foto-url";
 import type { Profilo } from "@/lib/totem";
 
 const C = { verm: "#e5481e", vermScuro: "#b8330f", abete: "#2c4a32", abeteChiaro: "#4f7a55", crema: "#f3e8cf", carta: "#fbf4e3", senape: "#e9a81c", ink: "#1c241d", pelle: "#e3a47c", grigio: "#8e9298" };
@@ -120,9 +123,10 @@ export function FrancobolloTotem({
   profilo: Profilo;
   className?: string;
   titolo?: string;
-  immagine?: string | null; // foto scelta dall'organizzatore al posto del disegno
+  immagine?: string | null; // foto scelta dall'organizzatore al posto del disegno: percorso nello Storage (o data URL delle foto vecchie)
 }) {
   const Disegno = DISEGNO[profilo];
+  const foto = useUrlFoto(immagine);
   const denti = [];
   for (let i = 0; i <= 10; i++) {
     denti.push(<circle key={`t${i}`} cx={i * 10} cy="0" r="3.4" />, <circle key={`b${i}`} cx={i * 10} cy="120" r="3.4" />);
@@ -142,8 +146,8 @@ export function FrancobolloTotem({
         <rect x="0" y="0" width="100" height="120" fill={C.carta} />
       </g>
       <rect x="8" y="8" width="84" height="104" fill={FONDO[profilo]} />
-      {immagine ? (
-        <image href={immagine} x="8" y="8" width="84" height="104" preserveAspectRatio="xMidYMid slice" />
+      {foto ? (
+        <image href={foto} x="8" y="8" width="84" height="104" preserveAspectRatio="xMidYMid slice" />
       ) : (
         <g transform="translate(5 10)">
           <Disegno />

@@ -57,7 +57,7 @@ const RUOTATA = "/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAA
         partenza: f.size,
         feed: (await m.comprimiFoto(f, m.PROFILO_FEED)).blob.size,
         bacheca: (await m.comprimiFoto(f, m.PROFILO_BACHECA)).blob.size,
-        totem: (await m.comprimiRitaglio(f, m.PROFILO_FRANCOBOLLO)).length,
+        totem: (await m.comprimiRitaglio(f, m.PROFILO_FRANCOBOLLO)).size,
       };
     }
     const blob = new Blob([Uint8Array.from(atob(RUOTATA), (c) => c.charCodeAt(0))], { type: "image/jpeg" });
@@ -82,9 +82,9 @@ const RUOTATA = "/9j/4AAQSkZJRgABAQAAAQABAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAA
   await browser.close();
   for (const nome of ["normale", "grana"]) {
     const x = r[nome];
-    console.log(`     foto ${nome} da ${(x.partenza / 1048576).toFixed(1)} MB → feed ${(x.feed / 1024).toFixed(1)} KB, bacheca ${(x.bacheca / 1024).toFixed(1)} KB, totem ${x.totem} car.`);
+    console.log(`     foto ${nome} da ${(x.partenza / 1048576).toFixed(1)} MB → feed ${(x.feed / 1024).toFixed(1)} KB, bacheca ${(x.bacheca / 1024).toFixed(1)} KB, totem ${(x.totem / 1024).toFixed(1)} KB`);
     ok(x.feed <= 35 * 1024 && x.bacheca <= 50 * 1024, `foto ${nome}: feed sotto 35 KB e bacheca sotto 50 KB`);
-    ok(x.totem <= 68300, `foto ${nome}: totem sotto 50 KB (≤ 68.300 caratteri base64)`);
+    ok(x.totem <= 50 * 1024, `foto ${nome}: totem sotto 50 KB`);
   }
   ok(r.rotazione.h > r.rotazione.w && r.rotazione.verdeInAlto && r.rotazione.rapporto < 1, "foto verticale dell'iPhone (EXIF) ruotata giusta");
   ok(r.errore === "Non riesco a leggere questa foto. Prova con un'altra.", "file che non è una foto: messaggio chiaro");
@@ -117,7 +117,7 @@ r = await B.c.rpc("claim_member", { p_invite_code: code, p_member_id: B.mid, p_a
 if (r.error) throw r.error;
 const base64 = (caratteri) => "data:image/jpeg;base64," + "A".repeat(caratteri - 23);
 
-// totem dell'organizzatore: 5 foto da 50 KB passano, una più pesante no
+// totem dell'organizzatore, foto vecchie in base64 (dal 21/11 le nuove vanno nello Storage: foto-fase2.mjs): 5 da 50 KB passano, una più pesante no
 r = await A.c.rpc("save_quiz", { p_group_id: gid, p_domande: domande, p_totem: totem(base64(68300)) });
 ok(!r.error, "l'organizzatore salva 5 foto dei totem da 50 KB");
 r = await A.c.rpc("save_quiz", { p_group_id: gid, p_domande: domande, p_totem: totem(base64(68300)).map((t, i) => (i === 0 ? { ...t, nome: "Nome cambiato" } : t)) });
