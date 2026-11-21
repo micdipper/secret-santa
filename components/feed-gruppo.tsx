@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type TotemNomi, type Voce } from "@/components/feed";
+import { ComponiPost, ElencoFeed, VoceFeed, type Persona, type Reazione, type Risposta, type TotemNomi, type Voce } from "@/components/feed";
 import { TastoLink } from "@/components/ui";
 import { riduciFoto } from "@/lib/foto";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 // Ultima novità vista, ricordata nel telefono (per "N nuove" nella pagina del gruppo)
 const chiaveVisto = (groupId: string) => `feed-visto:${groupId}`;
+
+// Errore di rete = "controlla la connessione"; altrimenti il messaggio del database (già in italiano)
+const messaggioErrore = (error: { message: string }, cosa: string) =>
+  error.message.includes("fetch") ? `${cosa}: controlla la connessione e riprova.` : error.message;
 
 // Il feed vero: legge voci, reazioni e foto dal database. Con `limite` mostra solo le ultime (pagina del gruppo).
 export function FeedGruppo({
@@ -27,23 +31,32 @@ export function FeedGruppo({
 }) {
   const [voci, setVoci] = useState<Voce[] | null>(null);
   const [reazioni, setReazioni] = useState<Reazione[]>([]);
+  const [risposte, setRisposte] = useState<Risposta[]>([]);
   const [foto, setFoto] = useState<Record<string, string>>({});
   const [nuove, setNuove] = useState(0);
 
   const carica = useCallback(async () => {
     const supabase = clientSoloBrowser();
-    let q = supabase.from("feed_events").select("id, member_id, tipo, dati, quando").eq("group_id", groupId).order("quando", { ascending: false });
-    q = q.limit(limite ?? 200);
-    const { data } = await q;
+    const { data } = await supabase
+      .from("feed_events")
+      .select("id, member_id, tipo, dati, quando")
+      .eq("group_id", groupId)
+      .order("quando", { ascending: false })
+      .limit(limite ?? 200);
     const elenco = (data as Voce[]) ?? [];
     const ids = elenco.map((v) => v.id);
+    const post = elenco.filter((v) => v.tipo === "post").map((v) => v.id);
     const percorsi = elenco.flatMap((v) => (v.dati.foto ? [v.dati.foto] : []));
-    const [{ data: r }, firmati] = await Promise.all([
+    const [{ data: r }, { data: risp }, firmati] = await Promise.all([
       ids.length ? supabase.from("feed_reactions").select("event_id, member_id, emoji").in("event_id", ids) : Promise.resolve({ data: [] }),
+      post.length
+        ? supabase.from("feed_replies").select("event_id, member_id, testo").in("event_id", post).order("created_at")
+        : Promise.resolve({ data: [] }),
       percorsi.length ? supabase.storage.from("moodboard").createSignedUrls(percorsi, 60 * 60) : Promise.resolve({ data: [] }),
     ]);
     setVoci(elenco);
     setReazioni((r as Reazione[]) ?? []);
+    setRisposte((risp as Risposta[]) ?? []);
     setFoto(Object.fromEntries((firmati.data ?? []).flatMap((f) => (f.path && f.signedUrl ? [[f.path, f.signedUrl]] : []))));
 
     let visto = "1970-01-01T00:00:00Z";
@@ -79,6 +92,22 @@ export function FeedGruppo({
     if (error) carica();
   }
 
+  async function rispondi(eventId: string, testo: string) {
+    const { data, error } = await clientSoloBrowser().rpc("rispondi_post", { p_event: eventId, p_testo: testo });
+    if (error) {
+      carica(); // es. risposta già data da un altro telefono: la si mostra, col suo cestino
+      return messaggioErrore(error, "Risposta non inviata");
+    }
+    setRisposte((prima) => [...prima, data as Risposta]);
+  }
+
+  // prima si cancella nel database, poi sparisce: così il campo per riscrivere torna solo a cancellazione fatta
+  async function eliminaRisposta(eventId: string) {
+    const { error } = await clientSoloBrowser().rpc("elimina_risposta", { p_event: eventId });
+    if (error) return carica();
+    setRisposte((prima) => prima.filter((r) => !(r.event_id === eventId && r.member_id === io)));
+  }
+
   async function elimina(v: Voce) {
     if (!window.confirm("Vuoi cancellare questo post?")) return;
     const supabase = clientSoloBrowser();
@@ -105,7 +134,7 @@ export function FeedGruppo({
     const { data, error } = await supabase.rpc("pubblica_post", { p_group: groupId, p_testo: testo, p_foto: path });
     if (error) {
       if (path) await supabase.storage.from("moodboard").remove([path]);
-      return { errore: error.message.includes("fetch") ? "Post non pubblicato: controlla la connessione e riprova." : error.message };
+      return { errore: messaggioErrore(error, "Post non pubblicato") };
     }
     await carica();
     const salvato = (data as Voce | null)?.dati.testo ?? "";
@@ -125,11 +154,14 @@ export function FeedGruppo({
             persone={persone}
             totem={totem}
             reazioni={reazioni.filter((r) => r.event_id === v.id)}
+            risposte={risposte.filter((r) => r.event_id === v.id)}
             io={io}
             fotoUrl={v.dati.foto ? foto[v.dati.foto] : undefined}
             linkBacheca={v.member_id ? `/gruppo/${groupId}/bacheca/${v.member_id}` : undefined}
             onReagisci={(e) => reagisci(v.id, e)}
             onElimina={v.tipo === "post" && v.member_id === io ? () => elimina(v) : undefined}
+            onRispondi={io ? (t) => rispondi(v.id, t) : undefined}
+            onEliminaRisposta={io ? () => eliminaRisposta(v.id) : undefined}
           />
         )}
       />

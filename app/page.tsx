@@ -1,3 +1,4 @@
+import { KnitBand, Scribble } from "@/components/carta";
 import { ElencoGruppi } from "@/components/elenco-gruppi";
 import { Stellina } from "@/components/ornamenti";
 import { Feltro, TastoLink, TitoloRiquadro } from "@/components/ui";
@@ -17,11 +18,14 @@ export default async function Home() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-10 pb-16">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
+      <KnitBand className="mt-[calc(env(safe-area-inset-top)+96px)] mb-8" />
       <header className="relative">
         <Stellina className="absolute -top-2 right-2 size-8 text-senape" />
         <h1 className="pr-16 font-titolo text-[32px] leading-none">Secret Santa</h1>
-        <p className="mt-2 pr-16 text-crema/80">Il Babbo Natale segreto tra amici, con la bacheca di ognuno.</p>
+        <p className="mt-3 pr-16 text-crema/80">
+          Il Babbo Natale <Scribble tipo="sottolineato">segreto</Scribble> tra amici, con la bacheca di ognuno.
+        </p>
       </header>
 
       <ElencoGruppi attuali={gruppi.flatMap((g) => (g.groups ? [{ id: g.groups.id, nome: g.groups.name, stato: g.groups.status }] : []))} />

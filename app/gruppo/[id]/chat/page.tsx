@@ -40,7 +40,7 @@ function Chat() {
       if (!uid) return;
       const [{ data: g }, { data: membri }] = await Promise.all([
         supabase.from("groups").select("name, status").eq("id", id).maybeSingle(),
-        supabase.from("group_members").select("id, user_id, envelope_opened_at").eq("group_id", id),
+        supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id),
       ]);
       const io = membri?.find((m) => m.user_id === uid);
       // la Santa Chat si apre solo quando tutti hanno aperto la busta: prima la sua pagina spiega perché
@@ -50,11 +50,10 @@ function Chat() {
         setConv({ ruolo: "pescato", receiverId: io.id, nomeAltro: "Babbo Natale", lookAltro: null, nomeGruppo: g.name });
         return;
       }
-      // scrivo a chi ho pescato: solo dopo aver aperto la busta (prima il nome è una sorpresa)
-      if (!io.envelope_opened_at) return router.replace(`/gruppo/${id}/busta`);
+      // scrivo a chi ho pescato (qui tutti hanno già aperto la busta, io compreso)
       const { data: a } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
       if (!a) return router.replace(`/gruppo/${id}`);
-      const { data: dest } = await supabase.from("group_members").select("display_name, user_id").eq("id", a.receiver_member_id).maybeSingle();
+      const dest = membri!.find((m) => m.id === a.receiver_member_id);
       const { data: profili } = dest?.user_id ? await supabase.from("profiles").select("user_id, look").eq("user_id", dest.user_id) : { data: null };
       setConv({
         ruolo: "babbo",

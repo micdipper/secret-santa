@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./config";
 
 // Client Supabase per le pagine lette sul server (usa solo la chiave pubblica).
@@ -26,8 +27,9 @@ export async function creaClientServer() {
 }
 
 // Id dell'utente collegato (o null), verificato tramite i claims della sessione.
-export async function utenteCollegato() {
+// Con cache() layout e pagina della stessa richiesta lo calcolano una volta sola.
+export const utenteCollegato = cache(async () => {
   const supabase = await creaClientServer();
   const { data } = await supabase.auth.getClaims();
   return { supabase, userId: (data?.claims?.sub as string | undefined) ?? null };
-}
+});

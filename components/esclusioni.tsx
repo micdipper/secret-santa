@@ -11,6 +11,32 @@ export type Esclusione = { member_a: string; member_b: string; reason: "coppia" 
 const DUE_VERSI = (r: Esclusione["reason"]) => r !== "anno_scorso";
 export type Persona = { id: string; nome: string };
 
+// Esiste almeno una catena unica (ognuno regala al successivo, tutti in un solo giro) che rispetta
+// le esclusioni? Ricerca completa con un tetto di passi: per gruppi di amici risponde all'istante.
+// Serve solo ad avvisare prima: la regola vera la applica il database durante l'estrazione.
+export function estrazionePossibile(ids: string[], esclusioni: Esclusione[]) {
+  const vietato = new Set<string>();
+  for (const c of esclusioni) {
+    vietato.add(c.member_a + ">" + c.member_b);
+    if (DUE_VERSI(c.reason)) vietato.add(c.member_b + ">" + c.member_a);
+  }
+  const n = ids.length;
+  const usato = new Set([ids[0]]);
+  let passi = 0;
+  function cerca(da: string, quanti: number): boolean {
+    if (++passi > 200000) return true; // troppo lungo da verificare: non allarmo per niente
+    if (quanti === n) return !vietato.has(da + ">" + ids[0]);
+    for (const x of ids) {
+      if (usato.has(x) || vietato.has(da + ">" + x)) continue;
+      usato.add(x);
+      if (cerca(x, quanti + 1)) return true;
+      usato.delete(x);
+    }
+    return false;
+  }
+  return cerca(ids[0], 1);
+}
+
 export function RiquadroEsclusioni({
   persone,
   esclusioni,
@@ -28,23 +54,45 @@ export function RiquadroEsclusioni({
 }) {
   const [nuova, setNuova] = useState(false);
   const [coppiaA, setCoppiaA] = useState("");
-  const [coppiaB, setCoppiaB] = useState("");
+  const [salvo, setSalvo] = useState(false);
   const [motivo, setMotivo] = useState<Esclusione["reason"]>("coppia");
   const [togli, setTogli] = useState(false);
   const [errore, setErrore] = useState("");
   const nome = (id: string) => persone.find((p) => p.id === id)?.nome ?? "?";
 
-  async function salva() {
-    if (!coppiaA || !coppiaB || coppiaA === coppiaB) return setErrore("Scegli due persone diverse.");
-    // Coppia: vale nei due versi, la salvo in ordine. Anno scorso: A ha regalato a B, conta solo quel verso.
-    const [a, b] = DUE_VERSI(motivo) ? [coppiaA, coppiaB].sort() : [coppiaA, coppiaB];
+  // Si salva da solo al tocco della seconda persona; motivo e prima persona restano scelti
+  // per aggiungere di seguito (tranne "si amano": una persona ha un solo partner).
+  async function salva(seconda: string) {
+    if (!coppiaA || seconda === coppiaA || salvo) return;
+    // Due versi: la salvo in ordine. Anni scorsi: A ha regalato a B, conta solo quel verso.
+    const [a, b] = DUE_VERSI(motivo) ? [coppiaA, seconda].sort() : [coppiaA, seconda];
+    setSalvo(true);
     const e = await onAggiungi({ member_a: a, member_b: b, reason: motivo });
+    setSalvo(false);
     if (e) return setErrore(e);
+    setErrore("");
+    if (motivo === "coppia") setCoppiaA("");
+  }
+
+  function chiudi() {
     setNuova(false);
     setCoppiaA("");
-    setCoppiaB("");
     setErrore("");
   }
+
+  // Chi si può toccare: per "si amano" spariscono quelli già in coppia; come seconda persona
+  // spariscono la prima e chi è già escluso con lei per lo stesso motivo (e verso).
+  const inCoppia = new Set(esclusioni.filter((c) => c.reason === "coppia").flatMap((c) => [c.member_a, c.member_b]));
+  const giaFatta = (x: string) =>
+    esclusioni.some((c) =>
+      DUE_VERSI(motivo)
+        ? c.reason === motivo && ((c.member_a === coppiaA && c.member_b === x) || (c.member_b === coppiaA && c.member_a === x))
+        : c.reason === "anno_scorso" && c.member_a === coppiaA && c.member_b === x,
+    );
+  const scelgibili = persone.filter((m) =>
+    !coppiaA ? !(motivo === "coppia" && inCoppia.has(m.id)) : m.id !== coppiaA && !(motivo === "coppia" && inCoppia.has(m.id)) && !giaFatta(m.id),
+  );
+  const impossibile = persone.length >= 3 && !estrazionePossibile(persone.map((p) => p.id), esclusioni);
 
   async function togliUna(c: Esclusione) {
     await onTogli(c);
@@ -64,7 +112,7 @@ export function RiquadroEsclusioni({
           {esclusioni.map((c) => {
             const a = nome(c.member_a).split(" ")[0];
             const b = nome(c.member_b).split(" ")[0];
-            const testo = c.reason === "coppia" ? `💞 ${a} e ${b} si amano` : c.reason === "odio" ? `😤 ${a} e ${b} si odiano` : `🎁 ${a} → ${b}, anno scorso`;
+            const testo = c.reason === "coppia" ? `💞 ${a} e ${b} si amano` : c.reason === "odio" ? `😤 ${a} e ${b} si odiano` : `🎁 ${a} → ${b}, già regalato`;
             return (
               <li key={c.member_a + c.member_b + c.reason}>
                 {togli ? (
@@ -79,6 +127,11 @@ export function RiquadroEsclusioni({
           })}
         </ul>
       )}
+      {impossibile && (
+        <p role="alert" className="mt-4 rounded-2xl bg-vermiglio/12 p-4 text-sm font-medium text-vermiglio-scuro">
+          Con queste esclusioni l&apos;estrazione è impossibile: nessun giro riesce a rispettarle tutte. Togline qualcuna.
+        </p>
+      )}
       {nuova && (
         <div className="mt-5 flex flex-col gap-4">
           <div role="radiogroup" aria-label="Perché non devono pescarsi?" className="grid grid-cols-3 gap-2">
@@ -86,7 +139,7 @@ export function RiquadroEsclusioni({
               [
                 ["coppia", "💞", "Si amano", "Non si pescano a vicenda"],
                 ["odio", "😤", "Si odiano", "Non si pescano a vicenda"],
-                ["anno_scorso", "🎁", "Già fatto l'anno scorso", "Chi ha regalato non ripesca la stessa persona"],
+                ["anno_scorso", "🎁", "Già regalato negli anni scorsi", "Chi ha regalato non ripesca la stessa persona"],
               ] as const
             ).map(([v, emoji, titolo, spiegazione]) => (
               <button
@@ -96,7 +149,8 @@ export function RiquadroEsclusioni({
                 aria-checked={motivo === v}
                 onClick={() => {
                   setMotivo(v);
-                  setCoppiaB("");
+                  setCoppiaA("");
+                  setErrore("");
                 }}
                 className={`cucitura cliccabile stoffa-chiara relative flex flex-col items-center gap-1 [--raggio:20px] rounded-[20px] px-2 pt-4 pb-3 text-center ${
                   motivo === v ? "outline-3 outline-offset-2 outline-vermiglio" : ""
@@ -110,50 +164,47 @@ export function RiquadroEsclusioni({
               </button>
             ))}
           </div>
-          {[
-            { v: coppiaA, set: setCoppiaA, seconda: false, et: DUE_VERSI(motivo) ? "Prima persona" : "Chi ha fatto il regalo", opzioni: persone },
-            {
-              v: coppiaB,
-              set: setCoppiaB,
-              seconda: true,
-              et: DUE_VERSI(motivo) ? "Seconda persona" : "A chi l'ha fatto",
-              // senza la prima persona e senza chi è già escluso con lei per lo stesso motivo (e verso)
-              opzioni: persone.filter(
-                (m) =>
-                  m.id !== coppiaA &&
-                  !esclusioni.some((c) =>
-                    DUE_VERSI(motivo)
-                      ? c.reason === motivo && ((c.member_a === coppiaA && c.member_b === m.id) || (c.member_b === coppiaA && c.member_a === m.id))
-                      : c.reason === "anno_scorso" && c.member_a === coppiaA && c.member_b === m.id,
-                  ),
-              ),
-            },
-          ].map((s) => (
-            <label key={s.et} className="flex flex-col gap-2">
-              <span className="font-medium">{s.et}</span>
-              <span className="campo-cucito block">
-                <select
-                  value={s.v}
-                  disabled={s.seconda && !coppiaA}
-                  onChange={(e) => {
-                    s.set(e.target.value);
-                    if (!s.seconda) setCoppiaB("");
-                  }}
-                  className="h-14 w-full appearance-none bg-transparent px-5 text-inchiostro outline-none"
+          <div className="flex flex-col gap-3">
+            <p className="font-medium">
+              {!coppiaA
+                ? DUE_VERSI(motivo)
+                  ? "Tocca la prima persona"
+                  : "Chi ha fatto il regalo?"
+                : `${DUE_VERSI(motivo) ? "E l'altra persona?" : `A chi l'ha fatto ${nome(coppiaA).split(" ")[0]}?`} Si salva da sola.`}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {coppiaA && (
+                <button
+                  type="button"
+                  aria-pressed
+                  onClick={() => setCoppiaA("")}
+                  className="cucitura cliccabile stoffa-vermiglio relative min-h-11 rounded-full px-4 text-base text-crema"
+                  title="Tocca per cambiarla"
                 >
-                  <option value="">{s.seconda && !coppiaA ? "Prima scegli la persona sopra" : "Scegli…"}</option>
-                  {s.opzioni.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nome}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
-          ))}
+                  {nome(coppiaA)} ✕
+                </button>
+              )}
+              {scelgibili.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  disabled={salvo}
+                  onClick={() => (coppiaA ? salva(m.id) : setCoppiaA(m.id))}
+                  className="cucitura cliccabile stoffa-chiara relative min-h-11 rounded-full px-4 text-base text-abete"
+                >
+                  {nome(m.id)}
+                </button>
+              ))}
+              {scelgibili.length === 0 && (
+                <p className="text-sm text-inchiostro/70">
+                  {coppiaA ? "Con questa persona le hai già messe tutte." : "Sono già tutti in coppia."}
+                </p>
+              )}
+            </div>
+          </div>
           {errore && <p className="text-sm text-vermiglio-scuro">{errore}</p>}
-          <Tasto onClick={salva} disabled={!coppiaA || !coppiaB}>
-            Salva
+          <Tasto tipo="secondario" onClick={chiudi}>
+            Ho finito
           </Tasto>
         </div>
       )}

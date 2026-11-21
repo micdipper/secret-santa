@@ -8,6 +8,7 @@ import { CAPELLI_PAZZO, COLORE_NEON, MAGLIONE_GODO, ToppaAvatar, type Look } fro
 import { segnaPremioVisto } from "@/components/avviso-premi";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
 import { GIOCHI } from "@/lib/giochi/elenco";
+import { leggi, scrivi } from "@/lib/memoria";
 import { suoni } from "@/lib/suoni";
 
 export type Vittoria = { n: number; nome: string; look: Look | null; mio: boolean };
@@ -24,18 +25,8 @@ function conPremio(look: Look | null, premio: string): Look | null {
 }
 
 const chiave = (gruppo: string) => `vincitori-visti:${gruppo}`;
-function visti(gruppo: string): number[] {
-  try {
-    return JSON.parse(localStorage.getItem(chiave(gruppo)) ?? "[]") as number[];
-  } catch {
-    return [];
-  }
-}
-function segnaVisto(gruppo: string, n: number) {
-  try {
-    localStorage.setItem(chiave(gruppo), JSON.stringify([...new Set([...visti(gruppo), n])]));
-  } catch {}
-}
+const visti = (gruppo: string) => leggi<number[]>(chiave(gruppo), []);
+const segnaVisto = (gruppo: string, n: number) => scrivi(chiave(gruppo), [...new Set([...visti(gruppo), n])]);
 
 /*
   Annuncio del vincitore: quando un gioco si chiude e il vincitore è deciso, la prima volta che si apre

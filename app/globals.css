@@ -200,13 +200,17 @@ textarea {
   width: 100%;
   align-items: center;
   justify-content: center;
-  height: 56px;
-  padding: 0 24px;
+  min-height: 56px;
+  padding: 8px 24px;
   border-radius: 28px;
   font-family: var(--font-titolo);
   font-size: 18px;
-  line-height: 1;
-  white-space: nowrap;
+  line-height: 1.1;
+  /* il testo non esce MAI dal tasto: se non ci sta va a capo (righe bilanciate) */
+  white-space: normal;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 /* Basteleur ha più spazio sotto le lettere: lo compensiamo */
 .tasto > span {
@@ -294,14 +298,23 @@ textarea {
 /* Pallina che dondola */
 @keyframes dondola {
   0% { transform: rotate(0); }
-  15% { transform: rotate(14deg); }
-  35% { transform: rotate(-11deg); }
-  55% { transform: rotate(7deg); }
-  75% { transform: rotate(-4deg); }
+  15% { transform: rotate(calc(14deg * var(--forza, 1))); }
+  35% { transform: rotate(calc(-11deg * var(--forza, 1))); }
+  55% { transform: rotate(calc(7deg * var(--forza, 1))); }
+  75% { transform: rotate(calc(-4deg * var(--forza, 1))); }
   100% { transform: rotate(0); }
 }
 .dondola {
   animation: dondola 1.4s ease-out;
+}
+/* easter egg: al 7° tocco la pallina si stacca e cade */
+.pallina-cade {
+  animation: pallina-cade 0.65s cubic-bezier(0.55, 0, 0.9, 0.4) forwards;
+}
+@keyframes pallina-cade {
+  0% { transform: translateY(0) rotate(0); }
+  20% { transform: translateY(-6px) rotate(-10deg); }
+  100% { transform: translateY(110dvh) rotate(40deg); opacity: 0.9; }
 }
 
 /* Premi del personaggio */
@@ -363,7 +376,9 @@ textarea {
 .toppa::before {
   content: "";
   position: absolute;
-  inset: 4px;
+  /* distanza dal bordo che cresce con la toppa (sui personaggi grandi 4px la attaccava al bordo);
+     stessa regola di Cucitura in avatar.tsx */
+  inset: max(4px, 7%);
   border-radius: 50%;
   border: 1.5px dashed rgb(44 74 50 / 0.55); /* stesso filo delle cuciture premio (FILO_CUCITURA in avatar.tsx) */
 }
@@ -500,3 +515,76 @@ textarea {
     0 1px 0 #7e560c,
     inset 0 -3px 4px rgb(0 0 0 / 0.3);
 }
+
+/* =====================================================================
+   MASHUP col design system "Secret Santa" (artifact): oggetti di carta e da rivista
+   accanto al feltro. Classi ss-* copiate dal design system, coi colori del sito.
+   Si usano con parsimonia: una stella, un timbro, uno o due scarabocchi per schermata.
+   ===================================================================== */
+:root {
+  --ornament: #e9a81c;
+  --accent: var(--color-vermiglio);
+  --on-accent: var(--color-crema);
+  --accent-text: var(--color-vermiglio-scuro);
+  --highlight: #f2c24b;
+  --rosa: var(--color-rosa);
+  --notte: #1c1a17;
+  --ghiaccio: #bfe0ee;
+  --fir: var(--color-abete);
+  --clementina: #f08a3c;
+  --senape: var(--color-senape);
+  --surface: var(--color-abete-scuro); /* tacche del biglietto: il colore del fondo della pagina */
+  --surface-raised: var(--color-feltro);
+  --ink: var(--color-inchiostro);
+  --ink-muted: rgb(28 36 29 / 0.7);
+  --font-display: var(--font-titolo);
+  --tilt-strong: -8deg;
+  --tilt-right: 1.5deg;
+  --tilt-left: -1.5deg;
+  --shadow-paper: 0 2px 2px rgba(0, 0, 0, 0.18), 0 10px 18px -8px rgba(0, 0, 0, 0.45);
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --radius-md: 16px;
+}
+.ss-star { display: inline-block; width: 1em; height: 1em; background: var(--ornament); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 0 C34 22 42 30 64 32 C42 34 34 42 32 64 C30 42 22 34 0 32 C22 30 30 22 32 0Z%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M32 0 C34 22 42 30 64 32 C42 34 34 42 32 64 C30 42 22 34 0 32 C22 30 30 22 32 0Z%22/%3E%3C/svg%3E") center / contain no-repeat; vertical-align: -0.1em; }
+.ss-knit { position: relative; height: 52px; background: var(--accent); overflow: hidden; }
+.ss-knit::before { content: ""; position: absolute; inset: 0; background: var(--on-accent); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2252%22 viewBox=%220 0 44 52%22%3E%3Cpath d=%22M20 8h4v4h-4zM8 12h4v4h-4zM20 12h4v4h-4zM32 12h4v4h-4zM12 16h4v4h-4zM20 16h4v4h-4zM28 16h4v4h-4zM16 20h4v4h-4zM20 20h4v4h-4zM24 20h4v4h-4zM4 24h4v4h-4zM8 24h4v4h-4zM12 24h4v4h-4zM16 24h4v4h-4zM24 24h4v4h-4zM28 24h4v4h-4zM32 24h4v4h-4zM36 24h4v4h-4zM16 28h4v4h-4zM20 28h4v4h-4zM24 28h4v4h-4zM12 32h4v4h-4zM20 32h4v4h-4zM28 32h4v4h-4zM8 36h4v4h-4zM20 36h4v4h-4zM32 36h4v4h-4zM20 40h4v4h-4zM0 0h4v4h-4zM8 0h4v4h-4zM16 0h4v4h-4zM24 0h4v4h-4zM32 0h4v4h-4zM40 0h4v4h-4zM0 48h4v4h-4zM8 48h4v4h-4zM16 48h4v4h-4zM24 48h4v4h-4zM32 48h4v4h-4zM40 48h4v4h-4z%22/%3E%3C/svg%3E") 0 0 / 44px 52px repeat-x; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2252%22 viewBox=%220 0 44 52%22%3E%3Cpath d=%22M20 8h4v4h-4zM8 12h4v4h-4zM20 12h4v4h-4zM32 12h4v4h-4zM12 16h4v4h-4zM20 16h4v4h-4zM28 16h4v4h-4zM16 20h4v4h-4zM20 20h4v4h-4zM24 20h4v4h-4zM4 24h4v4h-4zM8 24h4v4h-4zM12 24h4v4h-4zM16 24h4v4h-4zM24 24h4v4h-4zM28 24h4v4h-4zM32 24h4v4h-4zM36 24h4v4h-4zM16 28h4v4h-4zM20 28h4v4h-4zM24 28h4v4h-4zM12 32h4v4h-4zM20 32h4v4h-4zM28 32h4v4h-4zM8 36h4v4h-4zM20 36h4v4h-4zM32 36h4v4h-4zM20 40h4v4h-4zM0 0h4v4h-4zM8 0h4v4h-4zM16 0h4v4h-4zM24 0h4v4h-4zM32 0h4v4h-4zM40 0h4v4h-4zM0 48h4v4h-4zM8 48h4v4h-4zM16 48h4v4h-4zM24 48h4v4h-4zM32 48h4v4h-4zM40 48h4v4h-4z%22/%3E%3C/svg%3E") 0 0 / 44px 52px repeat-x; }
+.ss-knit--small { height: 26px; }
+.ss-knit--small::before { -webkit-mask-size: 22px 26px; mask-size: 22px 26px; }
+.ss-countdown { display: flex; gap: var(--space-2); }
+.ss-countdown__unit { display: grid; justify-items: center; gap: 2px; min-width: 72px; padding: var(--space-3) var(--space-2); background: var(--surface-raised); border-radius: var(--radius-md); }
+.ss-countdown__value { font: 700 32px/40px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); }
+.ss-countdown__label { font: 600 13px/18px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); }
+.ss-countdown__sep { align-self: center; font-size: 14px; }
+.ss-scribble { position: relative; display: inline-block; z-index: 0; }
+.ss-scribble::after { content: ""; position: absolute; z-index: -1; pointer-events: none; background: var(--accent-text); }
+.ss-scribble--cerchio::after { inset: -7px -7px -5px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M14 30C6 16 40 4 72 5c30 1 46 10 42 22-4 13-38 18-64 17C24 43 6 36 10 24 14 13 44 6 66 7%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M14 30C6 16 40 4 72 5c30 1 46 10 42 22-4 13-38 18-64 17C24 43 6 36 10 24 14 13 44 6 66 7%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.ss-scribble--sottolineato::after { left: -4px; right: -4px; bottom: -10px; height: 12px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M3 10c20-6 38 4 58-1s36-5 56 0%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M30 14c18-3 40 0 64-2%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 16%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M3 10c20-6 38 4 58-1s36-5 56 0%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M30 14c18-3 40 0 64-2%22/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.ss-scribble--evidenziato { padding: 0 4px; color: var(--fir); }
+.ss-scribble--evidenziato::after { inset: 6% -2px 2% -2px; background: var(--highlight); transform: rotate(-1deg); }
+.ss-mark { display: inline-block; width: 1.1em; height: 1.1em; background: var(--accent-text); vertical-align: -0.15em; }
+.ss-mark--spunta { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%224%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 26c4 4 8 9 12 15 6-14 14-26 25-36%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-mark--asterisco { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M25 5l-2 38M7 15l34 19M8 34l33-20%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-mark--freccia { width: 2.4em; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 48%22%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M6 40C30 10 70 6 104 20%22/%3E%3Cpath fill=%22none%22 stroke=%22%23000%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M90 9l15 11-13 12%22/%3E%3C/svg%3E") center / contain no-repeat; }
+.ss-rubber { display: inline-block; width: 112px; height: 112px; color: var(--accent-text); transform: rotate(var(--tilt-strong)); opacity: 0.9; }
+.ss-rubber text { font: 700 10.5px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase; fill: currentColor; }
+.ss-rubber .ss-rubber__ring { fill: none; stroke: currentColor; stroke-width: 2; }
+.ss-rubber .ss-rubber__ring--thin { stroke-width: 1; }
+.ss-rubber .ss-rubber__word { font: 700 17px var(--font-display); letter-spacing: 0; text-transform: none; }
+.ss-rubber--ink { color: var(--ink); }
+/* adattamenti al sito */
+.ss-countdown { justify-content: space-between; }
+.ss-countdown__unit { flex: 1; }
+.ss-countdown__value { font-family: var(--font-display); }
+.ss-knit { margin-inline: -20px; } /* da bordo a bordo dentro le pagine (margine laterale px-5) */
+@media (prefers-reduced-motion: no-preference) {
+  .timbro-entra { animation: timbro .5s cubic-bezier(.2, .8, .2, 1.2) both; }
+}
+@keyframes timbro {
+  from { opacity: 0; transform: scale(1.6) rotate(var(--tilt-strong)); }
+  to { opacity: .9; transform: scale(1) rotate(var(--tilt-strong)); }
+}
+.ss-scribble::after { background: var(--accent); }
+.ss-scribble--sottolineato::after { bottom: -5px; height: 9px; }

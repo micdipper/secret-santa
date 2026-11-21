@@ -4,14 +4,13 @@ import { useState } from "react";
 import { normalizzaLook } from "@/components/avatar";
 import { AnnunciVincitori } from "@/components/giochi/annuncio";
 import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
-import { giorniAlloScambio } from "@/lib/giochi/avvento";
+import { GIORNO, giorniAlloScambio } from "@/lib/giochi/avvento";
 import { Tasto, TestataInterna } from "@/components/ui";
 import { useOraServer } from "@/lib/giochi/ora";
 import { NOMI_PROVA } from "@/lib/prove";
 
 // Sala prove del calendario: come se oggi fosse il giorno del gioco 3.
 // Si scartano tutti i regali (anche quelli futuri), si gioca senza limiti e non si salva niente.
-const GIORNO = 86_400_000;
 
 function finestreFinte(): Finestra[] {
   const mezzanotte = new Date();

@@ -1037,7 +1037,6 @@ export function trovaToppa(id: string) {
   return CATALOGO.find((t) => t.id === id);
 }
 
-export const NOMI_TIPI: Record<TipoToppa, string> = { simbolo: "Simboli", parola: "Parole", palette: "Texture" };
 
 // ---------- toppe create dall'organizzatore per il suo gruppo ----------
 // simbolo: una foto (ritagliata tonda) oppure un ricamo a punto croce su una griglia LATO×LATO

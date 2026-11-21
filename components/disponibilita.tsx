@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { ToppaAvatar, type Look } from "@/components/avatar";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
+import { oggiRoma } from "@/lib/date";
 import { conteggi, dataLunga, mese, numero, settimana } from "@/lib/disponibilita";
 
 export type PersonaDisp = { memberId: string; nome: string; look: Look | null; entrato: boolean };
@@ -182,7 +183,7 @@ export function ProponiGiorni({ iniziali, testoTasto, onSalva }: { iniziali: str
   const [giorni, setGiorni] = useState(iniziali);
   const [nuovo, setNuovo] = useState("");
   const [errore, setErrore] = useState("");
-  const oggi = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Rome" });
+  const oggi = oggiRoma();
   const cambiati = giorni.join() !== [...iniziali].sort().join();
 
   function aggiungi() {

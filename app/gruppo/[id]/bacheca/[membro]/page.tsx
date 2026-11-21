@@ -14,11 +14,13 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }] = await Promise.all([
+  const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }, { data: risultati }, { data: totemGruppo }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("display_name, user_id, quiz_rifiutato_at").eq("id", membro).eq("group_id", id).maybeSingle(),
     supabase.from("moodboard_items").select("id, kind, content, x, y, width, rotation, z").eq("member_id", membro),
     supabase.from("group_toppe").select("id, tipo, ordine, contenuto, member_id").eq("group_id", id).order("ordine"),
+    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", id),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
   if (!persona) notFound();
@@ -26,12 +28,8 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
   const nome = persona.display_name.split(" ")[0];
 
   // il totem di questa persona (se ha fatto il sondaggio)
-  const { data: risultato } = persona.user_id
-    ? await supabase.from("quiz_results").select("profilo").eq("group_id", id).eq("user_id", persona.user_id).maybeSingle()
-    : { data: null };
-  const { data: totem } = risultato
-    ? await supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", id).eq("profilo", risultato.profilo).maybeSingle()
-    : { data: null };
+  const risultato = persona.user_id ? risultati?.find((r) => r.user_id === persona.user_id) : undefined;
+  const totem = (risultato && totemGruppo?.find((t) => t.profilo === risultato.profilo)) || null;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-56">

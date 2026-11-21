@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { BustaSigillata } from "@/components/ornamenti";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
+import { SceltaDestinatario } from "@/components/scelta-destinatario";
+import { Countdown, KnitBand, RubberStamp, Scribble, Segno } from "@/components/carta";
 import { FeedGruppo } from "@/components/feed-gruppo";
 import { AvvisoSblocchi } from "@/components/avviso-sblocchi";
 import type { Profilo } from "@/lib/totem";
-import { EtichettaStoffa, Feltro, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
+import { EtichettaStoffa, Feltro, FrecciaAvanti, Icone, TastoLink, TitoloRiquadro } from "@/components/ui";
 import { dataBreve, giornoPrima, giorniMancanti } from "@/lib/date";
 import { conteggi, dataLunga } from "@/lib/disponibilita";
 import { utenteCollegato } from "@/lib/supabase/server";
@@ -20,24 +21,21 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membriDati }] = await Promise.all([
-    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti").eq("id", id).maybeSingle(),
+  // Tutto in una volta sola: le regole del database mostrano solo i dati dei miei gruppi
+  // (i personaggi di chi è entrato, i totem del sondaggio, la disponibilità e SOLO il mio abbinamento).
+  const [{ data: gruppo }, { data: membriDati }, { data: profili }, { data: risultati }, { data: nomiTotem }, { data: disp }, { data: abbinamento }] = await Promise.all([
+    supabase.from("groups").select("id, name, budget_eur, exchange_date, theme, status, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti, estrazione_fatta").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("profiles").select("user_id, look"),
+    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
+    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
+    supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
 
   const membri = (membriDati as Membro[]) ?? [];
-  // I personaggi di chi è entrato (le regole del database mostrano solo quelli dei miei gruppi)
-  const { data: profili } = await supabase
-    .from("profiles")
-    .select("user_id, look")
-    .in("user_id", membri.flatMap((m) => (m.user_id ? [m.user_id] : [])));
   const look = (m: Membro) => lookDi(profili, m.user_id);
-  // i totem di chi ha fatto il sondaggio (badge accanto al personaggio)
-  const [{ data: risultati }, { data: nomiTotem }] = await Promise.all([
-    supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
-    supabase.from("quiz_totems").select("profilo, nome, immagine").eq("group_id", id),
-  ]);
   const totemDi = (m: Membro) => {
     const r = risultati?.find((x) => x.user_id === m.user_id);
     if (!r) return null;
@@ -59,8 +57,10 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
     ? "Prima crea il sondaggio: poi arriva il link d'invito da mandare agli amici."
     : gruppo.status === "aperto"
       ? mancanti.length > 0
-        ? `Sono entrati ${entrati} su ${membri.length}: manda il link a chi manca. Quando ci sono tutti fai l'estrazione.`
-        : "Ci sono tutti: puoi fare l'estrazione!"
+        ? `Sono entrati ${entrati} su ${membri.length}: manda il link a chi manca.${gruppo.estrazione_fatta ? "" : " Quando ci sono tutti fai l'estrazione."}`
+        : gruppo.estrazione_fatta
+          ? "Ci sono tutti: aspettiamo che ognuno indichi la sua persona."
+          : "Ci sono tutti: puoi fare l'estrazione!"
       : daAprire > 0
         ? `Estrazione fatta. ${daAprire === 1 ? "Manca 1 persona" : `Mancano ${daAprire} persone`} ad aprire la busta.`
         : "Estrazione fatta e buste aperte da tutti. Puoi sempre cambiare data, budget e tema.";
@@ -82,7 +82,6 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             ? "Il calendario è aperto!"
             : "Oggi c'è un regalo da scartare";
 
-  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
   const riquadroOrganizzatore = (
     <Feltro className="mt-6">
       <p className="text-sm text-inchiostro/70">Sei l&apos;organizzatore</p>
@@ -97,40 +96,63 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
   // Sondaggio della disponibilità aperto: chi ha risposto e il giorno più probabile
   let sondaggio: { risposto: boolean; risposte: number; migliori: string[]; max: number } | null = null;
   if (gruppo.giorni_proposti) {
-    const { data: disp } = await supabase.from("disponibilita").select("member_id, giorni").eq("group_id", id);
     const risposte = Object.fromEntries((disp ?? []).map((r) => [r.member_id as string, r.giorni as string[]]));
     const { migliori, max } = conteggi([...(gruppo.giorni_proposti as string[])].sort(), risposte);
     sondaggio = { risposto: !!io && !!risposte[io.id], risposte: Object.keys(risposte).length, migliori, max };
   }
 
+  // "Abbiamo già fatto l'estrazione": la mia scelta (le regole mi danno solo la mia) e quanti hanno scelto
+  let sceltaDestinatario: React.ReactNode = null;
+  if (gruppo.estrazione_fatta && gruppo.status === "aperto" && io) {
+    const { data: quanti } = await supabase.rpc("quanti_hanno_scelto", { p_group_id: id });
+    sceltaDestinatario = (
+      <SceltaDestinatario
+        groupId={id}
+        persone={membri.filter((m) => m.id !== io.id).map((m) => ({ id: m.id, nome: m.display_name, look: look(m) }))}
+        scelta={abbinamento?.receiver_member_id ?? null}
+        hannoScelto={quanti ?? 0}
+        totale={membri.length}
+      />
+    );
+  }
+
   // Se ho già aperto la busta, mostro a chi faccio il regalo (le regole del database mi danno solo il mio abbinamento).
   let destinatario: Membro | undefined;
   if (gruppo.status !== "aperto" && io?.envelope_opened_at) {
-    const { data: abbinamento } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
     destinatario = membri.find((m) => m.id === abbinamento?.receiver_member_id);
   }
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
-      <header className="relative pt-24">
+      <KnitBand className="relative z-20 mt-[calc(env(safe-area-inset-top)+96px)]" />
+      <header className="relative pt-8">
         {/* (in alto a destra c'è il tasto dell'audio, uguale in ogni schermata) */}
-        <Profondita intensita={8} className="absolute top-[88px] right-0 w-16">
-          <PallinaCheDondola className="w-16" />
+        {/* la pallina pende sotto la banda a maglia: il filo sparisce dietro, ma la pallina si vede tutta */}
+        <Profondita intensita={8} className="absolute -top-4 right-0 z-10 w-16">
+          <PallinaCheDondola className="w-16" groupId={id} />
         </Profondita>
-        <h1 className="pr-16 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {giorni !== null && giorni >= 0 && (
-            <EtichettaStoffa colore="vermiglio">{giorni === 0 ? "Lo scambio è oggi!" : `${giorni} ${giorni === 1 ? "giorno" : "giorni"} allo scambio`}</EtichettaStoffa>
-          )}
-          {gruppo.exchange_date && <EtichettaStoffa>{dataBreve(gruppo.exchange_date)}</EtichettaStoffa>}
+        <h1 className="pr-20 font-titolo text-[32px] leading-none">{gruppo.name}</h1>
+        <div className="mt-4 flex flex-wrap gap-2 pr-20">
+          {gruppo.exchange_date && <EtichettaStoffa colore="vermiglio">Scambio {dataBreve(gruppo.exchange_date)}</EtichettaStoffa>}
           {gruppo.budget_eur !== null && <EtichettaStoffa>budget {gruppo.budget_eur} €</EtichettaStoffa>}
         </div>
         {gruppo.theme && <p className="mt-3 text-crema/80">Tema: {gruppo.theme}</p>}
+        {giorni !== null && giorni > 0 && gruppo.exchange_date && (
+          <div className="mt-6">
+            <Countdown data={gruppo.exchange_date} />
+          </div>
+        )}
+        {giorni === 0 && <p className="mt-6 font-titolo text-[28px] leading-tight">“È il giorno dello scambio!”</p>}
       </header>
 
       {/* 1. Il fulcro: busta, abbinamento o attesa (per l'organizzatore, prima dell'estrazione, è il suo riquadro) */}
       {gruppo.status === "aperto" ? (
-        organizzatore ? (
+        sceltaDestinatario ? (
+          <>
+            {organizzatore && riquadroOrganizzatore}
+            {sceltaDestinatario}
+          </>
+        ) : organizzatore ? (
           riquadroOrganizzatore
         ) : (
           <Feltro className="mt-6">
@@ -142,10 +164,13 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         )
       ) : destinatario ? (
         <Feltro className="mt-6">
+          <RubberStamp giro="Busta aperta ✦ acqua in bocca ✦" parola="Aperta" className="timbro-entra absolute -top-8 -right-3 !size-24" />
           <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
-          <div className="mt-3 flex items-center gap-4">
+          <div className="mt-3 flex items-center gap-4 pr-12">
             <ToppaAvatar look={look(destinatario)} nome={destinatario.display_name} />
-            <TitoloRiquadro>{destinatario.display_name}</TitoloRiquadro>
+            <TitoloRiquadro>
+              <Scribble tipo="sottolineato">{destinatario.display_name}</Scribble>
+            </TitoloRiquadro>
           </div>
           <p className="mt-4">
             Acqua in bocca!
@@ -162,8 +187,10 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
         </Feltro>
       ) : (
         <Feltro className="mt-6">
-          <BustaSigillata className="absolute -top-1 right-0 w-16 rotate-[8deg] drop-shadow-[0_3px_4px_rgba(0,0,0,.3)]" />
-          <TitoloRiquadro className="pr-20">La tua busta è pronta</TitoloRiquadro>
+          <RubberStamp giro="Estrazione fatta ✦ top secret ✦" parola="Fatto" className="timbro-entra absolute -top-8 -right-3 !size-24" />
+          <TitoloRiquadro className="pr-20">
+            La tua <Scribble tipo="cerchio">busta</Scribble> è pronta
+          </TitoloRiquadro>
           <p className="mt-2 pr-16">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
           <TastoLink href={`/gruppo/${id}/busta`} className="mt-5">
             Apri la busta
@@ -212,7 +239,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
               <span className="block font-titolo text-lg leading-tight text-abete">La tua bacheca</span>
               <span className="block text-sm text-inchiostro/70">Fai capire al tuo Babbo Natale cosa ti piace</span>
             </span>
-            {freccia}
+            <FrecciaAvanti />
           </Link>
 
           {/* 4. Santa Chat e mini giochi, affiancati: quelli non ancora sbloccati sono spenti col lucchetto
@@ -224,7 +251,9 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
 
           {/* 5. Novità del gruppo */}
           <section className="mt-8">
-            <h2 className="font-titolo text-2xl">Novità</h2>
+            <h2 className="font-titolo text-2xl">
+              Novità <Segno tipo="asterisco" className="!bg-senape" />
+            </h2>
             <div className="mt-4">
               <FeedGruppo
                 groupId={id}
@@ -245,7 +274,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           <h2 className="font-titolo text-2xl">Chi c&apos;è</h2>
           <span className="text-sm text-crema/75">{membri.length} persone</span>
         </div>
-        <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pt-1 pb-2">
+        <ul className="-mx-5 mt-4 flex gap-3 overflow-x-auto px-5 pt-2 pb-2">
           {membri.map((m) =>
             m.user_id ? (
               <li key={m.id} className="flex-none">

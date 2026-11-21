@@ -33,6 +33,8 @@ export type Elemento = {
 };
 
 const ALTEZZA = (100 * 4) / 3;
+// larghezza minima di una toppa (unità tela, 100 = tutta la tela): sotto non si riesce più ad afferrarla col dito
+const MINIMO = 16;
 const COLONNE = 60;
 const RIGHE = 80;
 const MAX_FOTO = 5; // foto e immagini da link sulla bacheca (ogni toppa invece una sola volta)
@@ -375,7 +377,7 @@ export function Bacheca({
       const d1 = Math.hypot(b1.x - a1.x, b1.y - a1.y);
       const ang0 = Math.atan2(b0.y - a0.y, b0.x - a0.x);
       const ang1 = Math.atan2(b1.y - a1.y, b1.x - a1.x);
-      width = Math.max(10, Math.min(90, e.width * (d1 / d0)));
+      width = Math.max(MINIMO, Math.min(90, e.width * (d1 / d0)));
       rotation = e.rotation + ((ang1 - ang0) * 180) / Math.PI;
       x = e.x + ((a1.x + b1.x) / 2 - (a0.x + b0.x) / 2) / px;
       y = e.y + ((a1.y + b1.y) / 2 - (a0.y + b0.y) / 2) / px;
@@ -542,7 +544,9 @@ export function Bacheca({
                     role="slider"
                     aria-label="Trascina per ingrandire o ruotare"
                     aria-valuenow={Math.round(e.width)}
-                    className="absolute -right-6 -bottom-6 flex size-11 touch-none items-center justify-center"
+                    // sempre nello stesso angolo (in basso a destra), appena FUORI dalla toppa: tocca l'angolo senza coprirla,
+                    // così la toppa si sposta da qualunque punto e la maniglia non salta da un angolo all'altro
+                    className="absolute -right-11 -bottom-11 flex size-11 touch-none items-center justify-center"
                     onPointerDown={(ev) => {
                       ev.stopPropagation();
                       (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
@@ -557,7 +561,7 @@ export function Bacheca({
                       ev.stopPropagation();
                       const d = Math.hypot(ev.clientX - m.cx, ev.clientY - m.cy);
                       const a = Math.atan2(ev.clientY - m.cy, ev.clientX - m.cx);
-                      const width = Math.max(10, Math.min(90, (m.e.width * d) / m.d0));
+                      const width = Math.max(MINIMO, Math.min(90, (m.e.width * d) / m.d0));
                       const rotation = m.e.rotation + ((a - m.a0) * 180) / Math.PI;
                       setElementi((l) => l.map((x) => (x.id === m.e.id ? { ...x, width, rotation } : x)));
                     }}
@@ -777,6 +781,7 @@ function StratoRicamo({
   const gomma = strumento === "gomma";
   const [puoAnnullare, setPuoAnnullare] = useState(false);
   const idRicamo = useRef<string | null>(iniziale?.id ?? null);
+  const premioControllato = useRef(false); // il premio del primo ricamo: basta controllarlo una volta
   const timerSalva = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cella = larghezza / COLONNE;
@@ -846,7 +851,10 @@ function StratoRicamo({
       if (idRicamo.current) {
         const { error } = await supabase.from("moodboard_items").update({ content, updated_at: new Date().toISOString() }).eq("id", idRicamo.current);
         if (error) onErrore("Non sono riuscito a salvare il ricamo.");
-        else controllaPremi();
+        else if (!premioControllato.current) {
+          premioControllato.current = true;
+          controllaPremi();
+        }
       } else {
         const { data, error } = await supabase
           .from("moodboard_items")

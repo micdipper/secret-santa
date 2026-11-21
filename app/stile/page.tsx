@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Countdown, KnitBand, RubberStamp, Scribble, Segno } from "@/components/carta";
 import { CATALOGO } from "@/components/toppe";
 import { PROFILI, TOTEM_PREDEFINITI } from "@/lib/totem";
 import { BustaSigillata, CuoreFolk, Pallina, Rametto, StellaNordica, Stellina, Uccellino } from "@/components/ornamenti";
@@ -43,6 +44,28 @@ function Separatore({ titolo }: { titolo: string }) {
 export default function Stile() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col overflow-x-hidden px-5 pb-16">
+      {/* Mashup col design system "Secret Santa": gli oggetti di carta accanto al feltro */}
+      <section id="mashup" className="pt-24">
+        <KnitBand />
+        <h2 className="mt-8 font-titolo text-[32px] leading-none">Amici di Natale</h2>
+        <div className="mt-6">
+          <Countdown data="2026-12-20" />
+        </div>
+        <Feltro className="mt-10">
+          <RubberStamp giro="Estrazione fatta ✦ top secret ✦" parola="Fatto" className="timbro-entra absolute -top-8 -right-3 !size-24" />
+          <TitoloRiquadro className="pr-20">
+            La tua <Scribble tipo="cerchio">busta</Scribble> è pronta
+          </TitoloRiquadro>
+          <p className="mt-2 pr-16">Scopri a chi farai il regalo. Lo vedrai solo tu.</p>
+          <Tasto className="mt-5">Apri la busta</Tasto>
+        </Feltro>
+        <h2 className="mt-8 font-titolo text-2xl">
+          Novità <Segno tipo="asterisco" className="!bg-senape" />
+        </h2>
+        <div className="mt-6">
+          <KnitBand piccola />
+        </div>
+      </section>
       <TestataInterna indietro="/prove" etichettaIndietro="Torna alla sala prove" contesto="Sala prove" titolo="Galleria dello stile" />
       {/* Galleria dei personaggi: tutti i tagli, le barbe e i premi */}
       {/* le toppe dei 5 totem (col nome che compare trascinandole) */}
@@ -61,6 +84,22 @@ export default function Stile() {
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {CATALOGO.filter((t) => t.totem === p && !t.ritirata && t.tipo === "parola").map((t) => (
                 <span key={t.id} className="block" style={{ width: (t.larghezza ?? 46) * 2.6, aspectRatio: String(t.rapporto) }}>
+                  {t.disegno()}
+                </span>
+              ))}
+            </div>
+          </Feltro>
+        ))}
+      </section>
+
+      {/* il cassetto: le toppe di tutti (non dei totem), per tipo */}
+      <section id="toppe-cassetto" className="flex flex-col gap-6 pt-6">
+        {(["simbolo", "parola", "palette"] as const).map((tipo) => (
+          <Feltro key={tipo}>
+            <TitoloRiquadro>{tipo === "simbolo" ? "Simboli" : tipo === "parola" ? "Parole" : "Texture"}</TitoloRiquadro>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {CATALOGO.filter((t) => !t.totem && !t.ritirata && t.tipo === tipo).map((t) => (
+                <span key={t.id} className="block" style={{ width: tipo === "parola" ? (t.larghezza ?? 46) * 2.6 : 88, aspectRatio: String(t.rapporto ?? 1) }}>
                   {t.disegno()}
                 </span>
               ))}

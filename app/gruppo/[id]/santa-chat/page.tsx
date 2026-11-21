@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
 import { PallinoChat } from "@/components/pallino-chat";
 import { ToppaBabbo } from "@/components/santa-chat";
-import { Feltro, Icone, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Feltro, FrecciaAvanti, Icone, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { utenteCollegato } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +16,12 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: membri }] = await Promise.all([
+  // le regole del database danno solo il mio abbinamento e i personaggi dei miei gruppi
+  const [{ data: gruppo }, { data: membri }, { data: a }, { data: profili }] = await Promise.all([
     supabase.from("groups").select("name, status").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("id, display_name, user_id, envelope_opened_at").eq("group_id", id).order("display_name"),
+    supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle(),
+    supabase.from("profiles").select("user_id, look"),
   ]);
   if (!gruppo || !membri) return null; // non è un mio gruppo: ci pensa il layout
   const io = membri.find((m) => m.user_id === userId);
@@ -28,15 +31,8 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
   const daAprire = membri.filter((m) => !m.envelope_opened_at);
   const aperta = estratto && daAprire.length === 0;
 
-  let destinatario: (typeof membri)[number] | undefined;
-  let profili: { user_id: string; look: unknown }[] | null = null;
-  if (aperta) {
-    const { data: a } = await supabase.from("assignments").select("receiver_member_id").eq("group_id", id).maybeSingle();
-    destinatario = membri.find((m) => m.id === a?.receiver_member_id);
-    if (destinatario?.user_id) ({ data: profili } = await supabase.from("profiles").select("user_id, look").eq("user_id", destinatario.user_id));
-  }
+  const destinatario = aperta ? membri.find((m) => m.id === a?.receiver_member_id) : undefined;
 
-  const freccia = <span className="relative mr-2 text-abete [&_svg]:size-6 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.4]">{Icone.avanti}</span>;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-16">
@@ -77,7 +73,7 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
                 <span className="block text-sm text-inchiostro/70">Non saprà che sei tu</span>
               </span>
               <PallinoChat receiverId={destinatario.id} ruolo="babbo" />
-              {freccia}
+              <FrecciaAvanti />
             </Link>
           )}
           <Link href={`/gruppo/${id}/chat?con=babbo`} className="feltro cliccabile flex items-center gap-4 p-4 pl-5">
@@ -87,7 +83,7 @@ export default async function PaginaSantaChat({ params }: { params: Promise<{ id
               <span className="block text-sm text-inchiostro/70">Lui sa chi sei, tu no</span>
             </span>
             <PallinoChat receiverId={io.id} ruolo="pescato" />
-            {freccia}
+            <FrecciaAvanti />
           </Link>
           <p className="text-sm text-crema/75">5 messaggi a testa al giorno, 50 caratteri l&apos;uno. I nomi del gruppo diventano asterischi.</p>
         </div>

@@ -32,9 +32,9 @@ type Gruppo = {
   quiz_salvato_at: string | null;
   giochi_attivi: boolean;
   giorni_proposti: string[] | null; // sondaggio della disponibilità aperto
+  estrazione_fatta: boolean; // "Abbiamo già fatto l'estrazione": ognuno indica la sua persona
 };
 type Membro = { id: string; display_name: string; user_id: string | null };
-type Coppia = Esclusione;
 
 export default function PaginaOrganizza() {
   return (
@@ -53,7 +53,7 @@ function Organizza() {
   const [mioId, setMioId] = useState<string | null>(null);
   const [gruppo, setGruppo] = useState<Gruppo | null>(null);
   const [membri, setMembri] = useState<Membro[]>([]);
-  const [coppie, setCoppie] = useState<Coppia[]>([]);
+  const [coppie, setCoppie] = useState<Esclusione[]>([]);
   const [profili, setProfili] = useState<{ user_id: string; look: unknown }[]>(
     [],
   );
@@ -68,7 +68,8 @@ function Organizza() {
   } | null>(null);
   const [nuovoNome, setNuovoNome] = useState("");
   const [estrazioneInCorso, setEstrazioneInCorso] = useState(false);
-  // data e tema si scrivono qui e si salvano con il tasto (la data) o uscendo dal campo (il tema)
+  // data, nome e tema si scrivono qui e si salvano con il tasto (la data) o uscendo dal campo (nome e tema)
+  const [nuovoNomeGruppo, setNuovoNomeGruppo] = useState("");
   const [nuovaData, setNuovaData] = useState("");
   const [nuovoTema, setNuovoTema] = useState("");
   const [avvisoData, setAvvisoData] = useState(false);
@@ -80,7 +81,7 @@ function Organizza() {
         supabase
           .from("groups")
           .select(
-            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti",
+            "id, name, budget_eur, exchange_date, theme, status, invite_code, organizer_id, quiz_salvato_at, giochi_attivi, giorni_proposti, estrazione_fatta",
           )
           .eq("id", id)
           .maybeSingle(),
@@ -95,12 +96,15 @@ function Organizza() {
           .eq("group_id", id),
       ]);
     setMioId(s.session?.user.id ?? null);
-    setGruppo(g as Gruppo | null);
-    setNuovaData((g as Gruppo | null)?.exchange_date ?? "");
-    setNuovoTema((g as Gruppo | null)?.theme ?? "");
-    setMembri((m as Membro[]) ?? []);
-    setCoppie((c as Coppia[]) ?? []);
-    const ids = ((m as Membro[]) ?? []).flatMap((x) =>
+    const gr = g as Gruppo | null;
+    const persone = (m as Membro[]) ?? [];
+    setGruppo(gr);
+    setNuovoNomeGruppo(gr?.name ?? "");
+    setNuovaData(gr?.exchange_date ?? "");
+    setNuovoTema(gr?.theme ?? "");
+    setMembri(persone);
+    setCoppie((c as Esclusione[]) ?? []);
+    const ids = persone.flatMap((x) =>
       x.user_id ? [x.user_id] : [],
     );
     const { data: p } = await supabase
@@ -144,7 +148,7 @@ function Organizza() {
     modificabile && mancanti.length === 0 && membri.length >= 3;
 
   async function salva(
-    campi: Partial<Pick<Gruppo, "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
+    campi: Partial<Pick<Gruppo, "name" | "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
   ) {
     setGruppo((g) => (g ? { ...g, ...campi } : g));
     setSalvataggio("salvo");
@@ -195,18 +199,23 @@ function Organizza() {
     });
   }
 
-  async function condividiLinkReset(m: Membro, url: string) {
-    const testo = `${m.display_name.split(" ")[0]}, ecco il link per scegliere una nuova password per "${gruppo!.name}". Vale 24 ore e si usa una volta sola.`;
+  // Condivide un link (o lo copia, se il telefono non sa condividere)
+  async function condividiLink(titolo: string, testo: string, url: string) {
     try {
-      if (navigator.share)
-        await navigator.share({ title: "Nuova password", text: testo, url });
-      else {
+      if (navigator.share) {
+        await navigator.share({ title: titolo, text: testo, url });
+      } else {
         await navigator.clipboard.writeText(url);
         setAvviso("Link copiato.");
       }
     } catch {
-      // condivisione annullata
+      // condivisione annullata: niente da fare
     }
+  }
+
+  function condividiLinkReset(m: Membro, url: string) {
+    const testo = `${m.display_name.split(" ")[0]}, ecco il link per scegliere una nuova password per "${gruppo!.name}". Vale 24 ore e si usa una volta sola.`;
+    return condividiLink("Nuova password", testo, url);
   }
 
   async function liberaNome(m: Membro) {
@@ -228,19 +237,16 @@ function Organizza() {
     carica();
   }
 
-  async function condividi() {
-    const link = `${window.location.origin}/invito/${gruppo!.invite_code}`;
+  function condividi() {
     const testo = `Entra nel Secret Santa "${gruppo!.name}": tocca il tuo nome e scegli una password.`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: gruppo!.name, text: testo, url: link });
-      } else {
-        await navigator.clipboard.writeText(link);
-        setAvviso("Link copiato.");
-      }
-    } catch {
-      // condivisione annullata: niente da fare
-    }
+    return condividiLink(gruppo!.name, testo, `${window.location.origin}/invito/${gruppo!.invite_code}`);
+  }
+
+  async function cambiaEstrazioneFatta(attiva: boolean) {
+    setErrore("");
+    const { error } = await supabase.rpc("imposta_estrazione_fatta", { p_group_id: id, p_attiva: attiva });
+    if (error) return setErrore(error.message);
+    carica();
   }
 
   async function estrai() {
@@ -285,6 +291,7 @@ function Organizza() {
           </TastoLink>
         </Feltro>
       ) : (
+        <>
         <Feltro className="mt-6">
           <TitoloRiquadro>Link d&apos;invito</TitoloRiquadro>
           <p className="mt-2 text-sm text-inchiostro/70">
@@ -306,6 +313,7 @@ function Organizza() {
             Rivedi il sondaggio
           </TastoLink>
         </Feltro>
+        </>
       )}
 
       <Feltro className="mt-4">
@@ -319,8 +327,20 @@ function Organizza() {
       </Feltro>
 
       <Feltro className="mt-4">
-        <TitoloRiquadro>Quando e quanto</TitoloRiquadro>
+        <TitoloRiquadro>Il gruppo</TitoloRiquadro>
         <div className="mt-5 flex flex-col gap-5">
+          <Campo
+            id="nome-gruppo"
+            etichetta="Nome del gruppo"
+            value={nuovoNomeGruppo}
+            maxLength={80}
+            onChange={(e) => setNuovoNomeGruppo(e.target.value)}
+            onBlur={() => {
+              const nome = nuovoNomeGruppo.trim();
+              if (!nome) return setNuovoNomeGruppo(gruppo.name); // il nome non può restare vuoto
+              if (nome !== gruppo.name) salva({ name: nome });
+            }}
+          />
           {gruppo.giorni_proposti ? (
             // sondaggio della disponibilità aperto: la data la fissa l'organizzatore dalla pagina del sondaggio
             <div className="flex flex-col gap-3">
@@ -413,7 +433,7 @@ function Organizza() {
               ? "Salvo…"
               : salvataggio === "salvato"
                 ? "Salvato ✓ Tutti lo vedono nella pagina del gruppo."
-                : "Budget e tema si salvano da soli, la data con il suo tasto. Puoi cambiarli anche dopo l'estrazione."}
+                : "Nome, budget e tema si salvano da soli, la data con il suo tasto. Puoi cambiarli anche dopo l'estrazione."}
           </p>
         </div>
       </Feltro>
@@ -537,6 +557,22 @@ function Organizza() {
         )}
       </Feltro>
 
+      {gruppo?.estrazione_fatta ? (
+        <Feltro className="mt-4">
+          <TitoloRiquadro>Estrazione già fatta</TitoloRiquadro>
+          <p className="mt-2">
+            {modificabile
+              ? "Ognuno, dalla pagina del gruppo, indica a chi fa il regalo (anche tu). Quando hanno indicato tutti, si aprono le buste. Chi ha scelto chi non lo vede nessuno."
+              : "Hanno indicato tutti la loro persona: ognuno trova la sua busta nella pagina del gruppo."}
+          </p>
+          {modificabile && (
+            <Tasto tipo="secondario" className="mt-5" onClick={() => cambiaEstrazioneFatta(false)}>
+              No, fatela fare al sito
+            </Tasto>
+          )}
+        </Feltro>
+      ) : (
+        <>
       <RiquadroEsclusioni
         className="mt-4"
         persone={membri.map((m) => ({ id: m.id, nome: m.display_name }))}
@@ -574,7 +610,15 @@ function Organizza() {
             {estrazioneInCorso ? "Estraggo…" : "Fai l'estrazione"}
           </Tasto>
         )}
+        {modificabile && (
+          <Tasto tipo="secondario" className="mt-3" onClick={() => cambiaEstrazioneFatta(true)}>
+            L&apos;abbiamo già fatta noi
+          </Tasto>
+        )}
       </Feltro>
+
+        </>
+      )}
 
       {errore && (
         <div className="mt-4">

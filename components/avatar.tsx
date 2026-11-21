@@ -21,7 +21,7 @@ export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e06
 export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd"];
 // 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
 // (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
-export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Rasati", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
+export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Pelato", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
 export const NOMI_BARBA = ["Niente", "Barba corta", "Barba folta", "Baffoni", "Pizzetto"];
 export const NOMI_OCCHIALI = ["Niente", "Tondi", "Grandi"];
 
@@ -43,7 +43,10 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri premi." },
   { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
+  { id: "natale", nome: "Cappello di Natale", comeSbloccarlo: "È un segreto." },
 ];
+// Un cappello alla volta.
+export const CAPPELLI = ["cowboy", "natale"];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
@@ -90,7 +93,7 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
 // Tiene al massimo uno tra lupetto, collana e calendario
 function soloUnoEsclusivo(lista: string[]) {
   let tieni = lista;
-  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI]) {
+  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI, CAPPELLI]) {
     const primo = tieni.find((a) => gruppo.includes(a));
     tieni = tieni.filter((a) => !gruppo.includes(a) || a === primo);
   }
@@ -177,8 +180,8 @@ function Capelli({ stile, c, dietro }: { stile: number; c: string; dietro: boole
           ))}
         </g>
       );
-    case 5: // rasati
-      return dietro ? null : <path d="M31 40c1-12 9-19 19-19s18 7 19 19c-6-4-12-6-19-6s-13 2-19 6z" fill={c} opacity=".55" />;
+    case 5: // pelato (era "rasati"): niente capelli, solo un riflesso di luce sulla testa
+      return dietro ? null : <ellipse cx="42" cy="27" rx="6" ry="3" transform="rotate(-25 42 27)" fill="#fff" opacity=".35" />;
     case 6: // cresta
       return dietro ? null : (
         <g fill={c}>
@@ -367,6 +370,23 @@ function CappelloCowboy() {
   );
 }
 
+// Cappello di Natale (premio dell'easter egg "Secret secret Santa"): feltro rosso che ricade di lato,
+// bordo di pelliccia bianca a pallini e pompon
+export function CappelloNatale() {
+  return (
+    <g transform="rotate(-6 50 30)">
+      <path d="M31 30c0-12 7-21 19-22 9-1 17 3 22 9 4 5 7 11 12 13-2 3-6 3-9 0-3-4-5-8-8-10 1 4 1 7 0 10z" fill="#d9381e" />
+      <path d="M44 12c6-2 13 0 18 5" fill="none" stroke="#a82a14" strokeWidth="1.2" strokeLinecap="round" opacity=".7" />
+      <path d="M29 27c7-3 14-4 21-4s14 1 21 4c1 3 1 6 0 8-7-3-14-4-21-4s-14 1-21 4c-1-2-1-5 0-8z" fill="#f7f1e3" />
+      <g fill="#ddd2bc">
+        <circle cx="35" cy="29" r="1" /><circle cx="42" cy="27.5" r="1" /><circle cx="50" cy="27" r="1" /><circle cx="58" cy="27.5" r="1" /><circle cx="65" cy="29" r="1" />
+      </g>
+      <circle cx="80" cy="31" r="5" fill="#f7f1e3" />
+      <circle cx="79" cy="30" r="1.6" fill="#fff" opacity=".8" />
+    </g>
+  );
+}
+
 export function Avatar({ look, className, titolo }: { look: Look; className?: string; titolo?: string }) {
   const pelle = PELLI[look.pelle];
   const capelli = COLORI_CAPELLI[look.coloreCapelli];
@@ -379,8 +399,9 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const alone = neon ? "url(#alone-neon)" : undefined; // filtro SVG (Safari non applica i filtri CSS dentro gli SVG)
   const godo = look.maglione === MAGLIONE_GODO;
   const cowboy = ha("cowboy");
+  const natale = !cowboy && ha("natale");
   // con il cappello i capelli si vedono solo sotto la tesa (e ai lati)
-  const taglio = cowboy ? "url(#sotto-cappello)" : undefined;
+  const taglio = cowboy || natale ? "url(#sotto-cappello)" : undefined;
   return (
     <svg viewBox="0 0 100 100" className={className} role={titolo ? "img" : undefined} aria-label={titolo} aria-hidden={titolo ? undefined : true}>
       {olografico && (
@@ -405,7 +426,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
           </filter>
         </defs>
       )}
-      {cowboy && (
+      {(cowboy || natale) && (
         <defs>
           <clipPath id="sotto-cappello">
             <path d="M0 100V0h12v34L88 23V0h12v100z" />
@@ -479,6 +500,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
       {cowboy && <CappelloCowboy />}
+      {natale && <CappelloNatale />}
 
       {/* accessori */}
       {ha("sciarpa") && (
@@ -536,7 +558,8 @@ export function ToppaAvatar({
   return (
     <span className="relative inline-flex flex-none">
       {toppa}
-      <BadgeTotem profilo={totem.profilo} nome={totem.nome} immagine={totem.immagine} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -right-1 -bottom-1" />
+      {/* in alto a destra, un po' fuori dalla toppa: così il francobollo non copre il look */}
+      <BadgeTotem profilo={totem.profilo} nome={totem.nome} immagine={totem.immagine} dimensione={Math.round(dimensione * 0.42)} className="pointer-events-none absolute -top-[6%] -right-[14%]" />
     </span>
   );
 }
@@ -552,7 +575,8 @@ export function lookDi(profili: { user_id: string; look: unknown }[] | null, use
 // a ogni dimensione, linea centrale sullo stesso cerchio (bordo − 4 px − metà filo). Stanno SOTTO il busto.
 export const FILO_CUCITURA = "rgb(44 74 50 / 0.55)";
 export function Cucitura({ tipo, dimensione }: { tipo: number; dimensione: number }) {
-  const R = ((dimensione / 2 - 4 - 0.75) * 100) / dimensione; // in unità del viewBox (100)
+  // stessa distanza dal bordo della cucitura normale (.toppa::before in globals.css): max(4px, 7%)
+  const R = ((dimensione / 2 - Math.max(4, dimensione * 0.07) - 0.75) * 100) / dimensione; // in unità del viewBox (100)
   const k = R / 43; // i motivi erano disegnati per il raggio 43: restano proporzionati
   const filo = FILO_CUCITURA;
   const tratto = { stroke: filo, strokeWidth: 1.5, vectorEffect: "non-scaling-stroke" as const, fill: "none", strokeLinecap: "round" as const };

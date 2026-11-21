@@ -381,11 +381,6 @@ export function fermaMusica() {
   timerMusica = null;
 }
 
-export function smettiMusica() {
-  musicaVoluta = false;
-  fermaMusica();
-}
-
 // uscendo dal sito (altra app, schermo spento, altra scheda) la musica si ferma; al ritorno riprende
 if (typeof document !== "undefined") {
   const aggiorna = () => {
