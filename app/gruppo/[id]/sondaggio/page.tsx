@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { FrancobolloTotem } from "@/components/totem";
 import { VibeTotem } from "@/components/toppe";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { messaggioFoto } from "@/lib/foto";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import {
   DOMANDE_PREDEFINITE,
@@ -273,8 +274,8 @@ function Sondaggio() {
                       try {
                         const immagine = await fotoPerFrancobollo(f);
                         setTotem((t) => ({ ...t, [p]: { ...t[p], immagine } }));
-                      } catch {
-                        setErrore("Non riesco a leggere questa foto. Prova con un'altra.");
+                      } catch (e) {
+                        setErrore(messaggioFoto(e));
                       }
                     }}
                   />

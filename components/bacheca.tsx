@@ -13,7 +13,7 @@ import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/u
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
-import { riduciFoto } from "@/lib/foto";
+import { PROFILO_BACHECA, comprimiFoto, messaggioFoto } from "@/lib/foto";
 
 /*
   Bacheca = tela da ricamo con toppe, foto e un ricamo a punto croce.
@@ -37,7 +37,7 @@ const ALTEZZA = (100 * 4) / 3;
 const MINIMO = 16;
 const COLONNE = 60;
 const RIGHE = 80;
-const MAX_FOTO = 5; // foto e immagini da link sulla bacheca (ogni toppa invece una sola volta)
+const MAX_FOTO = 2; // foto e immagini da link sulla bacheca (ogni toppa invece una sola volta); lo controlla anche il database
 
 
 // Ogni toppa nuova arriva un po' storta e un po' spostata dal centro, come attaccata a mano
@@ -260,12 +260,14 @@ export function Bacheca({
       ? { data: { id: crypto.randomUUID(), kind, content, x: nuovo.x, y: nuovo.y, width, rotation: nuovo.rotation, z }, error: null }
       : await traccia(supabase.from("moodboard_items").insert(nuovo).select("id, kind, content, x, y, width, rotation, z").single());
     if (error || !data) {
-      return setErrore(error?.message?.includes("5 foto") ? `Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto.` : "Non sono riuscito ad attaccarlo. Riprova.");
+      setErrore(error?.message?.includes("al massimo") ? `Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto.` : "Non sono riuscito ad attaccarlo. Riprova.");
+      return false;
     }
     setErrore("");
     setElementi((l) => [...l, data as Elemento]);
     setSelezionato(data.id);
     if (!prova) controllaPremi(); // magari ha appena vinto il lupetto
+    return true;
   }
 
   async function togli(id: string) {
@@ -294,21 +296,20 @@ export function Bacheca({
     if (fotoPiene) return setErrore(`Sulla bacheca ci stanno al massimo ${MAX_FOTO} foto: togline una per metterne un'altra.`);
     setCaricamento(true);
     try {
-      const { blob, rapporto } = await riduciFoto(file);
+      const { blob, rapporto } = await comprimiFoto(file, PROFILO_BACHECA);
       if (prova) {
         // nella sala prove la foto resta solo nel telefono
-        await aggiungi("immagine_link", { url: URL.createObjectURL(blob), rapporto }, 36);
-        setAttaccata("La foto");
+        if (await aggiungi("immagine_link", { url: URL.createObjectURL(blob), rapporto }, 36)) setAttaccata("La foto");
         setCaricamento(false);
         return;
       }
       const path = `${groupId}/${memberId}/${crypto.randomUUID()}.jpg`;
       const { error } = await traccia(supabase.storage.from("moodboard").upload(path, blob, { contentType: "image/jpeg" }));
-      if (error) throw error;
-      await aggiungi("foto", { path, rapporto }, 36);
-      setAttaccata("La foto");
-    } catch {
-      setErrore("Non sono riuscito a caricare la foto. Riprova con un'altra immagine.");
+      if (error) setErrore("Non sono riuscito a caricare la foto. Riprova.");
+      else if (await aggiungi("foto", { path, rapporto }, 36)) setAttaccata("La foto");
+      else await supabase.storage.from("moodboard").remove([path]); // non è sulla bacheca: il file non deve restare orfano
+    } catch (e) {
+      setErrore(messaggioFoto(e));
     }
     setCaricamento(false);
   }
@@ -319,7 +320,7 @@ export function Bacheca({
     if (!/^https?:\/\//i.test(url)) return setErrore("Incolla un indirizzo che inizia con https://");
     try {
       const rapporto = await caricaDimensioni(url);
-      await aggiungi("immagine_link", { url, rapporto }, 36);
+      if (!(await aggiungi("immagine_link", { url, rapporto }, 36))) return;
       setLinkImmagine("");
       setAttaccata("L'immagine");
     } catch {
@@ -630,7 +631,11 @@ export function Bacheca({
                 foto={
                   <div className="flex flex-col gap-4 rounded-2xl bg-feltro p-4 text-inchiostro shadow-[0_3px_6px_rgba(0,0,0,.35)]">
                     <p className="text-center text-sm text-inchiostro/70">
-                      {fotoPiene ? `Hai già ${MAX_FOTO} foto sulla tela: togline una per metterne un'altra.` : `Foto sulla tela: ${numFoto} di ${MAX_FOTO}`}
+                      {numFoto > MAX_FOTO
+                        ? `Hai ${numFoto} foto sulla tela: ne puoi tenere al massimo ${MAX_FOTO}.`
+                        : fotoPiene
+                          ? `Hai già ${MAX_FOTO} foto sulla tela: togline una per metterne un'altra.`
+                          : `Foto sulla tela: ${numFoto} di ${MAX_FOTO}`}
                     </p>
                     <label className={`tasto cucitura cliccabile stoffa-vermiglio relative ${fotoPiene ? "pointer-events-none opacity-50" : "cursor-pointer"}`} aria-disabled={fotoPiene}>
                       <span>{caricamento ? "Carico…" : "Scegli una foto"}</span>

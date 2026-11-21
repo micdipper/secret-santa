@@ -1,5 +1,7 @@
 // Sondaggio totem: logica fissa, profili fissi e contenuto predefinito (CLAUDE.md, punto 9ter).
 
+import { PROFILO_FRANCOBOLLO, comprimiRitaglio } from "@/lib/foto";
+
 export type Parametro = "impegno" | "esigenza";
 export type Profilo = "IMPEGNO_ALTO_RICEVE_TUTTO" | "IMPEGNO_ALTO_ESIGENTE" | "IMPEGNO_BASSO_RICEVE_TUTTO" | "IMPEGNO_BASSO_ESIGENTE" | "BONUS";
 export type Punti = "2" | "1" | "-1" | "-2";
@@ -78,21 +80,5 @@ export function profiloDa(impegno: number, esigenza: number): Profilo {
 export type TotemGruppo = { profilo: Profilo; nome: string; descrizione: string | null; immagine?: string | null };
 export const descrizioneDi = (t: { profilo: Profilo; descrizione: string | null }) => t.descrizione || TOTEM_PREDEFINITI[t.profilo].descrizione;
 
-// Foto del totem: ritaglio a francobollo (stesse proporzioni del riquadro interno, 84×104) e JPEG leggero
-export async function fotoPerFrancobollo(file: File): Promise<string> {
-  const img = await createImageBitmap(file);
-  const W = 336;
-  const H = 416;
-  const c = document.createElement("canvas");
-  c.width = W;
-  c.height = H;
-  const scala = Math.max(W / img.width, H / img.height); // riempie tutto, taglia quello che avanza
-  const w = img.width * scala;
-  const h = img.height * scala;
-  c.getContext("2d")!.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
-  for (const q of [0.82, 0.7, 0.55]) {
-    const url = c.toDataURL("image/jpeg", q);
-    if (url.length < 190000) return url;
-  }
-  return c.toDataURL("image/jpeg", 0.4);
-}
+// Foto del totem: ritaglio a francobollo (stesse proporzioni del riquadro interno, 84×104), sotto i 50 KB
+export const fotoPerFrancobollo = (file: File) => comprimiRitaglio(file, PROFILO_FRANCOBOLLO);
