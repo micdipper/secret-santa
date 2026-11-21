@@ -179,7 +179,11 @@ function Organizza() {
       return setErrore(
         error.message.includes("group_members_group_name_uidx")
           ? `"${n}" è già nella lista.`
-          : "Non sono riuscito ad aggiungerlo.",
+          : error.message.includes("Il sito è al completo")
+            ? "Il sito è quasi al completo: non c'è posto per un'altra persona, quindi non potrebbe entrare nel gruppo."
+            : error.message.includes("al completo")
+              ? `${error.message}.`
+              : "Non sono riuscito ad aggiungerlo.",
       );
     setNuovoNome("");
     setErrore("");

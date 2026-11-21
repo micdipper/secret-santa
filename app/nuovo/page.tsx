@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ToppaAvatar, LOOK_BASE, type Look } from "@/components/avatar";
 import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { EditorPersonaggio } from "@/components/editor-personaggio";
@@ -10,6 +10,7 @@ import { Campo, Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, Titolo
 import { nuovaEmailFinta, passwordValida } from "@/lib/accesso";
 import { giorniMancanti } from "@/lib/date";
 import { salvaAccessoCorrente } from "@/lib/portachiavi";
+import { AVVISO_POSTI_SOTTO, SITO_PIENO_ACCESSI, SITO_PIENO_GRUPPI, SITO_QUASI_PIENO, gruppoAlCompleto, leggiPosti, type Posti } from "@/lib/posti";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
 export default function NuovoGruppo() {
@@ -30,6 +31,11 @@ export default function NuovoGruppo() {
   const [look, setLook] = useState<Look>(LOOK_BASE);
   const [avvisoData, setAvvisoData] = useState(false);
   const [giaEstratto, setGiaEstratto] = useState(false);
+  const [posti, setPosti] = useState<Posti | null>(null); // posti liberi sul sito (ogni nome scritto ne occupa uno)
+
+  useEffect(() => {
+    leggiPosti(supabase).then(setPosti);
+  }, [supabase]);
 
   function aggiungiNome() {
     const n = nuovoNome.trim();
@@ -39,6 +45,10 @@ export default function NuovoGruppo() {
       setErrore(`"${n}" è già nella lista.`);
       return;
     }
+    // il gruppo nuovo occupa un posto per ogni nome, organizzatore compreso
+    const dopo = altri.length + 2;
+    if (posti && dopo > posti.persone_per_gruppo) return setErrore(gruppoAlCompleto(posti.persone_per_gruppo));
+    if (posti && dopo > posti.posti_liberi) return setErrore(SITO_QUASI_PIENO);
     setAltri([...altri, n]);
     setNuovoNome("");
     setErrore("");
@@ -56,6 +66,17 @@ export default function NuovoGruppo() {
     if (dataTroppoVicina(data) && !senzaGiochi) return setAvvisoData(true);
 
     setInvio(true);
+    // prima di creare l'accesso: c'è posto? (altrimenti resterebbe un accesso senza gruppo)
+    const ora = await leggiPosti(supabase);
+    setPosti(ora);
+    if (ora?.accessi_pieni) {
+      setInvio(false);
+      return setErrore(SITO_PIENO_ACCESSI);
+    }
+    if (ora && ora.posti_liberi < altri.length + 1) {
+      setInvio(false);
+      return setErrore(ora.posti_liberi < 3 ? SITO_PIENO_GRUPPI : `Il sito è quasi al completo: restano ${ora.posti_liberi} posti. Togli qualche persona per creare il gruppo.`);
+    }
     // ogni gruppo ha un accesso suo: quello di adesso (di un altro gruppo) resta nel portachiavi del telefono
     await salvaAccessoCorrente(supabase);
     const { error: errAccesso } = await supabase.auth.signUp({ email: nuovaEmailFinta(), password });
@@ -77,7 +98,9 @@ export default function NuovoGruppo() {
       return setErrore(
         error?.message?.includes("group_members_group_name_uidx")
           ? "Ci sono due nomi uguali nella lista: rendili diversi (es. con l'iniziale del cognome)."
-          : "Non sono riuscito a creare il gruppo. Riprova.",
+          : error?.message?.includes("al completo")
+            ? `${error.message}. Togli qualche persona e riprova.`
+            : "Non sono riuscito a creare il gruppo. Riprova.",
       );
     }
     await supabase.rpc("save_avatar", { p_look: look });
@@ -177,6 +200,11 @@ export default function NuovoGruppo() {
           <p className="mt-3 text-sm text-inchiostro/70">
             {altri.length === 0 ? "Nessuno ancora." : `${altri.length + 1} persone, te compreso. Il − accanto a un nome lo toglie.`}
           </p>
+          {posti && posti.posti_liberi - (altri.length + 1) <= AVVISO_POSTI_SOTTO && (
+            <p className="mt-2 text-sm font-semibold text-vermiglio">
+              Sul sito {posti.posti_liberi - (altri.length + 1) === 1 ? "resta 1 posto" : `restano ${Math.max(0, posti.posti_liberi - (altri.length + 1))} posti`} per altre persone.
+            </p>
+          )}
           <button
             type="button"
             role="switch"
