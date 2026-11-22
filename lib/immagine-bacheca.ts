@@ -10,9 +10,11 @@
 // - un po' di movimento: tela, personaggio e totem leggermente ruotati e spostati, diversi a ogni "Rimescola".
 // Tela, personaggio e totem arrivano già "fotografati" (canvas) da components/condividi-bacheca.tsx.
 
-export const LARGHEZZA = 1080;
-export const ALTEZZA = 1920;
-export const SITO = "secretfanta.vercel.app";
+import { casuale } from "./giochi/base.ts";
+
+const LARGHEZZA = 1080;
+const ALTEZZA = 1920;
+const SITO = "secretfanta.vercel.app";
 
 // i colori del sito (gli stessi delle stoffe della tela, lib/parole.ts)
 const COLORI = {
@@ -33,7 +35,7 @@ const INCHIOSTRO = COLORI.nero;
 const SENAPE = COLORI.senape;
 const PALETTE = Object.values(COLORI);
 const ANGOLI = ["alto-sinistra", "alto-destra", "basso-sinistra", "basso-destra"] as const;
-export type Angolo = (typeof ANGOLI)[number];
+type Angolo = (typeof ANGOLI)[number];
 
 export type Pezzi = {
   tela: HTMLCanvasElement; // la bacheca (3:4), con gli angoli già arrotondati
@@ -49,7 +51,7 @@ export type Pezzi = {
   fontTesto: string;
 };
 
-export type Scelte = { angolo: Angolo; sfondo: string; neve: boolean; toppaSito: string };
+type Scelte = { angolo: Angolo; sfondo: string; neve: boolean; toppaSito: string };
 
 // ---------- colori ----------
 function rgb(colore: string): [number, number, number] {
@@ -79,7 +81,7 @@ const distanza = (a: string, b: string) => {
 const piuLeggibile = (fondo: string, scelte: string[]) => [...scelte].sort((a, b) => contrasto(b, fondo) - contrasto(a, fondo))[0];
 
 // I 4 sfondi che si staccano di più dalla tela (mai il colore della tela, e diversi tra loro)
-export function sfondiPer(coloreTela: string): string[] {
+function sfondiPer(coloreTela: string): string[] {
   // mai il colore della tela, e mai il crema della cornice (si confonderebbe)
   const candidati = PALETTE.filter((c) => distanza(c, coloreTela) > 60 && distanza(c, CREMA) > 60).sort(
     (a, b) => contrasto(b, coloreTela) + distanza(b, coloreTela) / 200 - (contrasto(a, coloreTela) + distanza(a, coloreTela) / 200),
@@ -111,16 +113,6 @@ export function scelta(coloreTela: string, seme: number, giro: number): Scelte {
   };
 }
 
-function casuale(seme: number) {
-  let a = seme >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 // ---------- pezzi del disegno ----------
 function stella(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
@@ -137,14 +129,27 @@ function stella(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) 
   ctx.restore();
 }
 
+let grana: HTMLCanvasElement | null = null;
+function piastrellaGrana() {
+  if (grana) return grana;
+  grana = document.createElement("canvas");
+  grana.width = grana.height = 128;
+  const g = grana.getContext("2d")!;
+  const r = casuale(7);
+  for (let i = 0; i < 360; i++) {
+    g.fillStyle = r() < 0.5 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)";
+    g.fillRect(Math.floor(r() * 64) * 2, Math.floor(r() * 64) * 2, 2, 2);
+  }
+  return grana;
+}
+
 function fondo(ctx: CanvasRenderingContext2D, colore: string, neve: boolean, r: () => number) {
   ctx.fillStyle = colore;
   ctx.fillRect(0, 0, LARGHEZZA, ALTEZZA);
-  // grana leggera e luce morbida dall'alto, come lo sfondo del sito
-  for (let i = 0; i < 9000; i++) {
-    ctx.fillStyle = r() < 0.5 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)";
-    ctx.fillRect(r() * LARGHEZZA, r() * ALTEZZA, 2, 2);
-  }
+  // grana leggera (una piastrella 128×128 ripetuta: molto più veloce di 9000 puntini a ogni "Rimescola")
+  ctx.fillStyle = ctx.createPattern(piastrellaGrana(), "repeat")!;
+  ctx.fillRect(0, 0, LARGHEZZA, ALTEZZA);
+  // luce morbida dall'alto, come lo sfondo del sito
   const g = ctx.createRadialGradient(LARGHEZZA * 0.3, 0, 100, LARGHEZZA * 0.3, 0, ALTEZZA * 0.9);
   g.addColorStop(0, "rgba(255,255,255,0.10)");
   g.addColorStop(1, "rgba(0,0,0,0.16)");

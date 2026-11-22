@@ -38,7 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AscoltaTocchi />
         <AvvisoPremi />
         <NovitaSito />
-        {children}
+        {/* il contenuto delle pagine sta sopra la grana (body::before) */}
+        <div className="relative z-[1] flex flex-1 flex-col">{children}</div>
       </body>
     </html>
   );

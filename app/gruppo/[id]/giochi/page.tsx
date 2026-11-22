@@ -6,7 +6,7 @@ import { AnnunciVincitori } from "@/components/giochi/annuncio";
 import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
 import { Feltro, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { caricaGiochi, caricaPersone, finestreDa, vittorieDa } from "@/lib/giochi/dati";
-import { aperturaCalendario, benvenutoVisto, giorniAlloScambio, segnaBenvenuto } from "@/lib/giochi/avvento";
+import { aperturaCalendario, benvenutoVisto, giorniAlloScambio, NUMERO_GIOCHI, segnaBenvenuto } from "@/lib/giochi/avvento";
 import { durataBreve, scartoDa, statoDa, useOraServer } from "@/lib/giochi/ora";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 
@@ -58,7 +58,7 @@ export default function PaginaCalendario() {
 
   // benvenuto: la prima volta che si apre il calendario (una volta per gruppo, ricordato nel telefono)
   const [benvenuto, setBenvenuto] = useState(false);
-  const apertura = dati?.attivi && dati.finestre.length === 5 ? aperturaCalendario(dati.finestre[0].apre) : null;
+  const apertura = dati?.attivi && dati.finestre.length === NUMERO_GIOCHI ? aperturaCalendario(dati.finestre[0].apre) : null;
   const aperto = apertura !== null && ora >= apertura;
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- memoria del telefono (solo nel browser)

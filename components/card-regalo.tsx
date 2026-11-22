@@ -61,15 +61,15 @@ export function CardRegalo({ groupId, fronte, nota, azioni }: { groupId: string;
           className={`feltro flex flex-col p-6 [grid-area:1/1] [backface-visibility:hidden] [transform:rotateY(180deg)] ${nascosta ? "" : "pointer-events-none"}`}
           aria-hidden={!nascosta}
         >
-          <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="toppa size-14 shrink-0 font-titolo text-3xl text-vermiglio" aria-hidden>
-              ?
+          {/* tutto centrato, in verticale e in orizzontale: riempie l'altezza del davanti senza buchi */}
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+            <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
+            <span className="toppa size-20 shrink-0 font-titolo text-[44px] leading-none text-vermiglio" aria-hidden>
+              {/* il punto interrogativo di Basteleur sta un po' in alto: lo abbasso per centrarlo nel cerchio */}
+              <span className="translate-y-[0.06em]">?</span>
             </span>
             <TitoloRiquadro>Top secret</TitoloRiquadro>
-          </div>
-          <div className="mt-auto flex items-center gap-3 pt-4">
-            <p className="min-w-0 flex-1">Nome nascosto. Tocca l&apos;occhio quando nessuno guarda.</p>
+            <p className="max-w-[16rem] text-sm text-inchiostro/80">Nome nascosto. Tocca l&apos;occhio quando nessuno guarda.</p>
             {nascosta && occhio}
           </div>
         </div>

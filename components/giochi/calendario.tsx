@@ -182,7 +182,7 @@ export function Benvenuto({ giorni, aperto, onChiudi }: { giorni: number; aperto
   return (
     <AnimatePresence>
       {aperto && (
-        <motion.div className="!fixed inset-0 !z-[70] flex items-center justify-center bg-inchiostro/60 px-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-[70] flex items-center justify-center bg-inchiostro/60 px-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.div
             className="feltro w-full max-w-sm p-6 text-center"
             initial={{ y: 40, scale: 0.9 }}
