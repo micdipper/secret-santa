@@ -117,7 +117,7 @@ export function AvvisoPremi() {
           exit={{ opacity: 0 }}
           role="dialog"
           aria-modal="true"
-          aria-label="Hai vinto un premio"
+          aria-label="Hai ricevuto un dono"
         >
           <motion.div
             className="feltro w-full max-w-sm p-6 text-center"
@@ -127,10 +127,10 @@ export function AvvisoPremi() {
             transition={{ type: "spring", stiffness: 220, damping: 16 }}
           >
             <div className="relative">
-              <p className="text-sm text-inchiostro/70">Hai vinto un premio!</p>
-              <TitoloRiquadro className="mt-1">{NOMI[premio.id] ?? "Un premio"}</TitoloRiquadro>
+              <p className="text-sm text-inchiostro/70">Hai ricevuto un dono!</p>
+              <TitoloRiquadro className="mt-1">{NOMI[premio.id] ?? "Un dono"}</TitoloRiquadro>
               <span className="toppa mx-auto mt-4 size-32 overflow-hidden">
-                <Avatar look={premio.look} className="relative top-[8%] h-full w-full" titolo="Il tuo personaggio col premio" />
+                <Avatar look={premio.look} className="relative top-[8%] h-full w-full" titolo="Il tuo personaggio col dono" />
               </span>
               <Tasto
                 className="mt-6"

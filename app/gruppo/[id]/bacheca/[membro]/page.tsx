@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { lookDi } from "@/components/avatar";
 import { Bacheca, type Elemento } from "@/components/bacheca";
 import { SondaggioPerBacheca } from "@/components/sondaggio-totem";
 import { FrancobolloTotem } from "@/components/totem";
@@ -9,18 +10,27 @@ import { descrizioneDi, type Profilo } from "@/lib/totem";
 
 export const dynamic = "force-dynamic";
 
-export default async function PaginaBacheca({ params }: { params: Promise<{ id: string; membro: string }> }) {
+export default async function PaginaBacheca({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string; membro: string }>;
+  searchParams: Promise<{ condividi?: string }>;
+}) {
   const { id, membro } = await params;
+  const { condividi } = await searchParams;
   const { supabase, userId } = await utenteCollegato();
   if (!userId) return null; // il layout del gruppo pensa all'accesso
 
-  const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }, { data: risultati }, { data: totemGruppo }] = await Promise.all([
+  const [{ data: gruppo }, { data: persona }, { data: elementi }, { data: toppeGruppo }, { data: risultati }, { data: totemGruppo }, { data: profili }] = await Promise.all([
     supabase.from("groups").select("name").eq("id", id).maybeSingle(),
     supabase.from("group_members").select("display_name, user_id, quiz_rifiutato_at").eq("id", membro).eq("group_id", id).maybeSingle(),
     supabase.from("moodboard_items").select("id, kind, content, x, y, width, rotation, z").eq("member_id", membro),
     supabase.from("group_toppe").select("id, tipo, ordine, contenuto, member_id").eq("group_id", id).order("ordine"),
     supabase.from("quiz_results").select("user_id, profilo").eq("group_id", id),
     supabase.from("quiz_totems").select("profilo, nome, descrizione, immagine").eq("group_id", id),
+    // il mio personaggio, per l'immagine da condividere
+    supabase.from("profiles").select("user_id, look").eq("user_id", userId),
   ]);
   if (!gruppo) return null; // non è un mio gruppo: ci pensa il layout
   if (!persona) notFound();
@@ -66,6 +76,17 @@ export default async function PaginaBacheca({ params }: { params: Promise<{ id: 
             iniziali={(elementi as Elemento[]) ?? []}
             totem={totem ? { profilo: totem.profilo as Profilo, nome: totem.nome, immagine: totem.immagine } : null}
             personalizzate={(toppeGruppo as RigaPersonalizzata[]) ?? []}
+            condivisione={
+              mia
+                ? {
+                    look: lookDi(profili, userId),
+                    nome,
+                    gruppo: gruppo.name,
+                    totem: totem ? { profilo: totem.profilo as Profilo, nome: totem.nome, immagine: totem.immagine } : null,
+                    apri: condividi === "1",
+                  }
+                : undefined
+            }
           />
         ) : mia ? (
           <SondaggioPerBacheca groupId={id} rifiutato={!!persona.quiz_rifiutato_at} />

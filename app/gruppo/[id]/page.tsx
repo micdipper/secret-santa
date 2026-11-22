@@ -1,3 +1,4 @@
+import { CardRegalo } from "@/components/card-regalo";
 import Link from "next/link";
 import { PallinaCheDondola } from "@/components/pallina-che-dondola";
 import { Profondita } from "@/components/profondita";
@@ -163,28 +164,41 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
           </Feltro>
         )
       ) : destinatario ? (
-        <Feltro className="mt-6">
-          <RubberStamp giro="Busta aperta ✦ acqua in bocca ✦" parola="Aperta" className="timbro-entra absolute -top-8 -right-3 !size-24" />
-          <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
-          <div className="mt-3 flex items-center gap-4 pr-12">
-            <ToppaAvatar look={look(destinatario)} nome={destinatario.display_name} />
-            <TitoloRiquadro>
-              <Scribble tipo="sottolineato">{destinatario.display_name}</Scribble>
-            </TitoloRiquadro>
-          </div>
-          <p className="mt-4">
-            Acqua in bocca!
-            {gruppo.budget_eur !== null && ` Budget ${gruppo.budget_eur} €`}
-            {gruppo.exchange_date && `, scambio ${dataBreve(gruppo.exchange_date)}`}
-            {gruppo.budget_eur !== null || gruppo.exchange_date ? "." : ""}
-          </p>
-          <TastoLink href={`/gruppo/${id}/bacheca/${destinatario.id}`} className="mt-5">
-            Guarda la sua bacheca
-          </TastoLink>
-          <TastoLink href={`/gruppo/${id}/biglietto`} tipo="secondario" className="mt-3">
-            Ricorda chi hai pescato
-          </TastoLink>
-        </Feltro>
+        <CardRegalo
+          groupId={id}
+          fronte={
+            <>
+              <RubberStamp giro="Busta aperta ✦ acqua in bocca ✦" parola="Aperta" className="timbro-entra absolute -top-8 -right-3 !size-24" />
+              <p className="text-sm text-inchiostro/70">Il tuo regalo è per</p>
+              <div className="mt-3 flex items-center gap-4 pr-12">
+                <ToppaAvatar look={look(destinatario)} nome={destinatario.display_name} />
+                <TitoloRiquadro>
+                  <Scribble tipo="sottolineato">{destinatario.display_name}</Scribble>
+                </TitoloRiquadro>
+              </div>
+            </>
+          }
+          nota={
+            <>
+              <p>
+                Acqua in bocca!
+                {gruppo.budget_eur !== null && ` Budget ${gruppo.budget_eur} €`}
+                {gruppo.exchange_date && `, scambio ${dataBreve(gruppo.exchange_date)}`}
+                {gruppo.budget_eur !== null || gruppo.exchange_date ? "." : ""}
+              </p>
+            </>
+          }
+          azioni={
+            <>
+              <TastoLink href={`/gruppo/${id}/bacheca/${destinatario.id}`} className="mt-5">
+                Guarda la sua bacheca
+              </TastoLink>
+              <TastoLink href={`/gruppo/${id}/biglietto`} tipo="secondario" className="mt-3">
+                Ricorda chi hai pescato
+              </TastoLink>
+            </>
+          }
+        />
       ) : (
         <Feltro className="mt-6">
           <RubberStamp giro="Estrazione fatta ✦ top secret ✦" parola="Fatto" className="timbro-entra absolute -top-8 -right-3 !size-24" />
@@ -228,7 +242,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             <span className="relative min-w-0 flex-1">
               <span className="block text-sm text-inchiostro/70">Il tuo personaggio</span>
               <span className="block font-titolo text-2xl leading-tight text-abete">Guardaroba</span>
-              <span className="mt-1 block text-sm text-inchiostro/70">Vestilo e indossa i premi che vinci</span>
+              <span className="mt-1 block text-sm text-inchiostro/70">Vestilo e indossa i doni che ricevi</span>
             </span>
           </Link>
 

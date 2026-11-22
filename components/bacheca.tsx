@@ -13,6 +13,7 @@ import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/u
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
 import { controllaPremi } from "@/components/avviso-premi";
+import { CondividiBacheca, type DatiCondivisione } from "@/components/condividi-bacheca";
 import { MAX_FOTO_BACHECA, PROFILO_BACHECA, comprimiFoto, messaggioFoto } from "@/lib/foto";
 import { CACHE_CONTROL, urlFirmati } from "@/lib/foto-url";
 
@@ -68,6 +69,7 @@ export function Bacheca({
   iniziaRicamando = false,
   totem = null,
   personalizzate = [],
+  condivisione,
 }: {
   groupId: string;
   memberId: string;
@@ -77,6 +79,7 @@ export function Bacheca({
   iniziaRicamando?: boolean; // si apre già col ricamo (dal kit del punto croce)
   totem?: { profilo: Profilo; nome: string; immagine?: string | null } | null; // il MIO totem: le sue toppe compaiono nel cassetto
   personalizzate?: RigaPersonalizzata[]; // toppe create dall'organizzatore per il gruppo
+  condivisione?: DatiCondivisione; // la MIA bacheca: tasto per condividerla come immagine col personaggio
 }) {
   // toppe create a mano: quelle del gruppo (dall'organizzatore, member_id vuoto) e quelle personali di ognuno
   const [righe, setRighe] = useState<RigaPersonalizzata[]>(personalizzate);
@@ -598,6 +601,7 @@ export function Bacheca({
           {!modoRicamo && (
             <div className="mt-4 flex items-center justify-center gap-3">
               <TastoTondo etichetta="Togli dalla bacheca" icona={Icone.cestino} disabled={!sel} onClick={() => sel && togli(sel.id)} />
+              {condivisione && <CondividiBacheca tela={() => telaRef.current} prima={() => setSelezionato(null)} dati={condivisione} />}
             </div>
           )}
 

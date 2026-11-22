@@ -3,6 +3,7 @@
 import { AvvisoDataVicina, dataTroppoVicina } from "@/components/avviso-data";
 import { ProponiGiorni } from "@/components/disponibilita";
 import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
+import { RifaiEstrazione } from "@/components/rifai-estrazione";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { ToppaAvatar, lookDi } from "@/components/avatar";
@@ -146,6 +147,14 @@ function Organizza() {
   const mancanti = membri.filter((m) => !m.user_id);
   const puoEstrarre =
     modificabile && mancanti.length === 0 && membri.length >= 3;
+  // dopo l'estrazione si può rifare fino al giorno dello scambio compreso (stessa regola di rifai_estrazione)
+  const puoRifare = !modificabile && (giorniAlloScambio === null || giorniAlloScambio >= 0);
+  const rifaiEstrazione = async () => {
+    const { error } = await supabase.rpc("rifai_estrazione", { p_group_id: id });
+    if (error) return error.message;
+    await carica();
+    return null;
+  };
 
   async function salva(
     campi: Partial<Pick<Gruppo, "name" | "budget_eur" | "exchange_date" | "theme" | "giorni_proposti">>,
@@ -256,7 +265,7 @@ function Organizza() {
   async function estrai() {
     if (
       !window.confirm(
-        "Fare l'estrazione adesso? Si fa una volta sola e dopo nessuno potrà più entrare.",
+        "Fare l'estrazione adesso? Dopo nessuno potrà più entrare, a meno di rifarla.",
       )
     )
       return;
@@ -569,6 +578,7 @@ function Organizza() {
               ? "Ognuno, dalla pagina del gruppo, indica a chi fa il regalo (anche tu). Quando hanno indicato tutti, si aprono le buste. Chi ha scelto chi non lo vede nessuno."
               : "Hanno indicato tutti la loro persona: ognuno trova la sua busta nella pagina del gruppo."}
           </p>
+          {puoRifare && <RifaiEstrazione onRifai={rifaiEstrazione} />}
           {modificabile && (
             <Tasto tipo="secondario" className="mt-5" onClick={() => cambiaEstrazioneFatta(false)}>
               No, fatela fare al sito
@@ -602,9 +612,10 @@ function Organizza() {
             : membri.length < 3
               ? "Servono almeno 3 persone."
               : mancanti.length > 0
-                ? `Manca${mancanti.length > 1 ? "no" : ""} ${mancanti.map((m) => m.display_name.split(" ")[0]).join(", ")}. Quando entrano tutti potrai fare l'estrazione: si fa una volta sola.`
-                : "Ci sono tutti! Si fa una volta sola e dopo nessuno potrà più entrare."}
+                ? `Manca${mancanti.length > 1 ? "no" : ""} ${mancanti.map((m) => m.display_name.split(" ")[0]).join(", ")}. Quando entrano tutti potrai fare l'estrazione.`
+                : "Ci sono tutti! Dopo l'estrazione nessuno potrà più entrare (a meno di rifarla)."}
         </p>
+        {puoRifare && <RifaiEstrazione onRifai={rifaiEstrazione} />}
         {modificabile && (
           <Tasto
             className="mt-5"
@@ -632,6 +643,7 @@ function Organizza() {
 
       <AvvisoDataVicina
         aperto={avvisoData}
+        data={nuovaData || null}
         onAltraData={() => {
           setAvvisoData(false);
           document.getElementById("data")?.focus();

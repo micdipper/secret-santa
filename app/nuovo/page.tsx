@@ -232,6 +232,7 @@ export default function NuovoGruppo() {
 
       <AvvisoDataVicina
         aperto={avvisoData}
+        data={data || null}
         onAltraData={() => {
           setAvvisoData(false);
           document.getElementById("data")?.focus();

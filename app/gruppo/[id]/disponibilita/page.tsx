@@ -127,7 +127,7 @@ export default function PaginaDisponibilita() {
           </Feltro>
         )}
       </div>
-      <AvvisoDataVicina aperto={avviso !== null} onAltraData={() => setAvviso(null)} onContinua={() => avviso && fissa(avviso, true)} />
+      <AvvisoDataVicina aperto={avviso !== null} data={avviso} onAltraData={() => setAvviso(null)} onContinua={() => avviso && fissa(avviso, true)} />
     </main>
   );
 }

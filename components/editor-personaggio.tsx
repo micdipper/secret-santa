@@ -140,7 +140,7 @@ export function EditorPersonaggio({
 
       {premi.length > 0 &&
         parte({
-          titolo: "I tuoi premi",
+          titolo: "I tuoi doni",
           children: (
             <ul className="mt-4 flex flex-col gap-3">
               {premi.map((a) => {
