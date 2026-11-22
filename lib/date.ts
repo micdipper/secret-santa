@@ -24,3 +24,8 @@ export function dataBreve(data: string | null) {
 export function giornoPrima(data: string, n: number) {
   return new Date(new Date(`${data}T00:00:00Z`).getTime() - n * 86_400_000).toISOString().slice(0, 10);
 }
+
+// Quanti giorni da "da" ad "a" (tutte e due "AAAA-MM-GG")
+export function giorniTra(da: string, a: string) {
+  return Math.round((new Date(`${a}T00:00:00Z`).getTime() - new Date(`${da}T00:00:00Z`).getTime()) / 86_400_000);
+}

@@ -115,6 +115,12 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
     };
   }, [aperto, seme, giro, conPersonaggio, dati.nome, dati.gruppo, dati.totem?.nome]);
 
+  const anteprimaRef = useRef<string | null>(null);
+  useEffect(() => {
+    anteprimaRef.current = anteprima;
+  }, [anteprima]);
+  useEffect(() => () => void (anteprimaRef.current && URL.revokeObjectURL(anteprimaRef.current)), []);
+
   function chiudi() {
     setAperto(false);
     pezzi.current = null; // la prossima volta si rifotografa (la bacheca può essere cambiata)
@@ -244,7 +250,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
       </AnimatePresence>
 
       {/* il personaggio e il totem da "fotografare", fuori dallo schermo (solo mentre l'anteprima è aperta) */}
-      {aperto && (
+      {aperto && !pronta && (
         <div aria-hidden className="pointer-events-none fixed top-0 left-[-10000px]">
           <div ref={avatarRef} className="inline-block p-4">
             <ToppaAvatar look={dati.look} dimensione={DIAMETRO} nome={dati.nome} />

@@ -22,7 +22,7 @@ function primaDataBuona() {
 
 // Quanti mini giochi si perdono con questa data (stessa regola del database).
 // Oggi è "tutti o niente"; con i giochi in più (blocco E) diventerà quelli dei giorni già passati.
-export function giochiPersi(data: string | null): number {
+function giochiPersi(data: string | null): number {
   return dataTroppoVicina(data) ? NUMERO_GIOCHI : 0;
 }
 
