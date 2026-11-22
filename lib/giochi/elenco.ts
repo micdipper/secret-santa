@@ -4,7 +4,9 @@ import type { Gioco } from "./base.ts";
 import { campanelli } from "./campanelli.ts";
 import { neve } from "./neve.ts";
 import { palline } from "./palline.ts";
+import { panettone } from "./panettone.ts";
 import { regali } from "./regali.ts";
+import { renna } from "./renna.ts";
 import { PESO_REGALO, slitta } from "./slitta.ts";
 
 export type InfoGioco = {
@@ -82,6 +84,37 @@ export const GIOCHI: InfoGioco[] = [
   },
 ];
 
+// Blocco E (PIANO-GIOCHI.md sezione 10): i giochi nuovi, numerati 6-10 nel database. Per ora solo in sala prove:
+// entrano nel calendario vero (e in GIOCHI) col pezzo E4, insieme alla migrazione.
+export const GIOCHI_NUOVI: InfoGioco[] = [
+  {
+    n: 6,
+    nome: "Affetta il panettone",
+    indizio: "Qualcosa da mettere in testa, ma non un cappello.",
+    storia:
+      "In cucina gli elfi lanciano in aria panettoni e pandori: striscia il dito per affettarli al volo, più ne prendi con un colpo solo e più punti fai. Non lasciarli ricadere interi... e il carbone non si affetta, si evita.",
+    premio: "corna",
+    nomePremio: "Cerchietto con le corna di renna",
+    durataMax: 50,
+    gioco: panettone,
+  },
+  {
+    n: 7,
+    nome: "La renna saltatrice",
+    indizio: "Per chi ha sempre freddo alle orecchie.",
+    storia:
+      "Una renna si è persa e corre sui tetti per tornare alla slitta. Tocca lo schermo per farla saltare i comignoli e i vuoti tra le case: più va lontano, più punti fai, e le campanelle in cima ai salti valgono qualcosa in più. Corre sempre più veloce, e basta un comignolo per finire nella neve.",
+    premio: "paraorecchie",
+    nomePremio: "Paraorecchie di pelo",
+    durataMax: 600,
+    gioco: renna,
+    formatta: (p) => [`${p} m`, ""],
+  },
+];
+
+// Qualsiasi gioco dal suo numero nel database (1-5 di oggi, 6-10 nuovi)
+export const infoGioco = (n: number) => [...GIOCHI, ...GIOCHI_NUOVI].find((g) => g.n === n);
+
 export const TENTATIVI = 3;
 
 // Gli stessi controlli di private.regole_gioco (per i test con Node)
@@ -91,11 +124,14 @@ export const REGOLE_SERVER: Record<number, { durataMin: number; durataMax: numbe
   3: { durataMin: 2, durataMax: 600, scoreMax: 6000, puntiAlSecondo: 25 },
   4: { durataMin: 3, durataMax: 300, scoreMax: 3000000, puntiAlSecondo: 15000 }, // regali × 10000 + metri
   5: { durataMin: 5, durataMax: 65, scoreMax: 6000, puntiAlSecondo: 160 },
+  // blocco E: proposte da scrivere in private.regole_gioco con la migrazione del pezzo E4
+  6: { durataMin: 1, durataMax: 50, scoreMax: 4000, puntiAlSecondo: 80 },
+  7: { durataMin: 2, durataMax: 600, scoreMax: 15000, puntiAlSecondo: 30 },
 };
 
 // Il punteggio da mostrare: [grande, piccolo] (es. gioco 4 → ["🎁 3", "145 m"])
 export function testoPunti(n: number, punteggio: number): [string, string] {
-  return GIOCHI[n - 1]?.formatta?.(punteggio) ?? [String(punteggio), ""];
+  return infoGioco(n)?.formatta?.(punteggio) ?? [String(punteggio), ""];
 }
 
 // Il numero dei giochi è scritto anche in avvento.ts (per le pagine che non devono caricare i giochi): devono coincidere

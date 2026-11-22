@@ -6,7 +6,7 @@ import { normalizzaLook } from "@/components/avatar";
 import { calcolaRighe, type Partita, type Persona } from "@/components/giochi/classifica";
 import { PaginaGioco, type Avvio } from "@/components/giochi/pagina-gioco";
 import { casuale } from "@/lib/giochi/base";
-import { GIOCHI } from "@/lib/giochi/elenco";
+import { GIOCHI, infoGioco } from "@/lib/giochi/elenco";
 import { useOraServer } from "@/lib/giochi/ora";
 import { NOMI_PROVA } from "@/lib/prove";
 
@@ -32,7 +32,7 @@ function partiteFinte(n: number): Partita[] {
 
 export default function ProvaGioco() {
   const n = Number(useParams<{ n: string }>().n);
-  const info = GIOCHI[n - 1] ?? GIOCHI[0];
+  const info = infoGioco(n) ?? GIOCHI[0];
   const [partite, setPartite] = useState<Partita[]>(() => partiteFinte(info.n));
   const [aperto] = useState(() => {
     const mezzanotte = new Date();
@@ -91,7 +91,7 @@ export default function ProvaGioco() {
   return (
     <PaginaGioco
       info={info}
-      contesto={`Sala prove · gioco ${info.n} di 5 · tentativi illimitati`}
+      contesto={info.n > 5 ? "Sala prove · gioco nuovo, in prova · tentativi illimitati" : `Sala prove · gioco ${info.n} di 5 · tentativi illimitati`}
       indietro="/prove/giochi"
       etichettaIndietro="Torna al calendario di prova"
       apre={aperto.apre}

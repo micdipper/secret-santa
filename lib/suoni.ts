@@ -218,6 +218,15 @@ export const suoni = {
     campana(f, 0.03, 0.14);
     campana(f * 1.5, 0.1, 0.08);
   },
+  // gioco 6: fetta di panettone (fruscio di lama + tonfo morbido; sale coi dolci della stessa strisciata)
+  fetta(livello = 1) {
+    rumore(0.09, { volume: 0.12, filtro: 2600 * Math.pow(2, (Math.min(livello, 6) - 1) / 12), tipoFiltro: "bandpass", q: 1.5, scendi: 1.8 });
+    nota(200, 0.08, { volume: 0.12, scivola: 0.6, ritardo: 0.03 });
+  },
+  // gioco 7: salto della renna ("boing" morbido che sale)
+  salto() {
+    nota(330, 0.16, { tipo: "triangle", volume: 0.1, scivola: 1.9 });
+  },
   // gioco 4: regalo preso (due sonagli che salgono)
   regalo(livello = 0) {
     const f = 880 * Math.pow(2, (livello % 5) / 12);

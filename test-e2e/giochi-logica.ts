@@ -4,10 +4,12 @@
 // stesso seme = stessa partita, punteggi dentro i limiti del server (REGOLE_SERVER).
 import { PASSO, casuale, type Mondo, type Tocco } from "../lib/giochi/base.ts";
 import { geometria, type StatoCampanelli } from "../lib/giochi/campanelli.ts";
-import { GIOCHI, REGOLE_SERVER } from "../lib/giochi/elenco.ts";
+import { GIOCHI, GIOCHI_NUOVI, REGOLE_SERVER, infoGioco } from "../lib/giochi/elenco.ts";
 import { VOLO, casa, colpibile, fuori, xRenna, type StatoNeve } from "../lib/giochi/neve.ts";
 import type { StatoPalline } from "../lib/giochi/palline.ts";
+import { raggio, type Dolce, type StatoPanettone } from "../lib/giochi/panettone.ts";
 import { velocita as velocitaRegali, type StatoRegali } from "../lib/giochi/regali.ts";
+import { GRAVITA, SALTO, type Ostacolo, type StatoRenna } from "../lib/giochi/renna.ts";
 import { corridoio, type StatoSlitta } from "../lib/giochi/slitta.ts";
 
 const MONDI: Mondo[] = [
@@ -115,11 +117,64 @@ const botNeve: Bot = (s: StatoNeve, m, caso, bravura) => {
   return [];
 };
 
-const BOT: Record<string, Bot> = { neve: botNeve, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta };
-const nomeBot = (n: number) => ["palline", "campanelli", "regali", "slitta", "neve"][n - 1];
+// Gioco 6: il bot fa una strisciata dritta attraverso un dolce (o due vicini), solo se il carbone non è
+// sulla strada. Aspetta di aver visto il dolce (reazione); il medio è più lento e a volte non guarda il carbone.
+const distTratto = (px: number, py: number, ax: number, ay: number, bx: number, by: number) => {
+  const dx = bx - ax, dy = by - ay;
+  const l = dx * dx + dy * dy;
+  const t = l ? Math.min(1, Math.max(0, ((px - ax) * dx + (py - ay) * dy) / l)) : 0;
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+};
+const visti = new WeakMap<object, Map<number, number>>();
+const botPanettone: Bot = (s: StatoPanettone, m, caso, bravura) => {
+  if (s.dito) return [];
+  const forte = bravura === 1;
+  if (caso() > (forte ? 0.5 : 0.055)) return [];
+  let v = visti.get(s);
+  if (!v) visti.set(s, (v = new Map()));
+  const fondo = m.h - m.sotto - 18;
+  const pronti: Dolce[] = [];
+  for (const d of s.dolci) {
+    if (!d.vivo || d.nato > s.t || d.y > fondo) continue;
+    if (!v.has(d.id)) v.set(d.id, s.t);
+    if (s.t - v.get(d.id)! >= (forte ? 0.15 : 0.4) && d.tipo !== "carbone") pronti.push(d);
+  }
+  if (!pronti.length) return [];
+  // prima quelli che stanno ricadendo più in basso
+  pronti.sort((a, b) => b.y - a.y);
+  const a = pronti[0];
+  const b = forte ? pronti.find((d) => d !== a && Math.hypot(d.x - a.x, d.y - a.y) < 140) : undefined;
+  let [x1, y1, x2, y2] = b ? [a.x, a.y, b.x, b.y] : [a.x - 45, a.y, a.x + 45, a.y];
+  const lx = x2 - x1, ly = y2 - y1, l = Math.hypot(lx, ly) || 1;
+  [x1, y1, x2, y2] = [x1 - (lx / l) * 30, y1 - (ly / l) * 30, x2 + (lx / l) * 30, y2 + (ly / l) * 30];
+  const guarda = forte || caso() > 0.15;
+  if (guarda && s.dolci.some((d) => d.vivo && d.tipo === "carbone" && d.nato <= s.t && distTratto(d.x, d.y, x1, y1, x2, y2) < raggio("carbone") + 20)) return [];
+  return [
+    { tipo: "giu", id: 1, x: x1, y: y1 },
+    { tipo: "muovi", id: 1, x: (x1 + x2) / 2, y: (y1 + y2) / 2 },
+    { tipo: "su", id: 1, x: x2, y: y2 },
+  ];
+};
+
+// Gioco 7: il bot salta quando il centro dell'ostacolo è a metà del salto davanti a sé (il fortissimo
+// con un errore da ±12 ms, il medio da ±45 ms e ogni tanto si distrae). Se il fortissimo cade presto,
+// il percorso era impossibile.
+const sbagli = new WeakMap<object, number>();
+const botRenna: Bot = (s: StatoRenna, _m, caso, bravura) => {
+  if (!s.aTerra || s.caduta >= 0) return [];
+  const o: Ostacolo | undefined = s.ostacoli.find((x) => !x.superato && x.x + x.w > s.dist);
+  if (!o) return [];
+  if (!sbagli.has(o)) sbagli.set(o, (caso() - 0.5) * 2 * (bravura === 1 ? 0.012 : 0.045) + (bravura < 1 && caso() < 0.02 ? 0.25 : 0));
+  const volo = (2 * SALTO) / GRAVITA;
+  const davanti = o.x + o.w / 2 - s.dist;
+  return davanti <= s.v * (volo / 2 + sbagli.get(o)!) ? [tocco(0, 0)] : [];
+};
+
+const BOT: Record<string, Bot> = { neve: botNeve, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta, panettone: botPanettone, renna: botRenna };
+const nomeBot = (n: number) => ["palline", "campanelli", "regali", "slitta", "neve", "panettone", "renna"][n - 1];
 
 function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
-  const { gioco } = GIOCHI[n - 1];
+  const { gioco } = infoGioco(n)!;
   const bot = BOT[nomeBot(n)];
   const s = gioco.crea(seme, mondo);
   const caso = casuale(seme ^ 0x5bd1e995);
@@ -139,9 +194,9 @@ function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
   return { punteggio: gioco.hud(s).punteggio, secondi: passi * PASSO, firma: firma.join(",") };
 }
 
-for (const info of GIOCHI) {
+for (const info of [...GIOCHI, ...GIOCHI_NUOVI].filter((g) => !process.env.SOLO || process.env.SOLO.split(",").includes(String(g.n)))) {
   const r = REGOLE_SERVER[info.n];
-  const partite = info.n === 2 || info.n === 4 ? 400 : PARTITE; // i campanelli durano molto: meno partite
+  const partite = info.n === 2 || info.n === 4 || info.n === 7 ? 400 : PARTITE; // i campanelli durano molto: meno partite
   const punti: number[] = [];
   const dettagli: Record<string, number[]> = { medio: [], forte: [] };
   const puntiBot: Record<string, number[]> = { medio: [], forte: [] };
@@ -157,6 +212,7 @@ for (const info of GIOCHI) {
     if (punteggio > r.puntiAlSecondo * secondi + 100) errore(`gioco ${info.n} seme ${seme}: troppi punti al secondo (${punteggio} in ${secondi.toFixed(1)} s)`);
     if (secondi < r.durataMin && punteggio > 0) errore(`gioco ${info.n} seme ${seme}: dura ${secondi.toFixed(1)} s, sotto il minimo ${r.durataMin} (il server la annullerebbe)`);
     if (secondi > r.durataMax) errore(`gioco ${info.n} seme ${seme}: dura ${secondi.toFixed(1)} s, oltre ${r.durataMax}`);
+    if (info.n === 7 && bravura === 1 && secondi < 300) errore(`gioco 7 seme ${seme}: il bot perfetto cade dopo ${secondi.toFixed(0)} s (percorso impossibile?)`);
     if (info.n === 4 && bravura === 1 && secondi < 200) errore(`gioco 4 seme ${seme}: il bot perfetto si schianta dopo ${secondi.toFixed(0)} s (percorso impossibile?)`);
     if (i < 30) {
       const b = partita(info.n, seme, mondo, bravura);

@@ -5,7 +5,8 @@ import { normalizzaLook } from "@/components/avatar";
 import { AnnunciVincitori } from "@/components/giochi/annuncio";
 import { Benvenuto, Calendario, type Finestra } from "@/components/giochi/calendario";
 import { GIORNO, giorniAlloScambio } from "@/lib/giochi/avvento";
-import { Tasto, TestataInterna } from "@/components/ui";
+import { Feltro, Tasto, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { GIOCHI_NUOVI } from "@/lib/giochi/elenco";
 import { useOraServer } from "@/lib/giochi/ora";
 import { NOMI_PROVA } from "@/lib/prove";
 
@@ -40,6 +41,15 @@ export default function ProvaCalendario() {
       <div className="mt-6">
         <Calendario finestre={finestre} ora={ora} href={(n) => `/prove/giochi/${n}`} gruppo={null} sempreAperte />
       </div>
+      <Feltro className="mt-6">
+        <TitoloRiquadro>Giochi nuovi, in prova</TitoloRiquadro>
+        <p className="mt-2 text-sm text-inchiostro/70">Non sono ancora nel calendario: arrivano tutti insieme quando saranno pronti.</p>
+        {GIOCHI_NUOVI.map((g) => (
+          <TastoLink key={g.n} href={`/prove/giochi/${g.n}`} tipo="secondario" className="mt-4">
+            {g.nome}
+          </TastoLink>
+        ))}
+      </Feltro>
       <Tasto tipo="secondario" className="mt-6" onClick={() => setAnnunci((a) => a + 1)}>
         Prova l&apos;annuncio dei vincitori
       </Tasto>
