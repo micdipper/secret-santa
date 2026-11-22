@@ -28,7 +28,7 @@ export default function ProvaAggiornamenti() {
         nota={<p>Acqua in bocca! Budget 20 €.</p>}
         azioni={
           <TastoLink href="/prova-busta" tipo="secondario" className="mt-5">
-            La carta che brilla
+            Rivedi la sua card
           </TastoLink>
         }
       />
