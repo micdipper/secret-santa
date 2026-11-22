@@ -340,18 +340,10 @@ export function AperturaBusta({
       D.requestPermission().catch(() => {});
   }
 
-  // Me lo ricordo: la pagina del gruppo mostrerà il promemoria (e sblocca il premio calendario)
+  // Me lo ricordo: la pagina del gruppo mostrerà il promemoria (e sblocca il premio calendario).
+  // Lato server si controlla che l'estrazione sia fatta e che esista un abbinamento (public.apri_busta).
   async function segnaAperta() {
-    const { data } = await supabase.auth.getSession();
-    const uid = data.session?.user.id;
-    if (uid) {
-      await supabase
-        .from("group_members")
-        .update({ envelope_opened_at: new Date().toISOString() })
-        .eq("group_id", groupId)
-        .eq("user_id", uid)
-        .is("envelope_opened_at", null);
-    }
+    await supabase.rpc("apri_busta", { p_group: groupId });
   }
 
   // il biglietto è fuori: festa!
