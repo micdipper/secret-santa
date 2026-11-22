@@ -366,7 +366,15 @@ export function componi(canvas: HTMLCanvasElement, p: Pezzi, scelte: Scelte, con
   fondo(ctx, scelte.sfondo, scelte.neve, r);
   const testo = piuLeggibile(scelte.sfondo, [CREMA, INCHIOSTRO]);
   // colore d'accento ("del secretfanta" e la nota): il più leggibile tra quelli vivaci, mai uguale allo sfondo
-  const accento = piuLeggibile(scelte.sfondo, [SENAPE, COLORI.rosa, COLORI.ghiaccio, COLORI.vermiglio, COLORI.abete, COLORI.notte].filter((c) => c !== scelte.sfondo));
+  // colore d'accento ("secretfanta" e la nota), con le regole WCAG sul contrasto con lo sfondo: si preferisce
+  // il livello AA del testo normale (4,5:1); se nessun colore acceso ci arriva, quello del testo grande (3:1, e
+  // questi testi sono grandi e in grassetto). Sempre un colore che non somiglia a quello del testo.
+  const accesi = [SENAPE, COLORI.vermiglio, COLORI.rosa, COLORI.ghiaccio, "#b3123e", "#6a2c91", COLORI.abete, COLORI.notte, CREMA];
+  const possibili = accesi.filter((c) => distanza(c, testo) > 100);
+  const accento =
+    possibili.find((c) => contrasto(c, scelte.sfondo) >= 4.5) ??
+    possibili.find((c) => contrasto(c, scelte.sfondo) >= 3) ??
+    piuLeggibile(scelte.sfondo, possibili);
   const inizio = titolo(ctx, p, testo, accento);
   toppaSito(ctx, p, scelte.toppaSito);
 
