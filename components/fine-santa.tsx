@@ -41,7 +41,7 @@ export function testoFineSanta(f: Pick<FineGruppo, "data" | "giorni">) {
       : f.giorni === 1
         ? `Manca 1 giorno: verranno cancellati domani, ${giornoMese(f.data)}.`
         : `Mancano ${f.giorni} giorni: verranno cancellati ${conArticolo(f.data)}.`;
-  return `A fine Secret Santa gli account vengono eliminati. Fai uno screenshot della tua bacheca e del tuo personaggio per ricordo! ${quando}`;
+  return `A fine Secret Santa gli account vengono eliminati. Salva un ricordo: la tua bacheca col tuo personaggio diventa un'immagine da tenere o condividere. ${quando}`;
 }
 
 // Il titolo della scheda
@@ -171,8 +171,8 @@ export function FineSanta({
           prossimi Secret Santa.
         </p>
         {memberId && (
-          <TastoLink href={prova ? "/prove/bacheca" : `/gruppo/${groupId}/bacheca/${memberId}`} className="mt-6">
-            Vai alla tua bacheca
+          <TastoLink href={prova ? "/prove/bacheca" : `/gruppo/${groupId}/bacheca/${memberId}?condividi=1`} className="mt-6">
+            Salva un ricordo
           </TastoLink>
         )}
         <Tasto tipo={memberId ? "secondario" : "primario"} className={memberId ? "mt-3" : "mt-6"} onClick={() => setScheda(false)}>

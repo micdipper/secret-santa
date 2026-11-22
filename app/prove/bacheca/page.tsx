@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { lookIniziale } from "@/components/avatar";
 import { Bacheca } from "@/components/bacheca";
 import { leggiToppeProva } from "@/components/editor-toppe";
 import type { RigaPersonalizzata } from "@/components/toppe";
@@ -51,7 +52,7 @@ function Prova() {
         Totem: <b className="font-titolo text-base text-senape">{TOTEM_PREDEFINITI[profilo].nome}</b>
       </p>
       <div className="mt-4">
-        <Bacheca groupId="prova" memberId="prova" modificabile iniziali={[]} prova iniziaRicamando={ricamo} totem={{ profilo, nome: TOTEM_PREDEFINITI[profilo].nome }} personalizzate={personalizzate} />
+        <Bacheca groupId="prova" memberId="prova" modificabile iniziali={[]} prova iniziaRicamando={ricamo} totem={{ profilo, nome: TOTEM_PREDEFINITI[profilo].nome }} personalizzate={personalizzate} condivisione={{ look: lookIniziale("prova-condividi"), nome: "Giulia", gruppo: "Sala prove", totem: { profilo, nome: TOTEM_PREDEFINITI[profilo].nome } }} />
       </div>
     </main>
   );

@@ -53,7 +53,7 @@ await avviso.getByRole("button", { name: /sparisce/ }).click();
 const scheda = p.getByRole("dialog");
 const testo = (await scheda.textContent()) ?? "";
 ok(testo.includes("Mancano 7 giorni") && testo.includes(fine), `scheda: "Mancano 7 giorni" e la data giusta (${fine}), non 5`);
-ok(testo.includes("Fai uno screenshot della tua bacheca e del tuo personaggio"), "ricorda di fare lo screenshot");
+ok(testo.includes("Salva un ricordo"), "ricorda di salvare un ricordo");
 await scheda.getByRole("button", { name: "Ho capito" }).click();
 await p.goto(`${SITO}/gruppo/${gid}/guardaroba`);
 await p.waitForTimeout(2000);

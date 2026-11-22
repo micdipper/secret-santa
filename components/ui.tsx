@@ -257,6 +257,32 @@ export const Icone = {
       <path d="M12 12.5l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" />
     </svg>
   ),
+  // condividi "classico": su iPhone il quadrato con la freccia, su Android i tre pallini collegati
+  condividiIos: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 3v12M8 7l4-4 4 4" />
+      <path d="M8 10H6.5A1.5 1.5 0 0 0 5 11.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5H16" />
+    </svg>
+  ),
+  condividiAndroid: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <circle cx="18" cy="5.5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="18.5" r="2.5" />
+      <path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1" />
+    </svg>
+  ),
+  rimescola: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M3 7h3.5c2 0 3.2 1 4.3 2.6l2.4 3.8C14.3 15 15.5 17 17.5 17H21M18 14l3 3-3 3" />
+      <path d="M3 17h3.5c1.3 0 2.2-.5 3-1.3M14.2 8.3C15 7.5 16 7 17.5 7H21M18 4l3 3-3 3" />
+    </svg>
+  ),
+  scarica: (
+    <svg viewBox="0 0 24 24" aria-hidden>
+      <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" />
+    </svg>
+  ),
   lucchetto: (
     <svg viewBox="0 0 24 24" aria-hidden>
       <rect x="5" y="11" width="14" height="9.5" rx="2.5" />
