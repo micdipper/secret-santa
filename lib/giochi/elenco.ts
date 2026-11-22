@@ -1,4 +1,5 @@
 // I 5 giochi del calendario: nomi, regole, premi e limiti (gli stessi di private.regole_gioco nel database).
+import { NUMERO_GIOCHI } from "./avvento.ts";
 import type { Gioco } from "./base.ts";
 import { campanelli } from "./campanelli.ts";
 import { neve } from "./neve.ts";
@@ -96,3 +97,6 @@ export const REGOLE_SERVER: Record<number, { durataMin: number; durataMax: numbe
 export function testoPunti(n: number, punteggio: number): [string, string] {
   return GIOCHI[n - 1]?.formatta?.(punteggio) ?? [String(punteggio), ""];
 }
+
+// Il numero dei giochi è scritto anche in avvento.ts (per le pagine che non devono caricare i giochi): devono coincidere
+if (GIOCHI.length !== NUMERO_GIOCHI) throw new Error("GIOCHI e NUMERO_GIOCHI (avvento.ts) non coincidono");

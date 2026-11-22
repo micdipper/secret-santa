@@ -22,7 +22,7 @@ export function AscoltaTocchi() {
   }, []);
   // il tasto per togliere musica e suoni: sempre visibile, in ogni schermata, in alto a destra
   return (
-    <div className="pointer-events-none !fixed inset-x-0 top-0 !z-[60] mx-auto w-full max-w-md px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] mx-auto w-full max-w-md px-5 pt-[calc(env(safe-area-inset-top)+24px)]">
       <TastoAudio className="pointer-events-auto ml-auto" />
     </div>
   );

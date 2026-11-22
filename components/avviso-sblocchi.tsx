@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { PopUp } from "@/components/pop-up";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
@@ -16,7 +16,8 @@ const SBLOCCHI = {
   },
   giochi: {
     titolo: "Il calendario dei mini giochi è aperto!",
-    testo: "Fino allo scambio ogni giorno c'è un pacchetto da scartare: un mini gioco con 3 tentativi, la classifica in diretta e un dono per chi vince la giornata.",
+    testo:
+      "Fino allo scambio ogni giorno c'è un pacchetto da scartare: un mini gioco con 3 tentativi, la classifica in diretta e un dono per chi vince la giornata.",
     tasto: "Apri il calendario",
     pagina: "giochi",
   },
@@ -45,44 +46,24 @@ export function AvvisoSblocchi({ groupId, chatAperta, giochiAperti }: { groupId:
 
   const s = mostra ? SBLOCCHI[mostra] : null;
   return (
-    <AnimatePresence>
-      {s && (
-        <motion.div
-          className="fixed inset-0 z-[500] flex items-center justify-center bg-black/55 px-5 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={s.titolo}
-            className="feltro w-full max-w-sm p-6 text-center"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 220, damping: 16 }}
-          >
-            <div className="relative">
-              <p className="text-sm text-inchiostro/70">Si è sbloccato qualcosa</p>
-              <TitoloRiquadro className="mt-1">{s.titolo}</TitoloRiquadro>
-              <p className="mt-3">{s.testo}</p>
-              <Tasto
-                className="mt-6"
-                onClick={() => {
-                  setMostra(null);
-                  router.push(`/gruppo/${groupId}/${s.pagina}`);
-                }}
-              >
-                {s.tasto}
-              </Tasto>
-              <Tasto tipo="secondario" className="mt-3" onClick={() => setMostra(null)}>
-                Chiudi
-              </Tasto>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <PopUp aperto={!!s} etichetta="sblocco-titolo" className="text-center">
+      <p className="text-sm text-inchiostro/70">Si è sbloccato qualcosa</p>
+      <TitoloRiquadro className="mt-1">
+        <span id="sblocco-titolo">{s?.titolo}</span>
+      </TitoloRiquadro>
+      <p className="mt-3">{s?.testo}</p>
+      <Tasto
+        className="mt-6"
+        onClick={() => {
+          setMostra(null);
+          router.push(`/gruppo/${groupId}/${s?.pagina}`);
+        }}
+      >
+        {s?.tasto}
+      </Tasto>
+      <Tasto tipo="secondario" className="mt-3" onClick={() => setMostra(null)}>
+        Chiudi
+      </Tasto>
+    </PopUp>
   );
 }
