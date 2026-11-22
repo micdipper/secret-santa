@@ -15,7 +15,7 @@ export const NOVITA_SITO: NotaSito[] = [
       },
       {
         titolo: "I premi ora si chiamano doni",
-        testo: "Così non si confondono coi regali del Secret Santa. E una volta vinti restano tuoi per sempre: anche se poi togli qualcosa dalla bacheca, il dono non te lo riprende nessuno.",
+        testo: "Così non si confondono coi regali del Secret Santa. E una volta ricevuti restano tuoi per sempre: anche se poi togli qualcosa dalla bacheca, il dono non te lo riprende nessuno.",
       },
       {
         titolo: "Occhio indiscreto?",
@@ -24,6 +24,10 @@ export const NOVITA_SITO: NotaSito[] = [
       {
         titolo: "Date più chiare",
         testo: "Se l'organizzatore sceglie una data troppo vicina, il sito ora dice chiaro quanti mini giochi si perdono.",
+      },
+      {
+        titolo: "Il gruppo non è per sempre",
+        testo: "Qualche giorno dopo lo scambio il gruppo sparisce, per fare spazio ai prossimi (il sito è gratis e lo spazio è poco). Una striscia in fondo alla pagina del gruppo ti avvisa per tempo: chiudila pure, domani torna.",
       },
       { titolo: "Bug schiacciati", testo: "Qua e là, come sempre." },
     ],

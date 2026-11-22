@@ -52,7 +52,7 @@ export function RifaiEstrazione({ onRifai }: { onRifai: () => Promise<string | n
                   <li>Chi regala a chi sparisce e le buste si richiudono: ognuno dovrà riaprire la sua.</li>
                   <li>La Santa Chat si svuota, così nessuno riceve messaggi dal Babbo sbagliato.</li>
                   <li>Il gruppo torna in attesa: il link d&apos;invito torna a funzionare, puoi aggiungere persone ed esclusioni e poi rifare l&apos;estrazione.</li>
-                  <li>I doni già vinti restano a tutti.</li>
+                  <li>I doni ricevuti restano a tutti.</li>
                 </ul>
                 {errore && (
                   <div className="mt-4">

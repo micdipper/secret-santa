@@ -121,7 +121,7 @@ export function SecretSecretSanta({
     suoni.fanfara();
     if (prova) return;
     const { error } = await clientSoloBrowser().rpc("vinci_secret_secret_santa", { p_group_id: groupId });
-    if (error) return setErrore("Il dono non si è salvato: controlla la connessione e riprova a vincere.");
+    if (error) return setErrore("Il dono non si è salvato: controlla la connessione e riprova a vincere per riceverlo.");
     controllaPremi();
   }
 

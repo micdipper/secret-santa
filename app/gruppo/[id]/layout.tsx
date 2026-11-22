@@ -35,7 +35,7 @@ export default async function LayoutGruppo({ children, params }: LayoutProps<"/g
       <RegistraAccesso groupId={id} nome={gruppo.name} invito={gruppo.invite_code} />
       {children}
       {mieFoto > MAX_FOTO_BACHECA && <FotoInPiu memberId={io.id} />}
-      {fine && <FineSanta groupId={id} fine={fine as FineGruppo} />}
+      {fine && <FineSanta groupId={id} memberId={io.id} fine={fine as FineGruppo} />}
     </>
   );
 }

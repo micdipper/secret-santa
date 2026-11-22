@@ -98,7 +98,7 @@ export function AnnunciVincitori({ gruppo, vittorie, onFinito }: { gruppo: strin
                 <ToppaAvatar look={conPremio(ora.look, info.premio)} dimensione={128} nome={ora.nome} />
               </motion.span>
               <p className="mt-4">
-                {ora.mio ? "Il dono è tuo:" : "Si porta a casa:"}{" "}
+                {ora.mio ? "Ricevi in dono:" : "Riceve in dono:"}{" "}
                 <span className="etichetta-stoffa bg-senape font-titolo text-inchiostro">{info.nomePremio}</span>
               </p>
               {ora.mio ? (

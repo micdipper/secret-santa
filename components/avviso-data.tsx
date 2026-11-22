@@ -66,8 +66,8 @@ export function AvvisoDataVicina({
               <p className="mt-3">
                 I mini giochi dell&apos;avvento sono {NUMERO_GIOCHI}, uno al giorno fino allo scambio.{" "}
                 {tutti
-                  ? "Con questa data non si potrà giocare a nessuno, e nessuno vincerà i doni che ci sono in palio."
-                  : `Con questa data i primi ${persi} non si potranno giocare, e con loro i doni che si vincono.`}
+                  ? "Con questa data non si potrà giocare a nessuno, e nessuno riceverà i doni che ci sono in palio."
+                  : `Con questa data i primi ${persi} non si potranno giocare, e con loro i doni che si ricevono vincendoli.`}
               </p>
               <Tasto className="mt-6" onClick={onAltraData}>
                 Scegli un altro giorno
