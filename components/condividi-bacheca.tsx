@@ -170,7 +170,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
             >
               <TastoTondo etichetta="Chiudi" icona={Icone.chiudi} onClick={chiudi} className="!absolute top-4 left-4 z-10" />
-              <div className="relative flex min-h-0 flex-col">
+              <div className="relative flex min-h-0 flex-col overflow-y-auto">
                 <TitoloRiquadro className="px-14 text-center text-balance">
                   <span id="condividi-titolo">Condividi la bacheca</span>
                 </TitoloRiquadro>
@@ -195,7 +195,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                 </div>
 
                 {/* anteprima 9:16 */}
-                <div className="relative mx-auto mt-4 aspect-[9/16] w-full max-w-[min(100%,calc((100dvh-420px)*9/16))] shrink-0 overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
+                <div className={`relative mx-auto mt-4 aspect-[9/16] w-full ${android ? "max-w-[min(62%,calc((100dvh-560px)*9/16))]" : "max-w-[min(62%,calc((100dvh-480px)*9/16))]"} shrink-0 overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]`}>
                   {anteprima ? (
                     // eslint-disable-next-line @next/next/no-img-element -- immagine appena creata nel telefono
                     <img src={anteprima} alt={`Anteprima: la bacheca di ${dati.nome} col personaggio`} className="block size-full object-contain" />
@@ -228,7 +228,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                     </Tasto>
                     {android && (
                       <Tasto tipo="secondario" className="mt-3 shrink-0" onClick={scarica}>
-                        Salva nel telefono
+                        Salva
                       </Tasto>
                     )}
                   </>

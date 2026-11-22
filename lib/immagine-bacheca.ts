@@ -299,10 +299,16 @@ function titolo(ctx: CanvasRenderingContext2D, p: Pezzi, testo: string, accento:
   const s1 = adattaTesto(ctx, "Questa è la mia bacheca", `700 {s}px ${p.fontTitoli}`, 84, larghezza);
   y += s1 * 1.2;
   ctx.fillText("Questa è la mia bacheca", x, y);
-  ctx.fillStyle = accento;
+  // "del" nel colore del testo, solo "secretfanta" nel colore d'accento (staccato dallo sfondo)
   const s2 = adattaTesto(ctx, "del secretfanta", `700 {s}px ${p.fontTitoli}`, 64, larghezza);
   y += s2 * 1.1;
-  ctx.fillText("del secretfanta", x, y);
+  const wDel = ctx.measureText("del ").width;
+  const wTutto = ctx.measureText("del secretfanta").width;
+  ctx.textAlign = "left";
+  ctx.fillText("del ", x - wTutto / 2, y);
+  ctx.fillStyle = accento;
+  ctx.fillText("secretfanta", x - wTutto / 2 + wDel, y);
+  ctx.textAlign = "center";
   if (p.nomeTotem) {
     ctx.fillStyle = testo;
     ctx.globalAlpha = 0.85;
