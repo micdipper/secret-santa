@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { ToppaAvatar, type Look } from "@/components/avatar";
 import { FrancobolloTotem } from "@/components/totem";
 import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
-import { combinazioni, componi, type Pezzi } from "@/lib/immagine-bacheca";
+import { componi, scelta, type Pezzi } from "@/lib/immagine-bacheca";
 import type { Profilo } from "@/lib/totem";
 
 export type DatiCondivisione = {
@@ -96,8 +96,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
           };
         }
         const c = document.createElement("canvas");
-        const tutte = combinazioni(pezzi.current.coloreTela, seme);
-        componi(c, pezzi.current, tutte[giro % tutte.length], conPersonaggio, seme + giro);
+        componi(c, pezzi.current, scelta(pezzi.current.coloreTela, seme, giro), conPersonaggio, seme + giro);
         const blob = await new Promise<Blob | null>((ok) => c.toBlob(ok, "image/jpeg", 0.92));
         if (!blob) throw new Error("niente immagine");
         if (annullato) return;
@@ -165,24 +164,22 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
               role="dialog"
               aria-modal="true"
               aria-labelledby="condividi-titolo"
-              className="feltro flex max-h-full w-full max-w-sm flex-col p-6"
+              className="feltro relative flex max-h-full w-full max-w-sm flex-col p-6"
               initial={{ scale: 0.9, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
             >
+              <TastoTondo etichetta="Chiudi" icona={Icone.chiudi} onClick={chiudi} className="!absolute top-4 left-4 z-10" />
               <div className="relative flex min-h-0 flex-col">
-                <div className="flex items-start gap-3">
-                  <TitoloRiquadro className="min-w-0 flex-1 pt-3">
-                    <span id="condividi-titolo">Condividi la bacheca</span>
-                  </TitoloRiquadro>
-                  <TastoTondo etichetta="Chiudi" icona={Icone.chiudi} onClick={chiudi} />
-                </div>
+                <TitoloRiquadro className="px-14 text-center text-balance">
+                  <span id="condividi-titolo">Condividi la bacheca</span>
+                </TitoloRiquadro>
 
                 {/* con il personaggio oppure solo la bacheca (tutta visibile) */}
-                <div role="radiogroup" aria-label="Cosa mettere nell'immagine" className="mt-4 grid shrink-0 grid-cols-2 gap-3">
+                <div role="radiogroup" aria-label="Cosa mettere nell'immagine: con il tuo personaggio o solo la bacheca" className="mt-4 grid shrink-0 grid-cols-2 gap-3">
                   {[
-                    { si: true, testo: "Col personaggio" },
+                    { si: true, testo: "Con te" },
                     { si: false, testo: "Solo bacheca" },
                   ].map((o) => (
                     <button
@@ -191,7 +188,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                       role="radio"
                       aria-checked={conPersonaggio === o.si}
                       onClick={() => setConPersonaggio(o.si)}
-                      className={`cliccabile cucitura relative min-h-14 rounded-full px-3 font-titolo text-[18px] leading-tight ${conPersonaggio === o.si ? "stoffa-vermiglio" : "stoffa-chiara"}`}
+                      className={`cliccabile cucitura relative min-h-14 rounded-full px-3 font-titolo text-[13px] leading-tight whitespace-nowrap min-[360px]:text-[15px] ${conPersonaggio === o.si ? "stoffa-vermiglio" : "stoffa-chiara"}`}
                     >
                       {o.testo}
                     </button>
@@ -199,7 +196,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                 </div>
 
                 {/* anteprima 9:16 */}
-                <div className="relative mx-auto mt-4 aspect-[9/16] min-h-0 w-full max-w-[min(100%,calc((100dvh-500px)*9/16))] shrink overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
+                <div className="relative mx-auto mt-4 aspect-[9/16] min-h-0 w-full max-w-[min(100%,calc((100dvh-420px)*9/16))] shrink overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
                   {anteprima ? (
                     // eslint-disable-next-line @next/next/no-img-element -- immagine appena creata nel telefono
                     <img src={anteprima} alt={`Anteprima: la bacheca di ${dati.nome} col personaggio`} className="block size-full object-cover" />
@@ -209,14 +206,14 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                 </div>
 
                 {/* sotto l'anteprima, così non copre niente dell'immagine */}
-                <div className="mt-3 flex shrink-0 items-center justify-center gap-3">
+                <div className="mt-3 flex shrink-0 flex-col items-center gap-1">
                   <TastoTondo
                     etichetta="Rimescola: un'altra composizione"
                     icona={Icone.rimescola}
                     disabled={!pronta}
                     onClick={() => setGiro((g) => g + 1)}
                   />
-                  <span className="text-sm text-inchiostro/80">Rimescola</span>
+                  <span aria-hidden className="text-center text-sm text-inchiostro/80">Rimescola</span>
                 </div>
 
                 {errore && (

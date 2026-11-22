@@ -46,17 +46,18 @@ const distanza = (a: string, b: string) => {
   return Math.hypot(r1 - r2, g1 - g2, b1 - b2);
 };
 
-// Le combinazioni possibili, in ordine sparso dal seme: "Rimescola" passa alla successiva
-export function combinazioni(coloreTela: string, seme: number): Scelte[] {
+// La combinazione n. "giro" (0 = la prima, poi una in più a ogni "Rimescola"): il COLORE dello sfondo cambia
+// a ogni giro, girando su tutti quelli permessi (4, o 3 se uno è simile alla tela), e cambiano anche l'angolo
+// del personaggio e stelline/neve. Il seme sceglie da dove si parte.
+export function scelta(coloreTela: string, seme: number, giro: number): Scelte {
   const sfondi = SFONDI.filter((s) => distanza(s, coloreTela) > 90);
-  const tutte: Scelte[] = [];
-  for (const angolo of ANGOLI) for (const sfondo of sfondi) for (const neve of [false, true]) tutte.push({ angolo, sfondo, neve });
-  const r = casuale(seme);
-  for (let i = tutte.length - 1; i > 0; i--) {
-    const j = Math.floor(r() * (i + 1));
-    [tutte[i], tutte[j]] = [tutte[j], tutte[i]];
-  }
-  return tutte;
+  const n = sfondi.length;
+  const k = seme + giro;
+  return {
+    sfondo: sfondi[k % n],
+    angolo: ANGOLI[(seme + giro + Math.floor(giro / n)) % ANGOLI.length],
+    neve: (seme + giro) % 2 === 1,
+  };
 }
 
 function casuale(seme: number) {
