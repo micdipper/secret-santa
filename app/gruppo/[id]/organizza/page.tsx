@@ -632,6 +632,7 @@ function Organizza() {
 
       <AvvisoDataVicina
         aperto={avvisoData}
+        data={nuovaData || null}
         onAltraData={() => {
           setAvvisoData(false);
           document.getElementById("data")?.focus();
