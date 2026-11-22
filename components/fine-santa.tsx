@@ -44,11 +44,17 @@ export function testoFineSanta(f: Pick<FineGruppo, "data" | "giorni">) {
   return `A fine Secret Santa gli account vengono eliminati. Fai uno screenshot della tua bacheca e del tuo personaggio per ricordo! ${quando}`;
 }
 
-// La riga corta della striscia
+// Il titolo della scheda
 export function testoStriscia(f: Pick<FineGruppo, "data" | "giorni">) {
   if (f.giorni <= 0) return "Stanotte il gruppo sparisce";
   if (f.giorni === 1) return "Domani il gruppo sparisce";
   return `Il gruppo sparisce ${conArticolo(f.data)}`;
+}
+// La parte grande della striscia (sempre corta, su una riga: al massimo "il 30 dicembre"); sopra c'è "Il gruppo sparisce"
+export function quandoStriscia(f: Pick<FineGruppo, "data" | "giorni">) {
+  if (f.giorni <= 0) return "stanotte";
+  if (f.giorni === 1) return "domani";
+  return conArticolo(f.data);
 }
 
 function giorniTra(da: string, a: string) {
@@ -128,14 +134,18 @@ export function FineSanta({
               <button
                 type="button"
                 onClick={() => setScheda(true)}
-                className="cliccabile cucitura stoffa-vermiglio relative flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-full py-2 pr-5 pl-4 text-left"
+                aria-label={`${testoStriscia(fine)}. Tocca per sapere di più`}
+                className="cliccabile cucitura stoffa-vermiglio relative flex min-h-[72px] min-w-0 flex-1 items-center gap-3 rounded-full py-4 pr-5 pl-4"
               >
-                <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-crema text-vermiglio [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-2">
+                <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-crema text-vermiglio max-[379px]:hidden [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-2">
                   {Icone.calendario}
                 </span>
-                <span className="min-w-0">
-                  <span className="block font-titolo text-[18px] leading-tight">{testoStriscia(fine)}</span>
-                  <span className="block text-sm opacity-85">Tocca per sapere di più</span>
+                <span className="min-w-0 flex-1 text-left max-[379px]:pl-3">
+                  <span className="block truncate text-sm leading-tight opacity-90">Il gruppo sparisce</span>
+                  <span data-quando className="block truncate font-titolo text-[18px] leading-tight">{quandoStriscia(fine)}</span>
+                </span>
+                <span aria-hidden className="shrink-0 max-[359px]:hidden [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[2.5]">
+                  {Icone.avanti}
                 </span>
               </button>
               <TastoTondo

@@ -48,7 +48,7 @@ ok(await avviso.waitFor({ timeout: 10000 }).then(() => true, () => false), "nell
 // lo scambio era 5 giorni fa (cancellazione tra 5 giorni), ma l'avviso compare oggi per la prima volta:
 // per la regola "mai prima di 7 giorni dal primo avviso" i giorni sono 7
 const fine = new Date(Date.now() + 7 * 864e5).toLocaleDateString("it-IT", { day: "numeric", month: "long", timeZone: "Europe/Rome" });
-ok(((await avviso.textContent()) ?? "").includes(`sparisce il ${fine}`) || ((await avviso.textContent()) ?? "").includes(`sparisce l'${fine}`), `striscia: "Il gruppo sparisce il ${fine}"`);
+ok(((await avviso.textContent()) ?? "").includes(fine), `striscia: "Il gruppo sparisce / il ${fine}"`);
 await avviso.getByRole("button", { name: /sparisce/ }).click();
 const scheda = p.getByRole("dialog");
 const testo = (await scheda.textContent()) ?? "";
@@ -81,7 +81,7 @@ await p.reload();
 await p.waitForTimeout(2000);
 ok(!(await avviso.isVisible()), "dopo \"Non mostrare più\" non torna, neanche il giorno dopo");
 await p.goto(`${SITO}/prove/fine-santa`);
-ok((await p.getByText("Stanotte il gruppo sparisce").count()) === 1 && (await p.getByText("Domani il gruppo sparisce").count()) === 1, "sala prove: i casi 7, 2, 1 e oggi");
+ok((await p.getByText("stanotte", { exact: true }).count()) === 1 && (await p.getByText("domani", { exact: true }).count()) === 1, "sala prove: i casi 7, 2, 1 e oggi");
 ok(errori.length === 0, `nessun errore nelle pagine${errori.length ? ": " + errori.join(" | ") : ""}`);
 await browser.close();
 console.log(`\nGruppo di prova da ripulire (chiedere prima a Marzia): ${gid}\nAccesso di prova: ${uid}`);
