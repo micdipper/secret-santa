@@ -90,7 +90,6 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
             nome: dati.nome,
             gruppo: dati.gruppo,
             nomeTotem: dati.totem?.nome ?? null,
-            sito: window.location.host,
             fontTitoli,
             fontTesto,
           };
@@ -196,10 +195,10 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                 </div>
 
                 {/* anteprima 9:16 */}
-                <div className="relative mx-auto mt-4 aspect-[9/16] min-h-0 w-full max-w-[min(100%,calc((100dvh-420px)*9/16))] shrink overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
+                <div className="relative mx-auto mt-4 aspect-[9/16] w-full max-w-[min(100%,calc((100dvh-420px)*9/16))] shrink-0 overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
                   {anteprima ? (
                     // eslint-disable-next-line @next/next/no-img-element -- immagine appena creata nel telefono
-                    <img src={anteprima} alt={`Anteprima: la bacheca di ${dati.nome} col personaggio`} className="block size-full object-cover" />
+                    <img src={anteprima} alt={`Anteprima: la bacheca di ${dati.nome} col personaggio`} className="block size-full object-contain" />
                   ) : (
                     !errore && <p className="absolute inset-0 grid place-items-center text-sm text-inchiostro/70">Preparo l&apos;immagine…</p>
                   )}
