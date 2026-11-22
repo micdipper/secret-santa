@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { CardRegalo } from "@/components/card-regalo";
 import { NovitaSito } from "@/components/novita-sito";
-import { Tasto, TestataInterna, TitoloRiquadro } from "@/components/ui";
+import { Tasto, TastoLink, TestataInterna, TitoloRiquadro } from "@/components/ui";
 
 export default function ProvaAggiornamenti() {
   const [giro, setGiro] = useState(0);
@@ -26,7 +26,11 @@ export default function ProvaAggiornamenti() {
           </>
         }
         nota={<p>Acqua in bocca! Budget 20 €.</p>}
-        azioni={null}
+        azioni={
+          <TastoLink href="/prova-busta" tipo="secondario" className="mt-5">
+            La carta che brilla
+          </TastoLink>
+        }
       />
       <Tasto tipo="secondario" className="mt-6" onClick={() => setGiro((g) => g + 1)}>
         Rivedi le novità
