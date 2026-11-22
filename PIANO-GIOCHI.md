@@ -192,3 +192,28 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
      3. Con `giochi-tempo.mjs`, aggiungere i momenti non ancora visti: giochi 2, 3 e 4 giocati nella pagina vera; 3 tentativi e poi rifiuto; partita abbandonata = 0; pareggio (vince chi ha fatto il punteggio per primo); gioco senza giocatori = "nessun vincitore"; vincitori diversi per ogni gioco con tutti e 5 i premi nel guardaroba (neon, Esplosione, GODO, cornici, cowboy); riquadro "Mini giochi" nella pagina del gruppo in ogni momento; Organizza con la data bloccata da T−5. Schermate a Marzia.
      4. Anteprima Vercel del ramo di lavoro e **taratura sul telefono vero di Marzia** in sala prove (`/prove/giochi`): difficoltà di ogni gioco; si cambiano solo le costanti in cima ai file; se cambia la difficoltà ricontrollare il racconto (`storia`) e i limiti del server col bot.
      5. Pulire SOLO i dati di test (chiedendo prima), aggiornare STATO.md, commit e push.
+
+---
+
+## 10. Blocco E – 5 giochi in più (approvato da Marzia il 22/11)
+
+### Decisioni
+- **10 giochi**, uno al giorno da T−9 allo scambio; il calendario si apre a T−10.
+- I 5 nuovi si giocano **prima** di quelli di oggi. **Numerazione nel database: i giochi di oggi restano 1-5, i nuovi sono 6-10** (così le partite e i doni già vinti nei gruppi veri non si toccano). Giorno del gioco k: k = 1..5 → T−(5−k) (come oggi); k = 6..10 → T−(15−k) (6 = T−9 … 10 = T−5). L'ordine del calendario (1° giorno … 10° giorno) è 6,7,8,9,10,1,2,3,4,5: il sito mostra il numero del giorno, mai quello del database.
+- **Data vicina**: non si perde più tutto, solo i giochi dei giorni già passati. Nuova colonna `groups.giochi_dal` (date) = oggi + 2 quando la data viene fissata; il gioco k vale se il suo giorno ≥ `giochi_dal`. `giochi_attivi` = almeno un gioco valido. Data bloccata dal giorno prima del primo gioco valido. `avviso-data.tsx`: `giochiPersi` = giochi coi giorni < oggi + 2 (`NUMERO_GIOCHI` = 10).
+- **Doni nuovi** (accessori/look, solo per chi vince): 6 Affetta il panettone → **cerchietto con le corna di renna** (cappello, alternativo a cowboy/Natale) · 7 La renna saltatrice → **paraorecchie di pelo** (si somma) · 8 Calzini spaiati → **maglione con le lucine** · 9 Trova l'intruso → **capelli brina** · 10 Il puntale → **cornice di lucine** (cucitura 5). Mai detti prima: solo un indizio.
+
+### I 5 giochi (un gesto diverso da quelli di oggi)
+| n | giorno | nome | gesto | idea |
+|---|---|---|---|---|
+| 6 | T−9 | Affetta il panettone | strisciare | panettoni e pandori lanciati in aria da tagliare, mai il carbone; 45 s, 3 cuori |
+| 7 | T−8 | La renna saltatrice | tocco a tempo | la renna corre sui tetti e salta i comignoli, sempre più fitti; finché non cade |
+| 8 | T−7 | Calzini spaiati | memoria a coppie | griglia di calzini a maglia da girare e accoppiare, griglie sempre più grandi, 60 s |
+| 9 | T−6 | Trova l'intruso | occhio | tante palline uguali e una diversa, sempre più simili; 60 s, errore = −3 s |
+| 10 | T−5 | Il puntale | tieni premuto e lascia | carica il lancio della stella sulla cima dell'albero che ondeggia; 10 lanci |
+
+### Ordine dei lavori (una sessione per pezzo)
+1. **E1** giochi 6 e 7 (logica + disegno + bot in `giochi-logica.ts`), sala prove.
+2. **E2** giochi 8, 9 e 10, sala prove.
+3. **E3** doni nel personaggio (`avatar.tsx`, editor, annuncio, `/stile`).
+4. **E4** migrazione (game 1..10, `giochi_dal`, `finestra_gioco`, `regole_gioco` 6-10, `premi_giochi`, `save_avatar`, trigger della data) + calendario a 10 giorni, avviso data, Organizza; collaudo SQL e viaggio nel tempo; **migrazione applicata e pubblicazione insieme**, in un momento in cui nessun gruppo sta giocando (il vecchio sito non conosce i giochi 6-10).

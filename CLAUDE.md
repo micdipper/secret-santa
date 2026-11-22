@@ -136,7 +136,7 @@ Obiettivo: **finito e online in 1-2 giorni**. Quando c'è da scegliere, vince se
 - `feed_events` (id, group_id, member_id, tipo, dati {testo, foto, profilo}, quando) e `feed_reactions` (event_id, member_id, group_id, emoji; una a testa) e `feed_replies` (event_id, member_id, group_id, testo ≤ 15; una a testa) — si scrivono solo con trigger, `pubblica_post`, `elimina_post`, `reagisci`, `rispondi_post`, `elimina_risposta`
 
 ## Regole di lavoro
-- **Novità del sito** (Marzia, 22/11): a ogni aggiornamento visibile si aggiunge una voce in cima a `lib/novita-sito.ts` (pop-up "Novità sotto l'albero", una volta per telefono). Tono semplice e simpatico, spiega il perché delle scelte senza dettagli tecnici. **Il testo va sempre mandato a Marzia e confermato da lei prima della pubblicazione.**
+- **Novità del sito** (Marzia, 22/11): a ogni aggiornamento visibile si aggiunge una voce in cima a `lib/novita-sito.ts` (pop-up "Novità sotto l'albero", una volta per telefono). Tono semplice e simpatico, spiega il perché delle scelte senza dettagli tecnici. **Brevissime** (una riga per voce) e **solo le novità di quell'aggiornamento**, senza ripetere quelle già annunciate. **Il testo va sempre mandato a Marzia e confermato da lei prima della pubblicazione.**
 - Procedere per fasi; a fine di ogni fase: commit, deploy su Vercel, verifica dal telefono.
 - Prima di scrivere codice per una fase, presentare un breve piano e aspettare l'ok.
 - Testare l'estrazione con utenti finti prima di usarla davvero.
