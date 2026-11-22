@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { ToppaAvatar, type Look } from "@/components/avatar";
 import { FrancobolloTotem } from "@/components/totem";
 import { Errore, Icone, Tasto, TastoTondo, TitoloRiquadro } from "@/components/ui";
-import { componi, NUMERO_LAYOUT, type Pezzi } from "@/lib/immagine-bacheca";
+import { combinazioni, componi, type Pezzi } from "@/lib/immagine-bacheca";
 import type { Profilo } from "@/lib/totem";
 
 export type DatiCondivisione = {
@@ -24,6 +24,8 @@ export type DatiCondivisione = {
   apri?: boolean; // si apre da sola (arrivando dalla scheda di fine Secret Santa)
 };
 
+const DIAMETRO = 520; // il personaggio "fotografato" (px CSS, poi ×2)
+
 const dueFotogrammi = () => new Promise<void>((ok) => requestAnimationFrame(() => requestAnimationFrame(() => ok())));
 
 function famiglia(variabile: string, riserva: string) {
@@ -33,7 +35,9 @@ function famiglia(variabile: string, riserva: string) {
 export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElement | null; prima?: () => void; dati: DatiCondivisione }) {
   const [android, setAndroid] = useState(false);
   const [aperto, setAperto] = useState(false);
-  const [seme, setSeme] = useState(() => Math.floor(Math.random() * 1000));
+  const [seme] = useState(() => Math.floor(Math.random() * 100000)); // ordine delle combinazioni (e posizione della neve)
+  const [giro, setGiro] = useState(0); // "Rimescola" = combinazione successiva
+  const [conPersonaggio, setConPersonaggio] = useState(true);
   const [anteprima, setAnteprima] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [errore, setErrore] = useState("");
@@ -74,10 +78,26 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
             domToCanvas(avatarRef.current, { scale: 2, timeout: 15000 }),
             totemRef.current ? domToCanvas(totemRef.current, { scale: 2, timeout: 15000 }) : Promise.resolve(null),
           ]);
-          pezzi.current = { tela: telaC, avatar: avatarC, totem: totemC, nome: dati.nome, gruppo: dati.gruppo, nomeTotem: dati.totem?.nome ?? null, fontTitoli, fontTesto };
+          const stile = getComputedStyle(el);
+          const involucro = avatarRef.current;
+          pezzi.current = {
+            tela: telaC,
+            raggioTela: (parseFloat(stile.borderTopLeftRadius) || 28) / Math.max(1, el.clientWidth),
+            coloreTela: stile.backgroundColor,
+            avatar: avatarC,
+            margineAvatar: (involucro.offsetWidth - DIAMETRO) / 2 / involucro.offsetWidth,
+            totem: totemC,
+            nome: dati.nome,
+            gruppo: dati.gruppo,
+            nomeTotem: dati.totem?.nome ?? null,
+            sito: window.location.host,
+            fontTitoli,
+            fontTesto,
+          };
         }
         const c = document.createElement("canvas");
-        componi(c, pezzi.current, seme);
+        const tutte = combinazioni(pezzi.current.coloreTela, seme);
+        componi(c, pezzi.current, tutte[giro % tutte.length], conPersonaggio, seme + giro);
         const blob = await new Promise<Blob | null>((ok) => c.toBlob(ok, "image/jpeg", 0.92));
         if (!blob) throw new Error("niente immagine");
         if (annullato) return;
@@ -95,7 +115,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
     return () => {
       annullato = true;
     };
-  }, [aperto, seme, dati.nome, dati.gruppo, dati.totem?.nome]);
+  }, [aperto, seme, giro, conPersonaggio, dati.nome, dati.gruppo, dati.totem?.nome]);
 
   function chiudi() {
     setAperto(false);
@@ -159,8 +179,27 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                   <TastoTondo etichetta="Chiudi" icona={Icone.chiudi} onClick={chiudi} />
                 </div>
 
+                {/* con il personaggio oppure solo la bacheca (tutta visibile) */}
+                <div role="radiogroup" aria-label="Cosa mettere nell'immagine" className="mt-4 grid shrink-0 grid-cols-2 gap-3">
+                  {[
+                    { si: true, testo: "Col personaggio" },
+                    { si: false, testo: "Solo bacheca" },
+                  ].map((o) => (
+                    <button
+                      key={o.testo}
+                      type="button"
+                      role="radio"
+                      aria-checked={conPersonaggio === o.si}
+                      onClick={() => setConPersonaggio(o.si)}
+                      className={`cliccabile cucitura relative min-h-14 rounded-full px-3 font-titolo text-[18px] leading-tight ${conPersonaggio === o.si ? "stoffa-vermiglio" : "stoffa-chiara"}`}
+                    >
+                      {o.testo}
+                    </button>
+                  ))}
+                </div>
+
                 {/* anteprima 9:16 */}
-                <div className="relative mx-auto mt-4 aspect-[9/16] min-h-0 w-full max-w-[min(100%,calc((100dvh-430px)*9/16))] shrink overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
+                <div className="relative mx-auto mt-4 aspect-[9/16] min-h-0 w-full max-w-[min(100%,calc((100dvh-500px)*9/16))] shrink overflow-hidden rounded-2xl bg-black/15 shadow-[0_6px_16px_-6px_rgba(0,0,0,.5)]">
                   {anteprima ? (
                     // eslint-disable-next-line @next/next/no-img-element -- immagine appena creata nel telefono
                     <img src={anteprima} alt={`Anteprima: la bacheca di ${dati.nome} col personaggio`} className="block size-full object-cover" />
@@ -175,7 +214,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
                     etichetta="Rimescola: un'altra composizione"
                     icona={Icone.rimescola}
                     disabled={!pronta}
-                    onClick={() => setSeme((s) => s + 1 + Math.floor(Math.random() * (NUMERO_LAYOUT - 1)))}
+                    onClick={() => setGiro((g) => g + 1)}
                   />
                   <span className="text-sm text-inchiostro/80">Rimescola</span>
                 </div>
@@ -212,7 +251,7 @@ export function CondividiBacheca({ tela, prima, dati }: { tela: () => HTMLElemen
       {aperto && (
         <div aria-hidden className="pointer-events-none fixed top-0 left-[-10000px]">
           <div ref={avatarRef} className="inline-block p-4">
-            <ToppaAvatar look={dati.look} dimensione={520} nome={dati.nome} />
+            <ToppaAvatar look={dati.look} dimensione={DIAMETRO} nome={dati.nome} />
           </div>
           {dati.totem && (
             <div ref={totemRef} className="w-[200px] p-3">

@@ -11,7 +11,7 @@ export const NOVITA_SITO: NotaSito[] = [
     voci: [
       {
         titolo: "Condividi la tua bacheca",
-        testo: "Tocca l'icona del condividi sotto la tela: la tua bacheca e il tuo personaggio diventano un'immagine per le storie, ogni volta impaginata in modo diverso (e se non ti convince, rimescola). Pronta per Instagram, WhatsApp o la galleria.",
+        testo: "Tocca l'icona del condividi sotto la tela: la tua bacheca diventa un'immagine per le storie, col tuo personaggio o da sola. Se non ti convince, rimescola colori e posizione. Pronta per Instagram, WhatsApp o la galleria (e non resta salvata da nessuna parte sul sito).",
       },
       {
         titolo: "Estrazione da rifare?",

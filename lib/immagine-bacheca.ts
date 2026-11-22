@@ -1,42 +1,64 @@
-// L'immagine da condividere: bacheca + personaggio in grande, formato storia 1080×1920.
-// Il layout non è fisso: 4 composizioni (collage, ritratto, francobollo, polaroid) con sfondo, lato,
-// rotazioni e stelline che cambiano a ogni "Rimescola" (seme). Disegno a mano su canvas, coi colori del sito.
+// L'immagine da condividere, formato storia 1080×1920 (regole di Marzia, 22/11):
+// - titolo sempre in alto, tutto centrato; in fondo l'indirizzo del sito, discreto, fuori da bacheca e personaggio;
+// - la bacheca in una cornice di feltro cucita (raggi: esterno = raggio della tela + bordo, cucitura = esterno − distanza);
+// - "con il personaggio": il personaggio sta in uno dei 4 angoli (in alto o in basso, a destra o a sinistra)
+//   e il francobollo del totem sempre in alto a destra sul personaggio; "solo la bacheca": la tela grande, tutta visibile;
+// - cambia solo: angolo del personaggio, colore dello sfondo (mai uguale al colore della tela) e stelline gialle
+//   OPPURE neve (mai insieme). Niente bande a maglia.
 // Tela, personaggio e totem arrivano già "fotografati" (canvas) da components/condividi-bacheca.tsx.
 
 export const LARGHEZZA = 1080;
 export const ALTEZZA = 1920;
-export const NUMERO_LAYOUT = 4;
 
-const C = {
-  abete: "#2f4830",
-  abeteScuro: "#1f3321",
-  vermiglio: "#e5481e",
-  crema: "#f3e6c9",
-  senape: "#e2a33b",
-  inchiostro: "#1c241d",
-  notte: "#22304a",
-};
-
-// fondo, colore dei testi, colore delle stelline
-const SFONDI = [
-  { fondo: C.abete, testo: C.crema, accento: C.senape, anello: null },
-  { fondo: C.vermiglio, testo: C.crema, accento: C.crema, anello: null },
-  { fondo: C.notte, testo: C.crema, accento: C.senape, anello: null },
-  { fondo: C.crema, testo: C.abete, accento: C.vermiglio, anello: C.abete },
-];
+const CREMA = "#f3e8cf";
+const SENAPE = "#e9a81c";
+// sfondi possibili (testo sempre crema): abete, vermiglio, blu notte, bordeaux (gli stessi della tela, lib/parole.ts)
+const SFONDI = ["#2c4a32", "#e5481e", "#24304a", "#7d3c5a"];
+const ANGOLI = ["alto-sinistra", "alto-destra", "basso-sinistra", "basso-destra"] as const;
+export type Angolo = (typeof ANGOLI)[number];
 
 export type Pezzi = {
-  tela: HTMLCanvasElement; // la bacheca (3:4)
-  avatar: HTMLCanvasElement; // la toppa tonda col personaggio
+  tela: HTMLCanvasElement; // la bacheca (3:4), con gli angoli già arrotondati
+  raggioTela: number; // raggio degli angoli della tela, in proporzione alla sua larghezza
+  coloreTela: string; // colore di fondo della tela (rgb(...) o #...), per non usarlo come sfondo
+  avatar: HTMLCanvasElement; // la toppa tonda col personaggio (con un margine trasparente intorno)
+  margineAvatar: number; // quanto è il margine trasparente, in proporzione al lato del canvas
   totem: HTMLCanvasElement | null; // il francobollo del totem
-  nome: string; // nome della persona
+  nome: string;
   gruppo: string;
   nomeTotem: string | null;
-  fontTitoli: string; // famiglia CSS di Basteleur
-  fontTesto: string; // famiglia CSS di Bricolage
+  sito: string; // indirizzo del sito (senza https://)
+  fontTitoli: string;
+  fontTesto: string;
 };
 
-// generatore col seme (stessa idea dei giochi)
+export type Scelte = { angolo: Angolo; sfondo: string; neve: boolean };
+
+function rgb(colore: string): [number, number, number] {
+  const m = colore.match(/\d+(\.\d+)?/g);
+  if (colore.startsWith("rgb") && m) return [+m[0], +m[1], +m[2]];
+  const h = colore.replace("#", "");
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+const distanza = (a: string, b: string) => {
+  const [r1, g1, b1] = rgb(a);
+  const [r2, g2, b2] = rgb(b);
+  return Math.hypot(r1 - r2, g1 - g2, b1 - b2);
+};
+
+// Le combinazioni possibili, in ordine sparso dal seme: "Rimescola" passa alla successiva
+export function combinazioni(coloreTela: string, seme: number): Scelte[] {
+  const sfondi = SFONDI.filter((s) => distanza(s, coloreTela) > 90);
+  const tutte: Scelte[] = [];
+  for (const angolo of ANGOLI) for (const sfondo of sfondi) for (const neve of [false, true]) tutte.push({ angolo, sfondo, neve });
+  const r = casuale(seme);
+  for (let i = tutte.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [tutte[i], tutte[j]] = [tutte[j], tutte[i]];
+  }
+  return tutte;
+}
+
 function casuale(seme: number) {
   let a = seme >>> 0;
   return () => {
@@ -48,11 +70,10 @@ function casuale(seme: number) {
   };
 }
 
-function stella(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, colore: string) {
-  // stellina a 4 punte del sito
+function stella(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.fillStyle = colore;
+  ctx.fillStyle = SENAPE;
   ctx.beginPath();
   ctx.moveTo(0, -r);
   ctx.quadraticCurveTo(r * 0.12, -r * 0.12, r, 0);
@@ -63,40 +84,35 @@ function stella(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, 
   ctx.restore();
 }
 
-function grana(ctx: CanvasRenderingContext2D, r: () => number) {
-  ctx.save();
+function fondo(ctx: CanvasRenderingContext2D, colore: string, neve: boolean, r: () => number) {
+  ctx.fillStyle = colore;
+  ctx.fillRect(0, 0, LARGHEZZA, ALTEZZA);
+  // grana leggera e luce morbida dall'alto, come lo sfondo del sito
   for (let i = 0; i < 9000; i++) {
     ctx.fillStyle = r() < 0.5 ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.05)";
     ctx.fillRect(r() * LARGHEZZA, r() * ALTEZZA, 2, 2);
   }
-  // luce morbida dall'alto
   const g = ctx.createRadialGradient(LARGHEZZA * 0.3, 0, 100, LARGHEZZA * 0.3, 0, ALTEZZA * 0.9);
   g.addColorStop(0, "rgba(255,255,255,0.10)");
   g.addColorStop(1, "rgba(0,0,0,0.18)");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, LARGHEZZA, ALTEZZA);
-  ctx.restore();
-}
-
-// banda a maglia nordica (zig-zag di "punti a V")
-function bandaMaglia(ctx: CanvasRenderingContext2D, y: number, colore: string, fondo: string) {
-  ctx.save();
-  ctx.fillStyle = fondo;
-  ctx.fillRect(0, y, LARGHEZZA, 64);
-  ctx.strokeStyle = colore;
-  ctx.lineWidth = 6;
-  ctx.lineCap = "round";
-  for (let x = -20; x < LARGHEZZA + 40; x += 36) {
-    ctx.beginPath();
-    ctx.moveTo(x, y + 16);
-    ctx.lineTo(x + 18, y + 32);
-    ctx.lineTo(x + 36, y + 16);
-    ctx.moveTo(x, y + 34);
-    ctx.lineTo(x + 18, y + 50);
-    ctx.lineTo(x + 36, y + 34);
-    ctx.stroke();
+  if (neve) {
+    // fiocchi di neve sparsi (sotto a tutto il resto)
+    for (let i = 0; i < 170; i++) {
+      const raggio = 2 + r() * r() * 9;
+      ctx.fillStyle = `rgba(255,255,255,${0.35 + r() * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(r() * LARGHEZZA, r() * ALTEZZA, raggio, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // stelline gialle solo nelle fasce ai lati (mai sopra titolo, tela o personaggio)
+    for (let i = 0; i < 10; i++) {
+      const x = r() < 0.5 ? 34 + r() * 60 : LARGHEZZA - 94 + r() * 60;
+      stella(ctx, x, 120 + r() * (ALTEZZA - 260), 8 + r() * 14);
+    }
   }
-  ctx.restore();
 }
 
 function ombra(ctx: CanvasRenderingContext2D, forte = 1) {
@@ -105,133 +121,52 @@ function ombra(ctx: CanvasRenderingContext2D, forte = 1) {
   ctx.shadowOffsetY = 18 * forte;
 }
 
-// la tela con una cornice di feltro crema cucita (raggio come la bacheca vera)
-function telaIncorniciata(ctx: CanvasRenderingContext2D, tela: HTMLCanvasElement, cx: number, cy: number, w: number, gradi: number) {
+// la tela nella cornice di feltro crema cucita. x, y = angolo in alto a sinistra della TELA
+const BORDO = 24; // feltro intorno alla tela
+const DISTANZA_CUCITURA = 11;
+function telaIncorniciata(ctx: CanvasRenderingContext2D, p: Pezzi, x: number, y: number, w: number) {
   const h = (w * 4) / 3;
-  const bordo = 22;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate((gradi * Math.PI) / 180);
+  const raggio = p.raggioTela * w; // come sulla bacheca vera
+  const esterno = raggio + BORDO;
   ctx.save();
   ombra(ctx);
-  ctx.fillStyle = C.crema;
+  ctx.fillStyle = CREMA;
   ctx.beginPath();
-  ctx.roundRect(-w / 2 - bordo, -h / 2 - bordo, w + bordo * 2, h + bordo * 2, 44);
+  ctx.roundRect(x - BORDO, y - BORDO, w + BORDO * 2, h + BORDO * 2, esterno);
   ctx.fill();
   ctx.restore();
+  ctx.drawImage(p.tela, x, y, w, h);
+  // cucitura vermiglia: stesso centro degli angoli, raggio = esterno − distanza
   ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(-w / 2, -h / 2, w, h, 30);
-  ctx.clip();
-  ctx.drawImage(tela, -w / 2, -h / 2, w, h);
-  ctx.restore();
   ctx.setLineDash([16, 12]);
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(229,72,30,0.7)";
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = "rgba(229,72,30,0.75)";
+  const d = DISTANZA_CUCITURA;
   ctx.beginPath();
-  ctx.roundRect(-w / 2 - bordo + 10, -h / 2 - bordo + 10, w + bordo * 2 - 20, h + bordo * 2 - 20, 34);
+  ctx.roundRect(x - BORDO + d, y - BORDO + d, w + (BORDO - d) * 2, h + (BORDO - d) * 2, esterno - d);
   ctx.stroke();
   ctx.restore();
 }
 
-// tela come francobollo: bordo dentellato
-function telaFrancobollo(ctx: CanvasRenderingContext2D, tela: HTMLCanvasElement, cx: number, cy: number, w: number, gradi: number) {
-  const h = (w * 4) / 3;
-  const m = 34; // margine bianco
-  const W = w + m * 2;
-  const H = h + m * 2;
-  const r = 13; // raggio dei dentini
-  // il francobollo si prepara su un foglio a parte: i dentini bucano solo lui, non lo sfondo
-  const f = document.createElement("canvas");
-  f.width = W;
-  f.height = H;
-  const g = f.getContext("2d")!;
-  g.fillStyle = "#fbf6ea";
-  g.fillRect(0, 0, W, H);
-  g.globalCompositeOperation = "destination-out";
-  const passo = 2 * r + 12;
-  for (let x = 0; x <= W + 1; x += passo) {
-    for (const y of [0, H]) {
-      g.beginPath();
-      g.arc(x, y, r, 0, Math.PI * 2);
-      g.fill();
-    }
-  }
-  for (let y = 0; y <= H + 1; y += passo) {
-    for (const x of [0, W]) {
-      g.beginPath();
-      g.arc(x, y, r, 0, Math.PI * 2);
-      g.fill();
-    }
-  }
-  g.globalCompositeOperation = "source-over";
-  g.drawImage(tela, m, m, w, h);
+// il personaggio (diametro della toppa = d) con il totem in alto a destra, come nel sito
+function personaggio(ctx: CanvasRenderingContext2D, p: Pezzi, cx: number, cy: number, d: number) {
+  const lato = d / (1 - 2 * p.margineAvatar); // il canvas ha un margine trasparente intorno alla toppa
   ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate((gradi * Math.PI) / 180);
-  ombra(ctx);
-  ctx.drawImage(f, -W / 2, -H / 2);
+  ombra(ctx, 1.2);
+  ctx.drawImage(p.avatar, cx - lato / 2, cy - lato / 2, lato, lato);
   ctx.restore();
-}
-
-// tela in una polaroid con la didascalia scritta
-function telaPolaroid(ctx: CanvasRenderingContext2D, p: Pezzi, cx: number, cy: number, w: number, gradi: number) {
-  const h = (w * 4) / 3;
-  const m = 36;
-  const sotto = 170;
-  const W = w + m * 2;
-  const H = h + m + sotto;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate((gradi * Math.PI) / 180);
-  ctx.save();
-  ombra(ctx);
-  ctx.fillStyle = "#fbf6ea";
-  ctx.fillRect(-W / 2, -H / 2, W, H);
-  ctx.restore();
-  ctx.drawImage(p.tela, -w / 2, -H / 2 + m, w, h);
-  ctx.fillStyle = C.abete;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  adattaTesto(ctx, `il mood di ${p.nome}`, `700 {s}px ${p.fontTitoli}`, 64, w);
-  ctx.fillText(`il mood di ${p.nome}`, 0, H / 2 - sotto / 2);
-  ctx.restore();
-}
-
-// il personaggio: la toppa tonda, con ombra
-// (il canvas del personaggio ha un margine trasparente: la toppa occupa il cerchio interno)
-function avatarGrande(ctx: CanvasRenderingContext2D, avatar: HTMLCanvasElement, cx: number, cy: number, d: number, gradi: number, anello: string | null) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate((gradi * Math.PI) / 180);
-  if (anello) {
-    // su sfondo chiaro la toppa crema non si staccherebbe: un bordo pieno intorno
+  if (p.totem) {
+    const w = d * 0.36;
+    const h = (w * p.totem.height) / p.totem.width;
     ctx.save();
-    ombra(ctx, 1.2);
-    ctx.fillStyle = anello;
-    ctx.beginPath();
-    ctx.arc(0, 0, d * 0.5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.translate(cx + d * 0.38, cy - d * 0.34);
+    ctx.rotate((8 * Math.PI) / 180);
+    ombra(ctx, 0.6);
+    ctx.drawImage(p.totem, -w / 2, -h / 2, w, h);
     ctx.restore();
-  } else {
-    ombra(ctx, 1.2);
   }
-  ctx.drawImage(avatar, -d / 2, -d / 2, d, d);
-  ctx.restore();
 }
 
-function totemAngolo(ctx: CanvasRenderingContext2D, totem: HTMLCanvasElement | null, cx: number, cy: number, w: number, gradi: number) {
-  if (!totem) return;
-  const h = (w * totem.height) / totem.width;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate((gradi * Math.PI) / 180);
-  ombra(ctx, 0.7);
-  ctx.drawImage(totem, -w / 2, -h / 2, w, h);
-  ctx.restore();
-}
-
-// rimpicciolisce il font finché il testo sta nella larghezza
 function adattaTesto(ctx: CanvasRenderingContext2D, testo: string, font: string, massimo: number, larghezza: number) {
   let s = massimo;
   ctx.font = font.replace("{s}", String(s));
@@ -242,87 +177,74 @@ function adattaTesto(ctx: CanvasRenderingContext2D, testo: string, font: string,
   return s;
 }
 
-// titolo su due righe: piccola sopra, grande sotto
-function titolo(ctx: CanvasRenderingContext2D, p: Pezzi, x: number, y: number, larghezza: number, allinea: CanvasTextAlign, colore: string, accento: string) {
+// titolo centrato: gruppo piccolo, "La bacheca di …" grande, totem. Restituisce dove finisce.
+function titolo(ctx: CanvasRenderingContext2D, p: Pezzi) {
+  const x = LARGHEZZA / 2;
+  const larghezza = LARGHEZZA - 160;
   ctx.save();
-  ctx.textAlign = allinea;
+  ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = colore;
+  ctx.fillStyle = CREMA;
   ctx.globalAlpha = 0.85;
   adattaTesto(ctx, p.gruppo, `500 {s}px ${p.fontTesto}`, 40, larghezza);
-  ctx.fillText(p.gruppo, x, y);
+  ctx.fillText(p.gruppo, x, 150);
   ctx.globalAlpha = 1;
   const s = adattaTesto(ctx, `La bacheca di ${p.nome}`, `700 {s}px ${p.fontTitoli}`, 92, larghezza);
-  ctx.fillText(`La bacheca di ${p.nome}`, x, y + s * 1.15);
+  let fine = 150 + s * 1.15;
+  ctx.fillText(`La bacheca di ${p.nome}`, x, fine);
   if (p.nomeTotem) {
-    ctx.fillStyle = accento;
-    adattaTesto(ctx, `✦ ${p.nomeTotem}`, `700 {s}px ${p.fontTitoli}`, 46, larghezza);
-    ctx.fillText(`✦ ${p.nomeTotem}`, x, y + s * 1.15 + 66);
+    ctx.fillStyle = SENAPE;
+    adattaTesto(ctx, `✦ ${p.nomeTotem} ✦`, `700 {s}px ${p.fontTitoli}`, 46, larghezza);
+    fine += 66;
+    ctx.fillText(`✦ ${p.nomeTotem} ✦`, x, fine);
   }
   ctx.restore();
+  return fine + 40;
 }
 
-function firma(ctx: CanvasRenderingContext2D, p: Pezzi, colore: string) {
+// l'indirizzo del sito in fondo: si legge, ma non ruba la scena
+function sito(ctx: CanvasRenderingContext2D, p: Pezzi) {
   ctx.save();
-  ctx.fillStyle = colore;
-  ctx.globalAlpha = 0.7;
   ctx.textAlign = "center";
+  ctx.fillStyle = CREMA;
+  ctx.globalAlpha = 0.6;
   ctx.font = `600 30px ${p.fontTesto}`;
-  ctx.fillText("Secret Santa ✦ " + new Date().getFullYear(), LARGHEZZA / 2, ALTEZZA - 70);
+  ctx.fillText(p.sito, LARGHEZZA / 2, ALTEZZA - 64);
   ctx.restore();
 }
 
-// stelline solo nelle fasce ai lati (mai sopra titolo, tela o personaggio)
-function stelline(ctx: CanvasRenderingContext2D, r: () => number, colore: string, quante: number) {
-  for (let i = 0; i < quante; i++) {
-    const x = r() < 0.5 ? 30 + r() * 70 : LARGHEZZA - 100 + r() * 70;
-    stella(ctx, x, 120 + r() * (ALTEZZA - 240), 8 + r() * 14, colore);
-  }
-}
+const SOTTO = ALTEZZA - 130; // sopra l'indirizzo del sito
 
-// Disegna la composizione n. (seme % NUMERO_LAYOUT) con le variazioni del seme.
-export function componi(canvas: HTMLCanvasElement, p: Pezzi, seme: number) {
+export function componi(canvas: HTMLCanvasElement, p: Pezzi, scelte: Scelte, conPersonaggio: boolean, seme: number) {
   canvas.width = LARGHEZZA;
   canvas.height = ALTEZZA;
   const ctx = canvas.getContext("2d")!;
-  const r = casuale(seme * 7919 + 13);
-  const layout = ((seme % NUMERO_LAYOUT) + NUMERO_LAYOUT) % NUMERO_LAYOUT;
-  const sf = SFONDI[Math.floor(r() * SFONDI.length)];
-  const destra = r() < 0.5; // il personaggio a destra o a sinistra
-  const segno = destra ? 1 : -1;
-  const ruota = (max: number) => (r() * 2 - 1) * max;
+  fondo(ctx, scelte.sfondo, scelte.neve, casuale(seme * 7919 + 13));
+  const inizio = titolo(ctx, p);
+  sito(ctx, p);
 
-  ctx.fillStyle = sf.fondo;
-  ctx.fillRect(0, 0, LARGHEZZA, ALTEZZA);
-  grana(ctx, r);
-  stelline(ctx, r, sf.accento, 10);
-
-  if (layout === 0) {
-    // COLLAGE: titolo in alto, tela al centro un po' storta, personaggio grande sull'angolo in basso
-    bandaMaglia(ctx, 0, sf.accento, "rgba(0,0,0,0.18)");
-    titolo(ctx, p, 80, 190, LARGHEZZA - 160, "left", sf.testo, sf.accento);
-    telaIncorniciata(ctx, p.tela, LARGHEZZA / 2 - segno * 40, 1010, 700, ruota(4));
-    avatarGrande(ctx, p.avatar, LARGHEZZA / 2 + segno * 300, 1520, 560, ruota(8), sf.anello);
-    totemAngolo(ctx, p.totem, LARGHEZZA / 2 - segno * 380, 1560, 170, ruota(12));
-  } else if (layout === 1) {
-    // RITRATTO: personaggio enorme in alto che esce dal bordo, tela sotto dall'altra parte, titolo in fondo
-    telaIncorniciata(ctx, p.tela, destra ? 430 : LARGHEZZA - 430, 1130, 600, segno * (3 + r() * 3));
-    avatarGrande(ctx, p.avatar, destra ? LARGHEZZA - 230 : 230, 470, 860, ruota(6), sf.anello);
-    totemAngolo(ctx, p.totem, destra ? LARGHEZZA - 170 : 170, 1090, 180, ruota(14));
-    titolo(ctx, p, LARGHEZZA / 2, 1620, LARGHEZZA - 140, "center", sf.testo, sf.accento);
-    bandaMaglia(ctx, ALTEZZA - 64, sf.accento, "rgba(0,0,0,0.18)");
-  } else if (layout === 2) {
-    // FRANCOBOLLO: la tela come un francobollo, personaggio che lo "timbra" dall'angolo
-    titolo(ctx, p, LARGHEZZA / 2, 170, LARGHEZZA - 140, "center", sf.testo, sf.accento);
-    telaFrancobollo(ctx, p.tela, LARGHEZZA / 2, 1040, 640, ruota(3));
-    avatarGrande(ctx, p.avatar, LARGHEZZA / 2 + segno * 330, 1500, 500, ruota(10), sf.anello);
-    totemAngolo(ctx, p.totem, LARGHEZZA / 2 - segno * 360, 560, 170, ruota(12));
-    firma(ctx, p, sf.testo);
-  } else {
-    // POLAROID: la tela in una polaroid storta, personaggio che sbuca da dietro
-    titolo(ctx, p, destra ? 80 : LARGHEZZA - 80, 180, LARGHEZZA - 160, destra ? "left" : "right", sf.testo, sf.accento);
-    avatarGrande(ctx, p.avatar, LARGHEZZA / 2 + segno * 250, 640, 600, ruota(8), sf.anello);
-    telaPolaroid(ctx, p, LARGHEZZA / 2 - segno * 30, 1250, 620, segno * -(3 + r() * 4));
-    totemAngolo(ctx, p.totem, LARGHEZZA / 2 - segno * 340, 560, 170, ruota(12));
+  if (!conPersonaggio) {
+    // solo la bacheca: più grande possibile, centrata nello spazio libero
+    const w = Math.min(LARGHEZZA - 2 * (BORDO + 70), ((SOTTO - inizio - 2 * BORDO) * 3) / 4);
+    const h = (w * 4) / 3;
+    telaIncorniciata(ctx, p, (LARGHEZZA - w) / 2, inizio + BORDO + (SOTTO - inizio - 2 * BORDO - h) / 2, w);
+    return;
   }
+
+  // con il personaggio: tela spostata dalla parte opposta, personaggio sull'angolo, un po' fuori dalla tela
+  const sinistra = scelte.angolo.endsWith("sinistra");
+  const alto = scelte.angolo.startsWith("alto");
+  const d = 440; // diametro del personaggio
+  const w = 640; // larghezza della tela
+  const h = (w * 4) / 3;
+  const sporge = d * 0.62; // quanto il personaggio esce dalla tela (in verticale)
+  const altezzaGruppo = h + 2 * BORDO + sporge;
+  const y0 = inizio + Math.max(0, (SOTTO - inizio - altezzaGruppo) / 2);
+  const telaY = (alto ? y0 + sporge : y0) + BORDO;
+  const telaX = sinistra ? LARGHEZZA - 70 - BORDO - w : 70 + BORDO;
+  telaIncorniciata(ctx, p, telaX, telaY, w);
+  // il personaggio sta sul margine libero e copre solo l'angolo della tela
+  const cx = sinistra ? d / 2 + 40 : LARGHEZZA - d / 2 - 40;
+  const cy = alto ? telaY - BORDO - sporge + d / 2 : telaY + h + BORDO + sporge - d / 2;
+  personaggio(ctx, p, cx, cy, d);
 }
