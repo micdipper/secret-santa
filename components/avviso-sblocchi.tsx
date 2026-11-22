@@ -16,7 +16,7 @@ const SBLOCCHI = {
   },
   giochi: {
     titolo: "Il calendario dei mini giochi è aperto!",
-    testo: "Fino allo scambio ogni giorno c'è un pacchetto da scartare: un mini gioco con 3 tentativi, la classifica in diretta e un regalo per chi vince.",
+    testo: "Fino allo scambio ogni giorno c'è un pacchetto da scartare: un mini gioco con 3 tentativi, la classifica in diretta e un dono per chi vince.",
     tasto: "Apri il calendario",
     pagina: "giochi",
   },

@@ -18,8 +18,8 @@ const PROVE = [
   { titolo: "Quando facciamo lo scambio?", testo: "La disponibilità per scegliere il giorno: proponi i giorni, rispondi, guarda gli amici inventati che cambiano idea e fissa la data.", href: "/prove/disponibilita" },
   { titolo: "Mini giochi dell'avvento", testo: "Il calendario coi regali da scartare, il benvenuto e la pagina di ogni gioco con la classifica in diretta (amici inventati).", href: "/prove/giochi" },
   { titolo: "Card e novità del sito", testo: "L'occhio che nasconde il nome di chi hai pescato e il pop-up con le novità dell'ultimo aggiornamento.", href: "/prove/aggiornamenti" },
-  { titolo: "Personaggio", testo: "L'editor completo con tutti i regali già sbloccati.", href: "/prove/personaggio" },
-  { titolo: "Galleria dello stile", testo: "Personaggi, regali, olografie, tasti e colori del sito.", href: "/stile" },
+  { titolo: "Personaggio", testo: "L'editor completo con tutti i doni già sbloccati.", href: "/prove/personaggio" },
+  { titolo: "Galleria dello stile", testo: "Personaggi, doni, olografie, tasti e colori del sito.", href: "/stile" },
 ];
 
 export default function SalaProve() {

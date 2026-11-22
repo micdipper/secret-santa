@@ -26,7 +26,7 @@ export function giochiPersi(data: string | null): number {
   return dataTroppoVicina(data) ? NUMERO_GIOCHI : 0;
 }
 
-// Pop-up: con la data scelta si perdono dei mini giochi (e i regali che si vincono). Si conferma o si cambia.
+// Pop-up: con la data scelta si perdono dei mini giochi (e i doni che si vincono). Si conferma o si cambia.
 export function AvvisoDataVicina({
   aperto,
   data,
@@ -66,8 +66,8 @@ export function AvvisoDataVicina({
               <p className="mt-3">
                 I mini giochi dell&apos;avvento sono {NUMERO_GIOCHI}, uno al giorno fino allo scambio.{" "}
                 {tutti
-                  ? "Con questa data non si potrà giocare a nessuno, e nessuno vincerà i regali che ci sono in palio."
-                  : `Con questa data i primi ${persi} non si potranno giocare, e con loro i regali che si vincono.`}
+                  ? "Con questa data non si potrà giocare a nessuno, e nessuno vincerà i doni che ci sono in palio."
+                  : `Con questa data i primi ${persi} non si potranno giocare, e con loro i doni che si vincono.`}
               </p>
               <Tasto className="mt-6" onClick={onAltraData}>
                 Scegli un altro giorno

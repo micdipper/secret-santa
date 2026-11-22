@@ -242,7 +242,7 @@ export default async function PaginaGruppo({ params }: { params: Promise<{ id: s
             <span className="relative min-w-0 flex-1">
               <span className="block text-sm text-inchiostro/70">Il tuo personaggio</span>
               <span className="block font-titolo text-2xl leading-tight text-abete">Guardaroba</span>
-              <span className="mt-1 block text-sm text-inchiostro/70">Vestilo e indossa i regali che vinci</span>
+              <span className="mt-1 block text-sm text-inchiostro/70">Vestilo e indossa i doni che vinci</span>
             </span>
           </Link>
 

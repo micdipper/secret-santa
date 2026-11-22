@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { RifaiEstrazione } from "@/components/rifai-estrazione";
 import { RiquadroEsclusioni, type Esclusione } from "@/components/esclusioni";
 import { Errore, Feltro, Icone, Tasto, TastoTondo, TestataInterna, TitoloRiquadro } from "@/components/ui";
 import { creaClientBrowser } from "@/lib/supabase/client";
@@ -126,6 +127,15 @@ export default function ProvaEstrazione() {
           <Tasto className="mt-4" onClick={estrai} disabled={estraggo}>
             {estraggo ? "Estraggo…" : cerchio ? "Estrai di nuovo" : "Estrai"}
           </Tasto>
+          {/* come in Organizza dopo l'estrazione vera: il pop-up che spiega cosa succede rifacendola */}
+          {cerchio && (
+            <RifaiEstrazione
+              onRifai={async () => {
+                setCerchio(null);
+                return null;
+              }}
+            />
+          )}
         </Feltro>
       </div>
     </main>

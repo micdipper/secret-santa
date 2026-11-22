@@ -73,7 +73,7 @@ function Profilo() {
         indietro={indietro}
         etichettaIndietro="Torna al gruppo"
         titolo="Guardaroba"
-        sottotitolo="Vesti il tuo personaggio: lo vedranno gli amici di questo gruppo. Usando il sito sbloccherai dei regali a sorpresa."
+        sottotitolo="Vesti il tuo personaggio: lo vedranno gli amici di questo gruppo. Usando il sito sbloccherai dei doni a sorpresa."
       />
 
       {!look ? (

@@ -10,8 +10,12 @@ export const NOVITA_SITO: NotaSito[] = [
     versione: "2026-11-23",
     voci: [
       {
-        titolo: "I premi ora si chiamano regali",
-        testo: "È Natale, dai. E una volta vinti restano tuoi per sempre: anche se poi togli qualcosa dalla bacheca, il regalo non te lo riprende nessuno.",
+        titolo: "Estrazione da rifare?",
+        testo: "Qualcuno si è aggiunto all'ultimo o c'era un errore: ora l'organizzatore può rifarla, fino al giorno dello scambio. Le buste si richiudono e la Santa Chat riparte da zero, così nessuno riceve messaggi dal Babbo sbagliato.",
+      },
+      {
+        titolo: "I premi ora si chiamano doni",
+        testo: "Così non si confondono coi regali del Secret Santa. E una volta vinti restano tuoi per sempre: anche se poi togli qualcosa dalla bacheca, il dono non te lo riprende nessuno.",
       },
       {
         titolo: "Occhio indiscreto?",

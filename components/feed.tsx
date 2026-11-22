@@ -26,7 +26,7 @@ export type Persona = { nome: string; look: Look | null };
 export type Voce = {
   id: string;
   member_id: string | null;
-  tipo: "creato" | "entrato" | "estrazione" | "busta" | "bacheca" | "totem" | "post" | "toppe";
+  tipo: "creato" | "entrato" | "estrazione" | "rifatta" | "busta" | "bacheca" | "totem" | "post" | "toppe";
   dati: { testo?: string; foto?: string; profilo?: Profilo };
   quando: string;
 };
@@ -69,6 +69,7 @@ const STOFFA_TIPO: Record<Voce["tipo"], Stoffa | null> = {
   creato: "senape",
   entrato: "senape",
   estrazione: "vermiglio",
+  rifatta: "vermiglio",
   busta: "notte",
   bacheca: "ghiaccio",
   totem: "rosa",
@@ -181,7 +182,7 @@ export function VoceFeed({
       }}
     >
       <div className="relative flex items-start gap-3">
-        {voce.tipo === "estrazione" ? (
+        {voce.tipo === "estrazione" || voce.tipo === "rifatta" ? (
           <span className="toppa size-11 flex-none">
             <BustaSigillata className="relative w-8" />
           </span>
@@ -192,6 +193,8 @@ export function VoceFeed({
           <p className="leading-snug">
             {voce.tipo === "estrazione" ? (
               <strong className="font-semibold">Estrazione fatta! Le buste sono pronte</strong>
+            ) : voce.tipo === "rifatta" ? (
+              <strong className="font-semibold">Estrazione rifatta: le buste si sono richiuse. Presto ne arrivano di nuove!</strong>
             ) : (
               <>
                 <strong className="font-semibold">{p?.nome ?? "Qualcuno"}</strong>

@@ -20,6 +20,7 @@ const VOCI: Voce[] = [
   { id: "v3", member_id: "p2", tipo: "bacheca", dati: {}, quando: fa(80) },
   { id: "v4", member_id: "p3", tipo: "busta", dati: {}, quando: fa(200) },
   { id: "v5", member_id: null, tipo: "estrazione", dati: {}, quando: fa(60 * 26) },
+  { id: "v7", member_id: null, tipo: "rifatta", dati: {}, quando: fa(60 * 28) },
   { id: "v6", member_id: "p4", tipo: "entrato", dati: {}, quando: fa(60 * 50) },
 ];
 const REAZIONI: Reazione[] = [

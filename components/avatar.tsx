@@ -41,7 +41,7 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "fiocco", nome: "È un bracciale o una collana?", comeSbloccarlo: "Almeno 10 cose sulla bacheca, tra cui una foto, un ricamo, un simbolo, una parola e una texture." },
   { id: "sciarpa", nome: "Lupetto grigio da portare indietro", comeSbloccarlo: "Tutte le 8 toppe del tuo totem sulla bacheca, più il tuo simbolo o la tua parola." },
   { id: "occhiali", nome: "Occhiali veloci", comeSbloccarlo: "Apri la tua busta." },
-  { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri regali." },
+  { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Vinci tutti gli altri doni." },
   { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
   { id: "natale", nome: "Cappello di Natale", comeSbloccarlo: "È un segreto." },
 ];

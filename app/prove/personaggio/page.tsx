@@ -17,7 +17,7 @@ export default function ProvaPersonaggio() {
         etichettaIndietro="Torna alla sala prove"
         contesto="Sala prove"
         titolo="Personaggio di prova"
-        sottotitolo="Tutti i regali sono sbloccati. Non si salva niente."
+        sottotitolo="Tutti i doni sono sbloccati. Non si salva niente."
       />
       <div className="sticky top-[calc(env(safe-area-inset-top)+8px)] z-10 mt-6 flex justify-center">
         <span className="rounded-full shadow-[0_8px_16px_-8px_rgba(0,0,0,.5)]">
