@@ -3,7 +3,10 @@
 // Migliaia di partite con semi diversi: niente NaN, la partita finisce sempre,
 // stesso seme = stessa partita, punteggi dentro i limiti del server (REGOLE_SERVER).
 import { PASSO, casuale, type Mondo, type Tocco } from "../lib/giochi/base.ts";
+import { geometria as geoCalzini, type StatoCalzini } from "../lib/giochi/calzini.ts";
 import { geometria, type StatoCampanelli } from "../lib/giochi/campanelli.ts";
+import { geometria as geoIntruso, type StatoIntruso } from "../lib/giochi/intruso.ts";
+import { VOLO as VOLO_STELLA, geometria as geoPuntale, type StatoPuntale } from "../lib/giochi/puntale.ts";
 import { GIOCHI, GIOCHI_NUOVI, REGOLE_SERVER, infoGioco } from "../lib/giochi/elenco.ts";
 import { VOLO, casa, colpibile, fuori, xRenna, type StatoNeve } from "../lib/giochi/neve.ts";
 import type { StatoPalline } from "../lib/giochi/palline.ts";
@@ -170,8 +173,88 @@ const botRenna: Bot = (s: StatoRenna, _m, caso, bravura) => {
   return davanti <= s.v * (volo / 2 + sbagli.get(o)!) ? [tocco(0, 0)] : [];
 };
 
-const BOT: Record<string, Bot> = { neve: botNeve, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta, panettone: botPanettone, renna: botRenna };
-const nomeBot = (n: number) => ["palline", "campanelli", "regali", "slitta", "neve", "panettone", "renna"][n - 1];
+// Gioco 8: il bot ricorda i calzini visti (il fortissimo tutti, il medio solo gli ultimi 8) e tocca con calma
+// (una carta ogni 0,25 s il fortissimo, ogni 0,5 s il medio).
+const memorie = new WeakMap<object, { visti: Map<number, number>; ultimo: number }>();
+const botCalzini: Bot = (s: StatoCalzini, m, caso, bravura) => {
+  let mem = memorie.get(s);
+  if (!mem) memorie.set(s, (mem = { visti: new Map(), ultimo: 0 }));
+  const forte = bravura === 1;
+  // ciò che è scoperto adesso lo si vede
+  s.carte.forEach((c, i) => {
+    if (c.scoperta && !c.presa) mem!.visti.set(i, c.tipo);
+    if (c.presa) mem!.visti.delete(i);
+  });
+  if (!forte) while (mem.visti.size > 8) mem.visti.delete(mem.visti.keys().next().value!);
+  if (s.t - mem.ultimo < (forte ? 0.25 : 0.5) + caso() * 0.1) return [];
+  mem.ultimo = s.t;
+  const libere = s.carte.map((c, i) => i).filter((i) => !s.carte[i].presa && !s.carte[i].scoperta);
+  let scelta: number | undefined;
+  if (s.aperte.length === 1 && s.sbaglio < 0) {
+    const tipo = s.carte[s.aperte[0]].tipo;
+    scelta = libere.find((i) => mem!.visti.get(i) === tipo);
+  } else {
+    // una coppia già nota?
+    const perTipo = new Map<number, number>();
+    for (const i of libere) {
+      const t = mem.visti.get(i);
+      if (t === undefined) continue;
+      if (perTipo.has(t)) {
+        scelta = perTipo.get(t);
+        break;
+      }
+      perTipo.set(t, i);
+    }
+  }
+  scelta ??= libere.find((i) => !mem!.visti.has(i)) ?? libere[Math.floor(caso() * libere.length)];
+  if (scelta === undefined) return [];
+  const c = geoCalzini(s, m).centro(scelta);
+  return [tocco(c.x, c.y)];
+};
+
+// Gioco 9: il bot "vede" l'intrusa dopo un tempo che cresce col numero di palline e cala con la differenza
+// (il fortissimo è velocissimo); il medio a volte tocca quella sbagliata.
+const attese = new WeakMap<object, { turno: number; quando: number; sbaglia: boolean }>();
+const botIntruso: Bot = (s: StatoIntruso, m, caso, bravura) => {
+  const forte = bravura === 1;
+  let a = attese.get(s);
+  if (!a || a.turno !== s.turno + s.conti.sbagli * 1000) {
+    const n = s.cols * s.righe;
+    const fatica = (n / 20) * (12 / Math.abs(s.diff));
+    a = { turno: s.turno + s.conti.sbagli * 1000, quando: s.t + (forte ? 0.25 + 0.15 * fatica : 0.6 + 0.6 * fatica * (0.6 + caso())), sbaglia: !forte && caso() < 0.12 * (12 / Math.abs(s.diff)) };
+    attese.set(s, a);
+  }
+  if (s.t < a.quando) return [];
+  const g = geoIntruso(s, m);
+  const i = a.sbaglia ? (s.intrusa + 1) % (s.cols * s.righe) : s.intrusa;
+  const c = g.centro(i);
+  return [tocco(c.x, c.y)];
+};
+
+// Gioco 10: il bot preme quando, lasciando dopo il tempo giusto per la carica, la cima sarà sopra di lui
+// all'arrivo della stella. Errore sul tempo del lascia: ±10 ms il fortissimo, ±45 ms il medio.
+const lanci = new WeakMap<object, { lancio: number; lascia: number }>();
+const botPuntale: Bot = (s: StatoPuntale, m, caso, bravura) => {
+  const g = geoPuntale(s, m);
+  const forte = bravura === 1;
+  if (s.fase === "pronto") {
+    // carica giusta (in salita): d = c* × PERIODO / 2
+    const cStar = (g.terra - g.yCima) / g.hMax;
+    const d = (cStar * 1.6) / 2;
+    const arrivo = (t: number) => g.xCima(t + d + VOLO_STELLA) - g.xLancio;
+    if (Math.sign(arrivo(s.t)) !== Math.sign(arrivo(s.t + 1 / 60)) && caso() < (forte ? 1 : 0.5)) {
+      lanci.set(s, { lancio: s.lancio, lascia: s.t + d + (caso() - 0.5) * 2 * (forte ? 0.01 : 0.045) });
+      return [{ tipo: "giu", id: 1, x: 100, y: 400 }];
+    }
+    return [];
+  }
+  const l = lanci.get(s);
+  if (s.fase === "carica" && l && s.t >= l.lascia) return [{ tipo: "su", id: 1, x: 100, y: 400 }];
+  return [];
+};
+
+const BOT: Record<string, Bot> = { calzini: botCalzini, intruso: botIntruso, puntale: botPuntale,  neve: botNeve, palline: botPalline, campanelli: botCampanelli, regali: botRegali, slitta: botSlitta, panettone: botPanettone, renna: botRenna };
+const nomeBot = (n: number) => ["palline", "campanelli", "regali", "slitta", "neve", "panettone", "renna", "calzini", "intruso", "puntale"][n - 1];
 
 function partita(n: number, seme: number, mondo: Mondo, bravura: number) {
   const { gioco } = infoGioco(n)!;

@@ -1,10 +1,13 @@
 // I 5 giochi del calendario: nomi, regole, premi e limiti (gli stessi di private.regole_gioco nel database).
 import { NUMERO_GIOCHI } from "./avvento.ts";
 import type { Gioco } from "./base.ts";
+import { calzini } from "./calzini.ts";
 import { campanelli } from "./campanelli.ts";
+import { intruso } from "./intruso.ts";
 import { neve } from "./neve.ts";
 import { palline } from "./palline.ts";
 import { panettone } from "./panettone.ts";
+import { puntale } from "./puntale.ts";
 import { regali } from "./regali.ts";
 import { renna } from "./renna.ts";
 import { PESO_REGALO, slitta } from "./slitta.ts";
@@ -110,6 +113,39 @@ export const GIOCHI_NUOVI: InfoGioco[] = [
     gioco: renna,
     formatta: (p) => [`${p} m`, ""],
   },
+  {
+    n: 8,
+    nome: "Calzini spaiati",
+    indizio: "Qualcosa che si accende quando meno te lo aspetti.",
+    storia:
+      "La lavatrice degli elfi ha mescolato tutti i calzini della Vigilia. Girane due alla volta e rimetti insieme le coppie: se non sono uguali tornano giù, ricordati dov'erano. Ogni cesto finito ne porta uno più grande, con calzini sempre più simili, e qualche secondo in più. Hai un minuto.",
+    premio: "lucine",
+    nomePremio: "Maglione con le lucine",
+    durataMax: 300,
+    gioco: calzini,
+  },
+  {
+    n: 9,
+    nome: "Trova l'intruso",
+    indizio: "Un colpo di freddo, ma solo in testa.",
+    storia:
+      "Sull'albero c'è una pallina che non è come le altre: un pelo più chiara, o un pelo più scura. Trovala e toccala. Ogni volta le palline aumentano e l'intrusa si mimetizza meglio. Hai un minuto, e ogni tocco sbagliato ti costa 3 secondi.",
+    premio: "brina",
+    nomePremio: "Capelli brina",
+    durataMax: 65,
+    gioco: intruso,
+  },
+  {
+    n: 10,
+    nome: "Il puntale",
+    indizio: "La tua toppa brillerà.",
+    storia:
+      "Manca solo la stella in cima all'albero, ma l'albero non sta fermo un attimo. Tieni premuto per caricare il lancio (la carica sale e poi riscende), poi lascia: la stella vola dritta in su e deve arrivare alla cima proprio quando le passa sopra. Hai 10 lanci, e ogni albero ondeggia più del precedente.",
+    premio: "cornice_lucine",
+    nomePremio: "Cornice di lucine",
+    durataMax: 120,
+    gioco: puntale,
+  },
 ];
 
 // Qualsiasi gioco dal suo numero nel database (1-5 di oggi, 6-10 nuovi)
@@ -127,6 +163,9 @@ export const REGOLE_SERVER: Record<number, { durataMin: number; durataMax: numbe
   // blocco E: proposte da scrivere in private.regole_gioco con la migrazione del pezzo E4
   6: { durataMin: 1, durataMax: 50, scoreMax: 4000, puntiAlSecondo: 80 },
   7: { durataMin: 2, durataMax: 600, scoreMax: 15000, puntiAlSecondo: 30 },
+  8: { durataMin: 2, durataMax: 300, scoreMax: 15000, puntiAlSecondo: 150 },
+  9: { durataMin: 1, durataMax: 65, scoreMax: 5000, puntiAlSecondo: 100 },
+  10: { durataMin: 8, durataMax: 120, scoreMax: 2000, puntiAlSecondo: 200 },
 };
 
 // Il punteggio da mostrare: [grande, piccolo] (es. gioco 4 → ["🎁 3", "145 m"])
