@@ -15,10 +15,10 @@ export type Look = {
 };
 
 export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
-// Gli ultimi colori sono premi: olografico (tutti i premi) e neon (gioco 1)
-export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6"];
-// L'ultimo maglione (crema con GODO a punto croce) è il premio del gioco 3
-export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd"];
+// Gli ultimi colori sono premi: olografico (tutti i premi), neon (gioco 1), brina (gioco 9)
+export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6", "url(#avatar-brina)"];
+// Gli ultimi maglioni sono premi: crema con GODO a punto croce (gioco 3), verde con le lucine (gioco 8)
+export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd", "#1f3d2b"];
 // 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
 // (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
 export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Pelato", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
@@ -29,12 +29,15 @@ export const CAPELLI_SUPER = 12;
 export const CAPELLI_PAZZO = 13;
 export const COLORE_OLOGRAFICO = 7;
 export const COLORE_NEON = 8;
+export const COLORE_BRINA = 9;
 export const MAGLIONE_GODO = 6;
+export const MAGLIONE_LUCINE = 7;
+export const CUCITURA_LUCINE = 5;
 
 // Premi che sono una scelta normale dell'editor (taglio, colore, maglione): compaiono solo se sbloccati
 export const PREMI_TAGLI: Record<number, string> = { [CAPELLI_SUPER]: "super", [CAPELLI_PAZZO]: "pazzo" };
-export const PREMI_COLORI: Record<number, string> = { [COLORE_OLOGRAFICO]: "olografico", [COLORE_NEON]: "neon" };
-export const PREMI_MAGLIONI: Record<number, string> = { [MAGLIONE_GODO]: "godo" };
+export const PREMI_COLORI: Record<number, string> = { [COLORE_OLOGRAFICO]: "olografico", [COLORE_NEON]: "neon", [COLORE_BRINA]: "brina" };
+export const PREMI_MAGLIONI: Record<number, string> = { [MAGLIONE_GODO]: "godo", [MAGLIONE_LUCINE]: "lucine" };
 
 export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] = [
   { id: "stellina", nome: "Così ti ricordi i compleanni", comeSbloccarlo: "Completa il sondaggio totem." },
@@ -44,9 +47,11 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Ricevi tutti gli altri doni." },
   { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
   { id: "natale", nome: "Cappello di Natale", comeSbloccarlo: "È un segreto." },
+  { id: "corna", nome: "Cerchietto con le corna di renna", comeSbloccarlo: "Vinci il gioco Affetta il panettone." },
+  { id: "paraorecchie", nome: "Paraorecchie di pelo", comeSbloccarlo: "Vinci il gioco La renna saltatrice." },
 ];
-// Un cappello alla volta.
-export const CAPPELLI = ["cowboy", "natale"];
+// Un cappello alla volta (il cerchietto con le corna conta come cappello; i paraorecchie si sommano a tutto).
+export const CAPPELLI = ["cowboy", "natale", "corna"];
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
@@ -54,8 +59,28 @@ export const OCCHIALI_VELOCI = ["occhiali", "occhiali_olo"];
 
 // Cuciture intorno alla toppa del personaggio: 0 filza (per tutti) · 1 catenella = premio "cuciture"
 // (un post nelle Novità + 5 reazioni) · 2 tulipano, 3 felce, 4 punto croce = "cornici", premio del gioco 4 (PIANO-GIOCHI.md)
-export const NOMI_CUCITURE = ["Filza", "Catenella", "Tulipano", "Felce", "Punto croce"];
-export const premioCucitura = (i: number) => (i === 0 ? null : i === 1 ? "cuciture" : "cornici");
+// · 5 lucine = "cornice_lucine", premio del gioco Il puntale
+export const NOMI_CUCITURE = ["Filza", "Catenella", "Tulipano", "Felce", "Punto croce", "Lucine"];
+export const premioCucitura = (i: number) => (i === 0 ? null : i === 1 ? "cuciture" : i === CUCITURA_LUCINE ? "cornice_lucine" : "cornici");
+
+// Il personaggio che indossa un dono (pop-up "Hai ricevuto un dono!" e annuncio del vincitore dei giochi)
+export function lookConDono(look: Look, dono: string): Look {
+  const parti: Record<string, Partial<Look>> = {
+    super: { capelli: CAPELLI_SUPER },
+    pazzo: { capelli: CAPELLI_PAZZO },
+    olografico: { coloreCapelli: COLORE_OLOGRAFICO },
+    neon: { coloreCapelli: COLORE_NEON },
+    brina: { coloreCapelli: COLORE_BRINA },
+    godo: { maglione: MAGLIONE_GODO },
+    lucine: { maglione: MAGLIONE_LUCINE },
+    cuciture: { cucitura: 1 },
+    cornici: { cucitura: 2 },
+    cornice_lucine: { cucitura: CUCITURA_LUCINE },
+  };
+  if (parti[dono]) return { ...look, ...parti[dono] };
+  if (!ACCESSORI.some((a) => a.id === dono)) return look;
+  return { ...look, accessori: soloUnoEsclusivo([dono, ...look.accessori.filter((a) => a !== dono)]) };
+}
 
 export const LOOK_BASE: Look = { pelle: 1, capelli: 0, coloreCapelli: 1, barba: 0, occhiali: 0, maglione: 0, accessori: [] };
 
@@ -370,6 +395,73 @@ function CappelloCowboy() {
   );
 }
 
+// Cerchietto con le corna di renna (premio del gioco Affetta il panettone): archetto rosso, corna di feltro
+// marrone con le punte chiare e due foglie di agrifoglio con le bacche
+function CerchiettoCorna() {
+  return (
+    <g>
+      <path d="M29 38c2-12 10-19 21-19s19 7 21 19" fill="none" stroke="#c0392b" strokeWidth="3" strokeLinecap="round" />
+      {[1, -1].map((l) => (
+        <g key={l} transform={`translate(${50 - l * 13} 21) scale(${l} 1)`}>
+          <path d="M0 0c-1-6-1-11 2-16M1-7c-4-2-6-5-7-9M1.5-12c3-1 5-3 6-6" fill="none" stroke="#7a4a1d" strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M0 0c-1-6-1-11 2-16" fill="none" stroke="#a8743f" strokeWidth="1.2" strokeLinecap="round" />
+        </g>
+      ))}
+      <path d="M58 21c3-3 7-3 9-1-3 0-5 2-6 4zM58 21c1-4 4-6 7-6-2 2-3 4-3 7z" fill="#2c4a32" />
+      <circle cx="58" cy="21.5" r="1.8" fill="#e5481e" />
+      <circle cx="60.5" cy="23" r="1.5" fill="#e5481e" />
+    </g>
+  );
+}
+
+// Paraorecchie di pelo (premio del gioco La renna saltatrice): archetto sopra la testa e due batuffoli di pelo
+function Paraorecchie() {
+  const ciuffo = (x: number) => (
+    <g key={x}>
+      <circle cx={x} cy="47" r="7" fill="#e5481e" />
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+        const a = (i / 8) * Math.PI * 2;
+        return <circle key={i} cx={x + Math.cos(a) * 5.2} cy={47 + Math.sin(a) * 5.2} r="2.6" fill="#e5481e" />;
+      })}
+      <circle cx={x - 2} cy="45" r="2" fill="#fff" opacity=".45" />
+    </g>
+  );
+  return (
+    <g>
+      <path d="M30 44c-2-15 7-26 20-26s22 11 20 26" fill="none" stroke="#24304a" strokeWidth="2.6" strokeLinecap="round" />
+      {ciuffo(29)}
+      {ciuffo(71)}
+    </g>
+  );
+}
+
+// Fila di lucine colorate (maglione premio del gioco Calzini spaiati): filo verde scuro e lampadine che si accendono a turno
+function FiloLucine() {
+  const punti = [20, 28, 36, 44, 52, 60, 68, 76].map((x) => [x, 86 + Math.sin(x / 6) * 2.4]);
+  const colori = ["#f6c94a", "#e5481e", "#7fd3ff", "#ff7ad9"];
+  return (
+    <g>
+      <path d={`M16 ${86 + Math.sin(16 / 6) * 2.4}` + punti.map(([x, y]) => `L${x} ${y}`).join("") + `L84 ${86 + Math.sin(14) * 2.4}`} fill="none" stroke="#0f2418" strokeWidth="1" />
+      {punti.map(([x, y], i) => (
+        <g key={x}>
+          <rect x={x - 0.9} y={y - 0.2} width="1.8" height="1.6" fill="#0f2418" />
+          <ellipse className="lucina" style={{ animationDelay: `${(i % 4) * 0.35}s` }} cx={x} cy={y + 3} rx="1.7" ry="2.4" fill={colori[i % 4]} />
+        </g>
+      ))}
+    </g>
+  );
+}
+// Brina sui capelli (premio del gioco Trova l'intruso): cristalli bianchi che brillano
+function CristalliBrina() {
+  return (
+    <g className="brina" stroke="#fff" strokeWidth=".8" strokeLinecap="round">
+      {[[38, 25], [55, 21], [64, 30], [33, 35]].map(([x, y], i) => (
+        <path key={i} style={{ animationDelay: `${i * 0.5}s` }} d={`M${x - 2.2} ${y}h4.4M${x} ${y - 2.2}v4.4M${x - 1.5} ${y - 1.5}l3 3M${x + 1.5} ${y - 1.5}l-3 3`} />
+      ))}
+    </g>
+  );
+}
+
 // Cappello di Natale (premio dell'easter egg "Secret secret Santa"): feltro rosso che ricade di lato,
 // bordo di pelliccia bianca a pallini e pompon
 export function CappelloNatale() {
@@ -395,9 +487,11 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
   const ha = (a: string) => look.accessori.includes(a);
   const olografico = look.coloreCapelli === COLORE_OLOGRAFICO;
   const neon = look.coloreCapelli === COLORE_NEON;
+  const brina = look.coloreCapelli === COLORE_BRINA;
   const classeCapelli = olografico ? "capelli-olografici" : undefined;
   const alone = neon ? "url(#alone-neon)" : undefined; // filtro SVG (Safari non applica i filtri CSS dentro gli SVG)
   const godo = look.maglione === MAGLIONE_GODO;
+  const lucine = look.maglione === MAGLIONE_LUCINE;
   const cowboy = ha("cowboy");
   const natale = !cowboy && ha("natale");
   // con il cappello i capelli si vedono solo sotto la tesa (e ai lati)
@@ -412,6 +506,16 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
             <stop offset=".55" stopColor="#8a5cff" />
             <stop offset=".8" stopColor="#ffc92e" />
             <stop offset="1" stopColor="#1fd69a" />
+          </linearGradient>
+        </defs>
+      )}
+      {brina && (
+        <defs>
+          {/* azzurro ghiaccio deciso alla radice, bianco brina sulle punte: si stacca dalla toppa crema */}
+          <linearGradient id="avatar-brina" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#4f98c9" />
+            <stop offset=".55" stopColor="#8cc8ec" />
+            <stop offset="1" stopColor="#dff3ff" />
           </linearGradient>
         </defs>
       )}
@@ -449,7 +553,9 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       ) : (
         <>
           <path d="M14 100c0-18 14-30 36-30s36 12 36 30z" fill={maglia} />
-          {godo ? (
+          {lucine ? (
+            <FiloLucine />
+          ) : godo ? (
             <>
               <PuntoCroceGodo />
               {/* fila di rombi nordici */}
@@ -499,8 +605,11 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
       <g className={classeCapelli} clipPath={taglio} filter={alone}>
         <Capelli stile={look.capelli} c={capelli} dietro={false} />
       </g>
+      {brina && look.capelli !== 5 && <CristalliBrina />}
+      {ha("paraorecchie") && <Paraorecchie />}
       {cowboy && <CappelloCowboy />}
       {natale && <CappelloNatale />}
+      {ha("corna") && <CerchiettoCorna />}
 
       {/* accessori */}
       {ha("sciarpa") && (
@@ -627,6 +736,20 @@ export function Cucitura({ tipo, dimensione }: { tipo: number; dimensione: numbe
       const [x, y] = p(a);
       return <path key={j} d={`M${x - m} ${y - m}l${2 * m} ${2 * m}M${x + m} ${y - m}l${-2 * m} ${2 * m}`} {...tratto} />;
     });
+  } else if (tipo === CUCITURA_LUCINE) {
+    // lucine: il filo della filza con tante lampadine colorate che si accendono a turno
+    const N = 14;
+    const colori = ["#f6c94a", "#e5481e", "#7fd3ff", "#ff7ad9"];
+    segni = (
+      <>
+        <circle cx="50" cy="50" r={R} {...tratto} />
+        {Array.from({ length: N }, (_, j) => {
+          const a = (j / N) * Math.PI * 2;
+          const [x, y] = p(a, R + 0.5);
+          return <ellipse key={j} className="lucina" style={{ animationDelay: `${(j % 4) * 0.35}s` }} cx={x} cy={y} rx={2.4 * k} ry={3.4 * k} fill={colori[j % 4]} transform={`rotate(${gradi(a) + 90} ${x} ${y})`} />;
+        })}
+      </>
+    );
   }
   return (
     <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden>

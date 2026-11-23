@@ -215,5 +215,5 @@ Tutti: verticale, una mano, un solo tipo di controllo, partite brevi, risposta i
 ### Ordine dei lavori (una sessione per pezzo)
 1. ✅ **E1** giochi 6 e 7 (logica + disegno + bot in `giochi-logica.ts`), sala prove. Fatto il 22/11 (vedi STATO.md).
 2. ✅ **E2** giochi 8, 9 e 10, sala prove. Fatto il 23/11 (vedi STATO.md).
-3. **E3** doni nel personaggio (`avatar.tsx`, editor, annuncio, `/stile`).
+3. ✅ **E3** (fatto il 23/11, vedi STATO.md) doni nel personaggio (`avatar.tsx`, editor, annuncio, `/stile`).
 4. **E4** migrazione (game 1..10, `giochi_dal`, `finestra_gioco`, `regole_gioco` 6-10, `premi_giochi`, `save_avatar`, trigger della data) + calendario a 10 giorni, avviso data, Organizza; collaudo SQL e viaggio nel tempo; **migrazione applicata e pubblicazione insieme**, in un momento in cui nessun gruppo sta giocando (il vecchio sito non conosce i giochi 6-10).

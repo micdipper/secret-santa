@@ -4,7 +4,7 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ACCESSORI, Avatar, CAPELLI_PAZZO, CAPELLI_SUPER, COLORE_NEON, COLORE_OLOGRAFICO, MAGLIONE_GODO, normalizzaLook, type Look } from "@/components/avatar";
+import { ACCESSORI, Avatar, lookConDono, normalizzaLook, type Look } from "@/components/avatar";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
 import { clientSoloBrowser } from "@/lib/supabase/client";
 import { suoni } from "@/lib/suoni";
@@ -20,6 +20,9 @@ const NOMI: Record<string, string> = {
   godo: "Maglione GODO",
   cowboy: "Cappello da cowboy",
   natale: "Cappello di Natale",
+  brina: "Capelli brina",
+  lucine: "Maglione con le lucine",
+  cornice_lucine: "Cornice di lucine",
 };
 
 // Le altre parti del sito possono chiedere un controllo subito (es. dopo aver attaccato qualcosa)
@@ -75,16 +78,8 @@ export function AvvisoPremi() {
     } catch {}
     const { data: prof } = await supabase.from("profiles").select("look").eq("user_id", uid).maybeSingle();
     const base = normalizzaLook(prof?.look, uid);
-    const anteprime: Record<string, Partial<Look>> = {
-      super: { capelli: CAPELLI_SUPER, accessori: [] },
-      pazzo: { capelli: CAPELLI_PAZZO, accessori: [] },
-      olografico: { coloreCapelli: COLORE_OLOGRAFICO, accessori: [] },
-      neon: { coloreCapelli: COLORE_NEON, accessori: [] },
-      godo: { maglione: MAGLIONE_GODO, accessori: [] },
-      cuciture: { cucitura: 1, accessori: [] },
-      cornici: { cucitura: 2, accessori: [] },
-    };
-    const look: Look = { ...base, ...(anteprime[nuovo] ?? { accessori: [nuovo] }) };
+    // solo il dono, senza gli altri accessori: si vede bene cosa è arrivato
+    const look: Look = lookConDono({ ...base, accessori: [] }, nuovo);
     setPremio({ id: nuovo, look });
     suoni.fanfara();
     confetti({ particleCount: 90, spread: 80, origin: { y: 0.4 }, colors: ["#e5481e", "#e9a81c", "#f3e8cf", "#2c4a32"], zIndex: 80 });

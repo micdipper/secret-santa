@@ -27,7 +27,7 @@ import { Feltro, TitoloRiquadro } from "@/components/ui";
   Le scelte del personaggio. Usato in due posti:
   - pagina "Il tuo personaggio" (ogni parte nel suo riquadro, con i premi sbloccati);
   - "Crea un gruppo", dentro il riquadro "Tu" (parti una sotto l'altra).
-  I premi (tagli Super ed Esplosione, colori olografico e neon, maglione GODO, accessori) compaiono SOLO quando sono sbloccati.
+  I premi (tagli Super ed Esplosione, colori olografico, neon e brina, maglioni GODO e lucine, cuciture, accessori) compaiono SOLO quando sono sbloccati.
   Ogni scelta tiene il suo numero (i), anche quando quelle prima sono nascoste.
 */
 const visibili = <T,>(lista: T[], premi: Record<number, string>, sbloccati: string[]) =>
@@ -112,7 +112,7 @@ export function EditorPersonaggio({
         children: <Campioni colori={maglioni} scelto={look.maglione} nome="Maglione" onScegli={(maglione) => onCambia({ maglione })} />,
       })}
 
-      {(sbloccati.includes("cuciture") || sbloccati.includes("cornici")) &&
+      {(sbloccati.includes("cuciture") || sbloccati.includes("cornici") || sbloccati.includes("cornice_lucine")) &&
         parte({
           titolo: "Cucitura della toppa",
           children: (
@@ -210,10 +210,14 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
   return (
     <div className="mt-4 flex flex-wrap gap-3">
       {colori.map(({ v: c, i }) => {
-        const olo = c.startsWith("url(");
+        const olo = c === "url(#avatar-olografico)";
         const neon = c === "#ff2bd6";
+        const brina = c === "url(#avatar-brina)";
+        const lucine = c === "#1f3d2b" && nome === "Maglione";
         const godo = c === "#f6efdd";
-        const fondo = olo
+        const fondo = brina
+          ? { backgroundImage: "linear-gradient(180deg,#4f98c9,#8cc8ec,#dff3ff)" }
+          : olo
           ? { backgroundImage: "linear-gradient(135deg,#ff4fae,#2fb8ff,#8a5cff,#ffc92e,#1fd69a)" }
           : neon
             ? { backgroundImage: "radial-gradient(circle, #ffd6f7 0%, #ff6be3 35%, #ff2bd6 70%)" }
@@ -222,13 +226,20 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
           <button
             key={c}
             type="button"
-            aria-label={olo ? `${nome} olografico` : c === "#ff2bd6" ? `${nome} neon` : c === "#f6efdd" ? `${nome} GODO` : `${nome} ${i + 1}`}
+            aria-label={olo ? `${nome} olografico` : neon ? `${nome} neon` : brina ? `${nome} brina` : godo ? `${nome} GODO` : lucine ? `${nome} con le lucine` : `${nome} ${i + 1}`}
             aria-pressed={scelto === i}
             onClick={() => onScegli(i)}
             className={`cliccabile flex size-12 items-center justify-center rounded-full ${olo ? "capelli-olografici" : ""} ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
             style={{ ...fondo, ["--spessore" as string]: "rgb(0 0 0 / 0.3)" }}
           >
             {godo && <span className="font-titolo text-[11px] leading-none text-vermiglio">GODO</span>}
+            {lucine && (
+              <span className="flex gap-0.5" aria-hidden>
+                {["#f6c94a", "#e5481e", "#7fd3ff", "#ff7ad9"].map((l) => (
+                  <span key={l} className="lucina size-1.5 rounded-full" style={{ backgroundColor: l }} />
+                ))}
+              </span>
+            )}
           </button>
         );
       })}

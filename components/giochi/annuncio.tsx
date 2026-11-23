@@ -4,25 +4,14 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CAPELLI_PAZZO, COLORE_NEON, MAGLIONE_GODO, ToppaAvatar, type Look } from "@/components/avatar";
+import { ToppaAvatar, lookConDono, type Look } from "@/components/avatar";
 import { segnaPremioVisto } from "@/components/avviso-premi";
 import { Tasto, TitoloRiquadro } from "@/components/ui";
-import { GIOCHI } from "@/lib/giochi/elenco";
+import { infoGioco } from "@/lib/giochi/elenco";
 import { leggi, scrivi } from "@/lib/memoria";
 import { suoni } from "@/lib/suoni";
 
 export type Vittoria = { n: number; nome: string; look: Look | null; mio: boolean };
-
-// Il personaggio del vincitore che indossa già il premio
-function conPremio(look: Look | null, premio: string): Look | null {
-  if (!look) return null;
-  if (premio === "neon") return { ...look, coloreCapelli: COLORE_NEON };
-  if (premio === "pazzo") return { ...look, capelli: CAPELLI_PAZZO };
-  if (premio === "godo") return { ...look, maglione: MAGLIONE_GODO };
-  if (premio === "cornici") return { ...look, cucitura: 2 };
-  if (premio === "cowboy") return { ...look, accessori: [...look.accessori.filter((a) => a !== "cowboy"), "cowboy"] };
-  return look;
-}
 
 const chiave = (gruppo: string) => `vincitori-visti:${gruppo}`;
 const visti = (gruppo: string) => leggi<number[]>(chiave(gruppo), []);
@@ -43,7 +32,7 @@ export function AnnunciVincitori({ gruppo, vittorie, onFinito }: { gruppo: strin
   }, [gruppo]);
 
   const ora = chiusi ? [...vittorie].sort((a, b) => a.n - b.n).find((v) => !chiusi.includes(v.n)) : undefined;
-  const info = ora ? GIOCHI[ora.n - 1] : null;
+  const info = ora ? infoGioco(ora.n) : null;
 
   // fanfara e coriandoli quando compare (una volta per annuncio: la pagina si ridisegna ogni secondo)
   const quale = ora ? ora.n : null;
@@ -53,7 +42,7 @@ export function AnnunciVincitori({ gruppo, vittorie, onFinito }: { gruppo: strin
     suoni.fanfara();
     confetti({ particleCount: 110, spread: 90, origin: { y: 0.4 }, colors: ["#e5481e", "#e9a81c", "#f3e8cf", "#2c4a32"], zIndex: 80 });
     // chi ha vinto vede il premio qui: il pop-up "Hai vinto un premio!" non serve più
-    if (mio && gruppo) segnaPremioVisto(GIOCHI[quale - 1].premio);
+    if (mio && gruppo) segnaPremioVisto(infoGioco(quale)!.premio);
   }, [quale, mio, gruppo]);
 
   function chiudi() {
@@ -95,7 +84,7 @@ export function AnnunciVincitori({ gruppo, vittorie, onFinito }: { gruppo: strin
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 11, delay: 0.15 }}
               >
-                <ToppaAvatar look={conPremio(ora.look, info.premio)} dimensione={128} nome={ora.nome} />
+                <ToppaAvatar look={ora.look && lookConDono(ora.look, info.premio)} dimensione={128} nome={ora.nome} />
               </motion.span>
               <p className="mt-4">
                 {ora.mio ? "Ricevi in dono:" : "Riceve in dono:"}{" "}

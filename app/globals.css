@@ -333,6 +333,21 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .esplosione { animation: none; }
 }
+/* lucine del maglione e della cornice (premi dei giochi): si accendono a turno */
+@keyframes lucina {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.lucina { animation: lucina 1.4s ease-in-out infinite; }
+/* brina sui capelli: i cristalli brillano */
+@keyframes brina {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+.brina path { animation: brina 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .lucina, .brina path { animation: none; }
+}
 /* cartellino del lupetto "da portare indietro" che dondola */
 @keyframes cartellino {
   0%, 100% { transform: rotate(-8deg); }
