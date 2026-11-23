@@ -140,7 +140,7 @@ export const GIOCHI_NUOVI: InfoGioco[] = [
     nome: "Il puntale",
     indizio: "La tua toppa brillerà.",
     storia:
-      "Manca solo la stella in cima all'albero, ma l'albero non sta fermo un attimo. Tieni premuto per caricare il lancio (la carica sale e poi riscende), poi lascia: la stella vola dritta in su e deve arrivare alla cima proprio quando le passa sopra. Hai 10 lanci, e ogni albero ondeggia più del precedente.",
+      "Manca solo la stella in cima all'albero, ma l'albero non sta fermo un attimo. Tieni premuto per caricare il lancio (la carica sale e poi riscende), poi lascia: la stella vola dritta in su e deve arrivare alla cima proprio quando le passa sopra. Se la lanci troppo in alto, ricadendo può ancora infilarsi sulla punta (ma vale meno). Più è centrata, più punti fa. Hai 10 lanci, e ogni albero ondeggia più del precedente.",
     premio: "cornice_lucine",
     nomePremio: "Cornice di lucine",
     durataMax: 120,
