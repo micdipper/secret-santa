@@ -5,9 +5,7 @@ import {
   ACCESSORI,
   Avatar,
   COLORI_CAPELLI,
-  ESCLUSIVI,
-  OCCHIALI_VELOCI,
-  CAPPELLI,
+  GRUPPI_ESCLUSIVI,
   MAGLIONI,
   NOMI_BARBA,
   NOMI_CAPELLI,
@@ -62,11 +60,11 @@ export function EditorPersonaggio({
       </div>
     );
 
-  // Lupetto, collana e calendario si escludono a vicenda; il resto si somma.
+  // Lupetto, collana e calendario si escludono a vicenda, come gli occhiali veloci, i cappelli, corna e paraorecchie; il resto si somma.
   function indossa(id: string) {
     if (look.accessori.includes(id)) return onCambia({ accessori: look.accessori.filter((a) => a !== id) });
-    const gruppo = [ESCLUSIVI, OCCHIALI_VELOCI, CAPPELLI].find((g) => g.includes(id));
-    const altri = gruppo ? look.accessori.filter((a) => !gruppo.includes(a)) : look.accessori;
+    const gruppi = GRUPPI_ESCLUSIVI.filter((g) => g.includes(id));
+    const altri = look.accessori.filter((a) => !gruppi.some((g) => g.includes(a)));
     onCambia({ accessori: [...altri, id] });
   }
 
@@ -213,8 +211,8 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
         const olo = c === "url(#avatar-olografico)";
         const neon = c === "#ff2bd6";
         const brina = c === "url(#avatar-brina)";
-        const lucine = c === "#1f3d2b" && nome === "Maglione";
-        const godo = c === "#f6efdd";
+        const lucine = c === "#8e1b2e" && nome === "Maglione";
+        const godo = c === "#8fd3ec" && nome === "Maglione";
         const fondo = brina
           ? { backgroundImage: "linear-gradient(180deg,#4f98c9,#8cc8ec,#dff3ff)" }
           : olo

@@ -93,22 +93,22 @@ export const GIOCHI_NUOVI: InfoGioco[] = [
   {
     n: 6,
     nome: "Affetta il panettone",
-    indizio: "Qualcosa da mettere in testa, ma non un cappello.",
+    indizio: "Per chi ha sempre freddo alle orecchie.",
     storia:
       "In cucina gli elfi lanciano in aria panettoni e pandori: striscia il dito per affettarli al volo, più ne prendi con un colpo solo e più punti fai. Non lasciarli ricadere interi... e il carbone non si affetta, si evita.",
-    premio: "corna",
-    nomePremio: "Cerchietto con le corna di renna",
+    premio: "paraorecchie",
+    nomePremio: "Paraorecchie di pelo",
     durataMax: 50,
     gioco: panettone,
   },
   {
     n: 7,
     nome: "La renna saltatrice",
-    indizio: "Per chi ha sempre freddo alle orecchie.",
+    indizio: "Qualcosa da mettere in testa, ma non un cappello.",
     storia:
       "Una renna si è persa e corre sui tetti per tornare alla slitta. Tocca lo schermo per farla saltare i comignoli e i vuoti tra le case: più va lontano, più punti fai, e le campanelle in cima ai salti valgono qualcosa in più. Corre sempre più veloce, e basta un comignolo per finire nella neve.",
-    premio: "paraorecchie",
-    nomePremio: "Paraorecchie di pelo",
+    premio: "corna",
+    nomePremio: "Cerchietto con le corna di renna",
     durataMax: 600,
     gioco: renna,
     formatta: (p) => [`${p} m`, ""],

@@ -17,8 +17,9 @@ export type Look = {
 export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
 // Gli ultimi colori sono premi: olografico (tutti i premi), neon (gioco 1), brina (gioco 9)
 export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6", "url(#avatar-brina)"];
-// Gli ultimi maglioni sono premi: crema con GODO a punto croce (gioco 3), verde con le lucine (gioco 8)
-export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#f6efdd", "#1f3d2b"];
+// Gli ultimi maglioni sono premi: azzurro ghiaccio con GODO a punto croce (gioco 3; era crema e si confondeva
+// con la toppa), bordeaux con le lucine (gioco 8)
+export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#8fd3ec", "#8e1b2e"];
 // 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
 // (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
 export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Pelato", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
@@ -47,15 +48,19 @@ export const ACCESSORI: { id: string; nome: string; comeSbloccarlo: string }[] =
   { id: "occhiali_olo", nome: "Occhiali veloci olografici", comeSbloccarlo: "Ricevi tutti gli altri doni." },
   { id: "cowboy", nome: "Cappello da cowboy", comeSbloccarlo: "Vinci il gioco 5 del calendario." },
   { id: "natale", nome: "Cappello di Natale", comeSbloccarlo: "È un segreto." },
-  { id: "corna", nome: "Cerchietto con le corna di renna", comeSbloccarlo: "Vinci il gioco Affetta il panettone." },
-  { id: "paraorecchie", nome: "Paraorecchie di pelo", comeSbloccarlo: "Vinci il gioco La renna saltatrice." },
+  { id: "paraorecchie", nome: "Paraorecchie di pelo", comeSbloccarlo: "Vinci il gioco Affetta il panettone." },
+  { id: "corna", nome: "Cerchietto con le corna di renna", comeSbloccarlo: "Vinci il gioco La renna saltatrice." },
 ];
-// Un cappello alla volta (il cerchietto con le corna conta come cappello; i paraorecchie si sommano a tutto).
+// Un cappello alla volta (il cerchietto con le corna conta come cappello).
 export const CAPPELLI = ["cowboy", "natale", "corna"];
+// Corna e paraorecchie: o uno o l'altro (Marzia, 23/11).
+export const TESTA = ["corna", "paraorecchie"];
+// Tutti i gruppi di doni che non si indossano insieme (un dono può stare in più gruppi)
 // Lupetto, collana e calendario non si indossano insieme: se ne sceglie uno.
 export const ESCLUSIVI = ["sciarpa", "fiocco", "stellina"];
 // I due paia di occhiali veloci: o uno o l'altro.
 export const OCCHIALI_VELOCI = ["occhiali", "occhiali_olo"];
+export const GRUPPI_ESCLUSIVI = [ESCLUSIVI, OCCHIALI_VELOCI, CAPPELLI, TESTA];
 
 // Cuciture intorno alla toppa del personaggio: 0 filza (per tutti) · 1 catenella = premio "cuciture"
 // (un post nelle Novità + 5 reazioni) · 2 tulipano, 3 felce, 4 punto croce = "cornici", premio del gioco 4 (PIANO-GIOCHI.md)
@@ -118,7 +123,7 @@ export function normalizzaLook(l: unknown, seme = ""): Look {
 // Tiene al massimo uno tra lupetto, collana e calendario
 function soloUnoEsclusivo(lista: string[]) {
   let tieni = lista;
-  for (const gruppo of [ESCLUSIVI, OCCHIALI_VELOCI, CAPPELLI]) {
+  for (const gruppo of GRUPPI_ESCLUSIVI) {
     const primo = tieni.find((a) => gruppo.includes(a));
     tieni = tieni.filter((a) => !gruppo.includes(a) || a === primo);
   }
@@ -395,7 +400,7 @@ function CappelloCowboy() {
   );
 }
 
-// Cerchietto con le corna di renna (premio del gioco Affetta il panettone): archetto rosso, corna di feltro
+// Cerchietto con le corna di renna (premio del gioco La renna saltatrice): archetto rosso, corna di feltro
 // marrone con le punte chiare e due foglie di agrifoglio con le bacche
 function CerchiettoCorna() {
   return (
@@ -414,7 +419,7 @@ function CerchiettoCorna() {
   );
 }
 
-// Paraorecchie di pelo (premio del gioco La renna saltatrice): archetto sopra la testa e due batuffoli di pelo
+// Paraorecchie di pelo (premio del gioco Affetta il panettone): archetto sopra la testa e due batuffoli di pelo
 function Paraorecchie() {
   const ciuffo = (x: number) => (
     <g key={x}>
@@ -437,15 +442,17 @@ function Paraorecchie() {
 
 // Fila di lucine colorate (maglione premio del gioco Calzini spaiati): filo verde scuro e lampadine che si accendono a turno
 function FiloLucine() {
-  const punti = [20, 28, 36, 44, 52, 60, 68, 76].map((x) => [x, 86 + Math.sin(x / 6) * 2.4]);
-  const colori = ["#f6c94a", "#e5481e", "#7fd3ff", "#ff7ad9"];
+  // il filo segue la scollatura, appena sotto il collo: le lucine si vedono anche nelle toppe piccole
+  const y = (x: number) => 76.5 + ((x - 50) / 30) ** 2 * 9;
+  const punti = [26, 34, 42, 50, 58, 66, 74].map((x) => [x, y(x)]);
+  const colori = ["#f6c94a", "#7fd3ff", "#ff7ad9", "#9dff8a"];
   return (
     <g>
-      <path d={`M16 ${86 + Math.sin(16 / 6) * 2.4}` + punti.map(([x, y]) => `L${x} ${y}`).join("") + `L84 ${86 + Math.sin(14) * 2.4}`} fill="none" stroke="#0f2418" strokeWidth="1" />
-      {punti.map(([x, y], i) => (
+      <path d={`M22 ${y(22)}` + [30, 38, 46, 54, 62, 70, 78].map((x) => `Q${x - 4} ${y(x - 4) + 2.2} ${x} ${y(x)}`).join("")} fill="none" stroke="#3a0d15" strokeWidth="1" />
+      {punti.map(([x, yy], i) => (
         <g key={x}>
-          <rect x={x - 0.9} y={y - 0.2} width="1.8" height="1.6" fill="#0f2418" />
-          <ellipse className="lucina" style={{ animationDelay: `${(i % 4) * 0.35}s` }} cx={x} cy={y + 3} rx="1.7" ry="2.4" fill={colori[i % 4]} />
+          <rect x={x - 1} y={yy - 0.2} width="2" height="1.6" fill="#3a0d15" />
+          <ellipse className="lucina" style={{ animationDelay: `${(i % 4) * 0.35}s` }} cx={x} cy={yy + 3.6} rx="2.1" ry="2.9" fill={colori[i % 4]} />
         </g>
       ))}
     </g>

@@ -141,7 +141,7 @@ export default function Stile() {
           { nome: "Esplosione neon e cowboy", look: { pelle: 2, capelli: 13, coloreCapelli: 8, barba: 0, occhiali: 0, maglione: 6, accessori: ["cowboy"] } },
           { nome: "Capelli brina", look: { pelle: 4, capelli: 2, coloreCapelli: 9, barba: 0, occhiali: 0, maglione: 0, accessori: [] } },
           { nome: "Maglione con le lucine", look: { pelle: 1, capelli: 1, coloreCapelli: 3, barba: 0, occhiali: 0, maglione: 7, accessori: [] } },
-          { nome: "Corna, paraorecchie e brina", look: { pelle: 2, capelli: 11, coloreCapelli: 9, barba: 0, occhiali: 0, maglione: 7, accessori: ["corna", "paraorecchie"] } },
+          { nome: "Corna, brina e lucine", look: { pelle: 2, capelli: 11, coloreCapelli: 9, barba: 0, occhiali: 0, maglione: 7, accessori: ["corna"] } },
           { nome: "Super, olografico e lupetto", look: { pelle: 1, capelli: 12, coloreCapelli: 7, barba: 0, occhiali: 1, maglione: 3, accessori: ["sciarpa"] } },
         ].map((p) => (
           <figure key={p.nome} className="flex flex-col items-center gap-2">
