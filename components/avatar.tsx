@@ -17,9 +17,8 @@ export type Look = {
 export const PELLI = ["#f3bf9b", "#e3a47c", "#cc8a5f", "#a9683f", "#7f4c2e", "#53311f"];
 // Gli ultimi colori sono premi: olografico (tutti i premi), neon (gioco 1), brina (gioco 9)
 export const COLORI_CAPELLI = ["#2b1d14", "#5a3520", "#9a5b2c", "#d9a441", "#e0662a", "#b8442b", "#7c7c7c", "url(#avatar-olografico)", "#ff2bd6", "url(#avatar-brina)"];
-// Gli ultimi maglioni sono premi: azzurro ghiaccio con GODO a punto croce (gioco 3; era crema e si confondeva
-// con la toppa), bordeaux con le lucine (gioco 8)
-export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#8fd3ec", "#8e1b2e"];
+// Gli ultimi maglioni sono premi: vermiglio con GODO bianco a punto croce (gioco 3), nero con le lucine (gioco 8)
+export const MAGLIONI = ["#e5481e", "#2c4a32", "#e9a81c", "#24304a", "#f4a9c4", "#7d3c5a", "#e5481e", "#1c1c1c"];
 // 12 e 13 sono premi: Super (Santa Chat) ed Esplosione (gioco 2). I tagli aggiunti dopo vanno IN CODA
 // (il numero è salvato nei personaggi: non si riordina mai), l'editor mostra comunque i premi per ultimi.
 export const NOMI_CAPELLI = ["Corti", "Caschetto", "Lunghi", "Chignon", "Ricci", "Pelato", "Cresta", "Afro", "Ciuffo", "Codini", "Treccia", "Spettinati", "Super", "Esplosione", "Riga in mezzo"];
@@ -379,7 +378,7 @@ function PuntoCroceGodo() {
       }),
     );
   });
-  return <path d={segni.join("")} stroke="#e5481e" strokeWidth=".75" strokeLinecap="round" />;
+  return <path d={segni.join("")} stroke="#fff" strokeWidth=".75" strokeLinecap="round" />;
 }
 
 // Cappello da cowboy (premio del gioco 5): cuoio, tesa curva, fascia a punto croce con stellina d'oro
@@ -401,25 +400,30 @@ function CappelloCowboy() {
 }
 
 // Cerchietto con le corna di renna (premio del gioco La renna saltatrice): archetto rosso, corna di feltro
-// marrone con le punte chiare e due foglie di agrifoglio con le bacche
+// marrone con le punte chiare e due foglie di agrifoglio con le bacche.
+// L'archetto parte SEMPRE da metà delle orecchie (l'unico punto fisso uguale per tutti i tagli, anche futuri)
+// e segue la testa del personaggio pelato: così combacia con ogni acconciatura.
 function CerchiettoCorna() {
   return (
     <g>
-      <path d="M29 38c2-12 10-19 21-19s19 7 21 19" fill="none" stroke="#c0392b" strokeWidth="3" strokeLinecap="round" />
+      <path d={ARCO_TESTA} fill="none" stroke="#c0392b" strokeWidth="2.6" strokeLinecap="round" />
       {[1, -1].map((l) => (
-        <g key={l} transform={`translate(${50 - l * 13} 21) scale(${l} 1)`}>
+        <g key={l} transform={`translate(${50 - l * 10} 27.5) scale(${l} 1)`}>
           <path d="M0 0c-1-6-1-11 2-16M1-7c-4-2-6-5-7-9M1.5-12c3-1 5-3 6-6" fill="none" stroke="#7a4a1d" strokeWidth="3.4" strokeLinecap="round" />
           <path d="M0 0c-1-6-1-11 2-16" fill="none" stroke="#a8743f" strokeWidth="1.2" strokeLinecap="round" />
         </g>
       ))}
-      <path d="M58 21c3-3 7-3 9-1-3 0-5 2-6 4zM58 21c1-4 4-6 7-6-2 2-3 4-3 7z" fill="#2c4a32" />
-      <circle cx="58" cy="21.5" r="1.8" fill="#e5481e" />
-      <circle cx="60.5" cy="23" r="1.5" fill="#e5481e" />
+      <path d="M63 30c3-3 7-3 9-1-3 0-5 2-6 4zM63 30c1-4 4-6 7-6-2 2-3 4-3 7z" fill="#2c4a32" />
+      <circle cx="63" cy="30.5" r="1.8" fill="#e5481e" />
+      <circle cx="65.5" cy="32" r="1.5" fill="#e5481e" />
     </g>
   );
 }
 
 // Paraorecchie di pelo (premio del gioco Affetta il panettone): archetto sopra la testa e due batuffoli di pelo
+// Arco che va da metà di un orecchio (30.5, 47) all'altro (69.5, 47) appoggiato sulla testa pelata (cima a 25):
+// lo usano cerchietto e paraorecchie, così stanno bene con tutti i tagli, anche cortissimi
+const ARCO_TESTA = "M30.5 47A19.5 22.5 0 0 1 69.5 47";
 function Paraorecchie() {
   const ciuffo = (x: number) => (
     <g key={x}>
@@ -433,7 +437,7 @@ function Paraorecchie() {
   );
   return (
     <g>
-      <path d="M30 44c-2-15 7-26 20-26s22 11 20 26" fill="none" stroke="#24304a" strokeWidth="2.6" strokeLinecap="round" />
+      <path d={ARCO_TESTA} fill="none" stroke="#24304a" strokeWidth="2" strokeLinecap="round" />
       {ciuffo(29)}
       {ciuffo(71)}
     </g>
@@ -442,16 +446,16 @@ function Paraorecchie() {
 
 // Fila di lucine colorate (maglione premio del gioco Calzini spaiati): filo verde scuro e lampadine che si accendono a turno
 function FiloLucine() {
-  // il filo segue la scollatura, appena sotto il collo: le lucine si vedono anche nelle toppe piccole
-  const y = (x: number) => 76.5 + ((x - 50) / 30) ** 2 * 9;
+  // il filo ondeggia di traverso lungo la maglia (niente arco), in alto: le lucine si vedono anche nelle toppe piccole
+  const y = (x: number) => 78.5 + Math.sin((x - 18) / 7) * 2.4;
   const punti = [26, 34, 42, 50, 58, 66, 74].map((x) => [x, y(x)]);
   const colori = ["#f6c94a", "#7fd3ff", "#ff7ad9", "#9dff8a"];
   return (
     <g>
-      <path d={`M22 ${y(22)}` + [30, 38, 46, 54, 62, 70, 78].map((x) => `Q${x - 4} ${y(x - 4) + 2.2} ${x} ${y(x)}`).join("")} fill="none" stroke="#3a0d15" strokeWidth="1" />
+      <path d={`M20 ${y(20)}` + Array.from({ length: 31 }, (_, i) => 20 + i * 2).map((x) => `L${x} ${y(x)}`).join("")} fill="none" stroke="#6b6b6b" strokeWidth="1" />
       {punti.map(([x, yy], i) => (
         <g key={x}>
-          <rect x={x - 1} y={yy - 0.2} width="2" height="1.6" fill="#3a0d15" />
+          <rect x={x - 1} y={yy - 0.2} width="2" height="1.6" fill="#6b6b6b" />
           <ellipse className="lucina" style={{ animationDelay: `${(i % 4) * 0.35}s` }} cx={x} cy={yy + 3.6} rx="2.1" ry="2.9" fill={colori[i % 4]} />
         </g>
       ))}
@@ -567,7 +571,7 @@ export function Avatar({ look, className, titolo }: { look: Look; className?: st
               <PuntoCroceGodo />
               {/* fila di rombi nordici */}
               {[22, 30, 38, 46, 54, 62, 70, 78].map((x) => (
-                <path key={x} d={`M${x} 92.5l3 3.5-3 3.5-3-3.5z`} fill="none" stroke="#2c4a32" strokeWidth=".9" />
+                <path key={x} d={`M${x} 92.5l3 3.5-3 3.5-3-3.5z`} fill="none" stroke="#fff" strokeOpacity=".85" strokeWidth=".9" />
               ))}
             </>
           ) : (

@@ -6,6 +6,8 @@ import {
   Avatar,
   COLORI_CAPELLI,
   GRUPPI_ESCLUSIVI,
+  MAGLIONE_GODO,
+  MAGLIONE_LUCINE,
   MAGLIONI,
   NOMI_BARBA,
   NOMI_CAPELLI,
@@ -211,8 +213,8 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
         const olo = c === "url(#avatar-olografico)";
         const neon = c === "#ff2bd6";
         const brina = c === "url(#avatar-brina)";
-        const lucine = c === "#8e1b2e" && nome === "Maglione";
-        const godo = c === "#8fd3ec" && nome === "Maglione";
+        const lucine = i === MAGLIONE_LUCINE && nome === "Maglione";
+        const godo = i === MAGLIONE_GODO && nome === "Maglione";
         const fondo = brina
           ? { backgroundImage: "linear-gradient(180deg,#4f98c9,#8cc8ec,#dff3ff)" }
           : olo
@@ -222,7 +224,7 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
             : { backgroundColor: c };
         return (
           <button
-            key={c}
+            key={i}
             type="button"
             aria-label={olo ? `${nome} olografico` : neon ? `${nome} neon` : brina ? `${nome} brina` : godo ? `${nome} GODO` : lucine ? `${nome} con le lucine` : `${nome} ${i + 1}`}
             aria-pressed={scelto === i}
@@ -230,7 +232,7 @@ function Campioni({ colori, scelto, nome, onScegli }: { colori: { v: string; i: 
             className={`cliccabile flex size-12 items-center justify-center rounded-full ${olo ? "capelli-olografici" : ""} ${scelto === i ? "outline-3 outline-offset-2 outline-vermiglio" : ""}`}
             style={{ ...fondo, ["--spessore" as string]: "rgb(0 0 0 / 0.3)" }}
           >
-            {godo && <span className="font-titolo text-[11px] leading-none text-vermiglio">GODO</span>}
+            {godo && <span className="font-titolo text-[11px] leading-none text-white">GODO</span>}
             {lucine && (
               <span className="flex gap-0.5" aria-hidden>
                 {["#f6c94a", "#e5481e", "#7fd3ff", "#ff7ad9"].map((l) => (
